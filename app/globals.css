@@ -4,116 +4,229 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Elemni dashboard — design tokens.
+ *
+ * Source of truth: DESIGN.md (the original "Linear-inspired" indigo spec).
+ * Indigo primary, Zinc neutrals, super-elliptical radii, 3px halo focus,
+ * no shadows by default, ambient lift on hover. Compact density.
+ *
+ * Tokens are split in three layers:
+ *   1. M3-style raw palette  (e.g. --color-primary, --color-on-primary)
+ *   2. Brand aliases          (e.g. --color-brand-indigo, --color-brand-indigo-tint)
+ *   3. shadcn-style mappings  (e.g. --color-background, --color-foreground)
+ *      so existing primitives (Button, etc.) keep working.
+ *
+ * Article X (no-hex-in-components): components must never declare colors
+ * directly. They reference these tokens via Tailwind utilities.
+ */
 @theme inline {
-    --font-heading: var(--font-sans);
-    --font-sans: var(--font-sans);
-    --color-sidebar-ring: var(--sidebar-ring);
-    --color-sidebar-border: var(--sidebar-border);
-    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-    --color-sidebar-accent: var(--sidebar-accent);
-    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-    --color-sidebar-primary: var(--sidebar-primary);
-    --color-sidebar-foreground: var(--sidebar-foreground);
-    --color-sidebar: var(--sidebar);
-    --color-chart-5: var(--chart-5);
-    --color-chart-4: var(--chart-4);
-    --color-chart-3: var(--chart-3);
-    --color-chart-2: var(--chart-2);
-    --color-chart-1: var(--chart-1);
-    --color-ring: var(--ring);
-    --color-input: var(--input);
+    --font-sans: var(--font-app, "Cairo"), system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-heading: var(--font-app, "Cairo"), system-ui, sans-serif;
+
+    /* Brand ----------------------------------------------------------- */
+    --color-brand-indigo: var(--brand-indigo);
+    --color-brand-indigo-deep: var(--brand-indigo-deep);
+    --color-brand-indigo-tint: var(--brand-indigo-tint);
+    --color-brand-amber: var(--brand-amber);
+    --color-brand-amber-tint: var(--brand-amber-tint);
+    --color-brand-emerald: var(--brand-emerald);
+    --color-brand-emerald-tint: var(--brand-emerald-tint);
+    --color-brand-rose: var(--brand-rose);
+    --color-brand-rose-tint: var(--brand-rose-tint);
+
+    /* Charts ---------------------------------------------------------- */
+    --color-chart-1: var(--brand-indigo);
+    --color-chart-2: var(--brand-indigo-tint);
+    --color-chart-3: var(--brand-amber);
+    --color-chart-4: var(--brand-amber-tint);
+    --color-chart-5: var(--brand-emerald);
+    --color-chart-grid: var(--zinc-100);
+    --color-chart-axis: var(--zinc-400);
+
+    /* Surfaces -------------------------------------------------------- */
+    --color-page: var(--page);
+    --color-surface: var(--surface);
+    --color-surface-raised: var(--surface-raised);
+    --color-surface-muted: var(--surface-muted);
+    --color-surface-subtle: var(--surface-subtle);
+    --color-surface-strong: var(--surface-strong);
+
+    /* Text ------------------------------------------------------------ */
+    --color-on-surface: var(--on-surface);
+    --color-on-surface-muted: var(--on-surface-muted);
+    --color-on-surface-subtle: var(--on-surface-subtle);
+    --color-on-primary: var(--on-primary);
+    --color-on-primary-tint: var(--on-primary-tint);
+
+    /* Outline / borders ---------------------------------------------- */
     --color-border: var(--border);
-    --color-destructive: var(--destructive);
-    --color-accent-foreground: var(--accent-foreground);
-    --color-accent: var(--accent);
-    --color-muted-foreground: var(--muted-foreground);
-    --color-muted: var(--muted);
-    --color-secondary-foreground: var(--secondary-foreground);
-    --color-secondary: var(--secondary);
-    --color-primary-foreground: var(--primary-foreground);
-    --color-primary: var(--primary);
-    --color-popover-foreground: var(--popover-foreground);
-    --color-popover: var(--popover);
-    --color-card-foreground: var(--card-foreground);
-    --color-card: var(--card);
-    --color-foreground: var(--foreground);
-    --color-background: var(--background);
-    --radius-sm: calc(var(--radius) * 0.6);
-    --radius-md: calc(var(--radius) * 0.8);
-    --radius-lg: var(--radius);
-    --radius-xl: calc(var(--radius) * 1.4);
-    --radius-2xl: calc(var(--radius) * 1.8);
-    --radius-3xl: calc(var(--radius) * 2.2);
-    --radius-4xl: calc(var(--radius) * 2.6);
+    --color-border-strong: var(--border-strong);
+    --color-ring: var(--brand-indigo);
+
+    /* Status --------------------------------------------------------- */
+    --color-success: var(--brand-emerald);
+    --color-success-tint: var(--brand-emerald-tint);
+    --color-warning: var(--brand-amber);
+    --color-warning-tint: var(--brand-amber-tint);
+    --color-error: var(--brand-rose);
+    --color-error-tint: var(--brand-rose-tint);
+
+    /* shadcn-style mappings (so existing Button/Card primitives work) */
+    --color-background: var(--page);
+    --color-foreground: var(--on-surface);
+    --color-card: var(--surface);
+    --color-card-foreground: var(--on-surface);
+    --color-popover: var(--surface);
+    --color-popover-foreground: var(--on-surface);
+    --color-primary: var(--brand-indigo);
+    --color-primary-foreground: var(--on-primary);
+    --color-primary-deep: var(--brand-indigo-deep);
+    --color-primary-tint: var(--brand-indigo-tint);
+    --color-secondary: var(--surface-subtle);
+    --color-secondary-foreground: var(--on-surface);
+    --color-muted: var(--surface-muted);
+    --color-muted-foreground: var(--on-surface-muted);
+    --color-accent: var(--surface-strong);
+    --color-accent-foreground: var(--on-surface);
+    --color-destructive: var(--brand-rose);
+    --color-input: var(--border);
+    --color-action: var(--brand-indigo);
+    --color-action-foreground: var(--on-primary);
+    --color-sidebar: var(--surface);
+    --color-sidebar-foreground: var(--on-surface);
+    --color-sidebar-primary: var(--brand-indigo);
+    --color-sidebar-primary-foreground: var(--on-primary);
+    --color-sidebar-accent: var(--brand-indigo-tint);
+    --color-sidebar-accent-foreground: var(--brand-indigo);
+    --color-sidebar-border: var(--border);
+    --color-sidebar-ring: var(--brand-indigo);
+
+    /* Radius — super-elliptical: 8px inputs/buttons, 12px chips, 16px cards */
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+    --radius-2xl: 1rem;
+    --radius-3xl: 1.5rem;
+    --radius-4xl: 2rem;
+
+    /* Type scale — keep Cairo weights consistent with original spec */
+    --text-display-lg: 30px;
+    --text-display-lg--line-height: 38px;
+    --text-display-lg--font-weight: 700;
+
+    --text-headline-md: 24px;
+    --text-headline-md--line-height: 32px;
+    --text-headline-md--font-weight: 600;
+
+    --text-headline-sm: 20px;
+    --text-headline-sm--line-height: 28px;
+    --text-headline-sm--font-weight: 600;
+
+    --text-title-lg: 18px;
+    --text-title-lg--line-height: 26px;
+    --text-title-lg--font-weight: 600;
+
+    --text-title-md: 16px;
+    --text-title-md--line-height: 24px;
+    --text-title-md--font-weight: 500;
+
+    --text-body-lg: 14px;
+    --text-body-lg--line-height: 22px;
+    --text-body-lg--font-weight: 400;
+
+    --text-body-md: 13px;
+    --text-body-md--line-height: 20px;
+    --text-body-md--font-weight: 400;
+
+    --text-label-md: 12px;
+    --text-label-md--line-height: 16px;
+    --text-label-md--font-weight: 500;
+    --text-label-md--letter-spacing: 0.01em;
+
+    --text-label-sm: 11px;
+    --text-label-sm--line-height: 14px;
+    --text-label-sm--font-weight: 500;
+
+    /* Spacing — compact density for dashboard */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 12px;
+    --spacing-lg: 16px;
+    --spacing-xl: 24px;
+    --spacing-2xl: 32px;
+    --spacing-3xl: 48px;
+    --spacing-sidebar-width: 240px;
+    --spacing-grid-gutter: 16px;
+    --spacing-container-margin: 24px;
 }
 
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+    /* Brand */
+    --brand-indigo: #4F46E5;
+    --brand-indigo-deep: #312E81;
+    --brand-indigo-tint: #EEF2FF;
+    --brand-amber: #F59E0B;
+    --brand-amber-tint: #FEF3C7;
+    --brand-emerald: #10B981;
+    --brand-emerald-tint: #D1FAE5;
+    --brand-rose: #EF4444;
+    --brand-rose-tint: #FEE2E2;
+
+    /* Zinc neutrals */
+    --zinc-50: #FAFAFA;
+    --zinc-100: #F4F4F5;
+    --zinc-200: #E4E4E7;
+    --zinc-300: #D4D4D8;
+    --zinc-400: #A1A1AA;
+    --zinc-500: #71717A;
+    --zinc-600: #52525B;
+    --zinc-700: #3F3F46;
+    --zinc-800: #27272A;
+    --zinc-900: #18181B;
+
+    /* Surfaces */
+    --page: #FAFAFA;
+    --surface: #FFFFFF;
+    --surface-raised: #FFFFFF;
+    --surface-muted: #F4F4F5;
+    --surface-subtle: #F9FAFB;
+    --surface-strong: #F4F4F5;
+
+    /* Text */
+    --on-surface: #18181B;
+    --on-surface-muted: #71717A;
+    --on-surface-subtle: #A1A1AA;
+    --on-primary: #FFFFFF;
+    --on-primary-tint: #312E81;
+
+    /* Borders */
+    --border: #E4E4E7;
+    --border-strong: #D4D4D8;
+
+    /* Radius base */
+    --radius: 0.5rem;
+
+    /* Toast/sonner raw variables (referenced by sonner component) */
+    --popover: var(--surface);
+    --popover-foreground: var(--on-surface);
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+    --page: #09090B;
+    --surface: #18181B;
+    --surface-raised: #27272A;
+    --surface-muted: #27272A;
+    --surface-subtle: #18181B;
+    --surface-strong: #3F3F46;
+
+    --on-surface: #FAFAFA;
+    --on-surface-muted: #A1A1AA;
+    --on-surface-subtle: #71717A;
+
+    --border: #27272A;
+    --border-strong: #3F3F46;
 }
 
 @layer base {
@@ -121,9 +234,37 @@
     @apply border-border outline-ring/50;
     }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-page text-foreground antialiased;
     }
   html {
     @apply font-sans;
     }
+
+  /* Scrollbar — minimal, brand-tinted.
+     Webkit (Chrome / Edge / Safari) and Firefox both supported. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 9999px;
+    border: 2px solid var(--page);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--on-surface-subtle);
+  }
+  ::-webkit-scrollbar-thumb:active {
+    background: var(--brand-indigo);
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
 }

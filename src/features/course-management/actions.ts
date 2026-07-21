@@ -1,0 +1,134 @@
+"use server";
+import { revalidateTag } from "next/cache";
+import { apiFetch } from "@/lib/api/client";
+import { endpoints } from "@/lib/api/endpoints";
+import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+import { courseOutSchema } from "@/features/shell/schema";
+import {
+  courseCreateSchema,
+  courseUpdateSchema,
+} from "@/features/course-management/schema";
+import { getCourse as getCourseQuery, listSubjects as listSubjectsQuery, listGrades as listGradesQuery, listStreams as listStreamsQuery } from "@/features/course-management/queries";
+import type { CourseOut } from "@/features/shell/schema";
+import type { CourseCreate, CourseUpdate } from "@/features/course-management/schema";
+import type { SubjectOut, GradeOut, StreamOut } from "@/features/course-management/schema";
+import { logger } from "@/lib/logger";
+
+async function redirectToSignIn(nextPath: string): Promise<never> {
+  const h = await headers();
+  const locale = h.get("Accept-Language")?.startsWith("en") ? "en" : "ar";
+  redirect(`/${locale}/sign-out?next=${encodeURIComponent(nextPath)}`);
+}
+
+export async function createCourse(
+  teacherProfileId: number,
+  data: FormData | CourseCreate,
+): Promise<{ success: true; course: CourseOut } | { success: false; error: { type: string; message: string; fields?: string[] } }> {
+  let body: CourseCreate;
+  if (data instanceof FormData) {
+    const raw = Object.fromEntries(data.entries());
+    body = courseCreateSchema.parse(raw);
+  } else {
+    body = courseCreateSchema.parse(data);
+  }
+
+  logger.action("createCourse", { teacherProfileId, title: body.title })
+  const start = performance.now()
+
+  try {
+    const course = await apiFetch(endpoints.courses.list, courseOutSchema, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+    revalidateTag(`courses:${teacherProfileId}`, "default");
+    const elapsed = Math.round(performance.now() - start)
+    logger.actionDone("createCourse", { courseId: course.id }, elapsed)
+    return { success: true, course };
+  } catch (err: unknown) {
+    const elapsed = Math.round(performance.now() - start)
+    if (err && typeof err === "object" && "type" in err) {
+      const apiErr = err as { type: string; message: string; fields?: string[] };
+      if (apiErr.type === "Unauthorized") {
+        logger.actionDone("createCourse", { unauthorized: true }, elapsed)
+        await redirectToSignIn(`/courses`);
+      }
+      logger.actionError("createCourse", apiErr, elapsed)
+      return { success: false, error: { type: apiErr.type, message: apiErr.message, fields: apiErr.fields } };
+    }
+    logger.actionError("createCourse", err, elapsed)
+    return { success: false, error: { type: "Upstream", message: "Network error" } };
+  }
+}
+
+export async function getCourseAction(courseId: number): Promise<CourseOut> {
+  return getCourseQuery(courseId);
+}
+
+export async function listSubjectsAction(): Promise<SubjectOut[]> {
+  return listSubjectsQuery();
+}
+
+export async function listGradesAction(): Promise<GradeOut[]> {
+  return listGradesQuery();
+}
+
+export async function listStreamsAction(): Promise<StreamOut[]> {
+  return listStreamsQuery();
+}
+
+export async function publishCourse(
+  courseId: number,
+  teacherProfileId: number,
+): Promise<{ success: true; course: CourseOut } | { success: false; error: { type: string; message: string } }> {
+  return updateCourse(courseId, teacherProfileId, { is_published: true } as CourseUpdate);
+}
+
+export async function unpublishCourse(
+  courseId: number,
+  teacherProfileId: number,
+): Promise<{ success: true; course: CourseOut } | { success: false; error: { type: string; message: string } }> {
+  return updateCourse(courseId, teacherProfileId, { is_published: false } as CourseUpdate);
+}
+
+export async function updateCourse(
+  courseId: number,
+  teacherProfileId: number,
+  data: FormData | CourseUpdate,
+): Promise<{ success: true; course: CourseOut } | { success: false; error: { type: string; message: string; fields?: string[] } }> {
+  let body: CourseUpdate;
+  if (data instanceof FormData) {
+    const raw = Object.fromEntries(data.entries());
+    body = courseUpdateSchema.parse(raw);
+  } else {
+    body = courseUpdateSchema.parse(data);
+  }
+
+  logger.action("updateCourse", { courseId, teacherProfileId })
+  const start = performance.now()
+
+  try {
+    const course = await apiFetch(endpoints.courses.detail(courseId), courseOutSchema, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    });
+    revalidateTag(`course:${courseId}`, "default");
+    revalidateTag(`courses:${teacherProfileId}`, "default");
+    const elapsed = Math.round(performance.now() - start)
+    logger.actionDone("updateCourse", { courseId: course.id }, elapsed)
+    return { success: true, course };
+  } catch (err: unknown) {
+    const elapsed = Math.round(performance.now() - start)
+    if (err && typeof err === "object" && "type" in err) {
+      const apiErr = err as { type: string; message: string; fields?: string[] };
+      if (apiErr.type === "Unauthorized") {
+        logger.actionDone("updateCourse", { unauthorized: true }, elapsed)
+        await redirectToSignIn(`/courses`);
+      }
+      logger.actionError("updateCourse", apiErr, elapsed)
+      return { success: false, error: { type: apiErr.type, message: apiErr.message, fields: apiErr.fields } };
+    }
+    logger.actionError("updateCourse", err, elapsed)
+    return { success: false, error: { type: "Upstream", message: "Network error" } };
+  }
+}

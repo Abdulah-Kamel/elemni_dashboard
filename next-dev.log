@@ -1,0 +1,70 @@
+[32m✔[0m [33mConsole Ninja[0m extension is connected to [33mNext.js[0m, see [36mhttps://tinyurl.com/2vt8jxzw[0m
+▲ Next.js 16.2.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://172.27.192.1:3000
+- Environments: .env.local
+✓ Ready in 2.1s
+⚠ Console Ninja Turbopack support is a PRO feature, [33mcurrently available to community users while in preview[0m
+
+ GET /ar 404 in 1221ms (next.js: 258ms, proxy.ts: 555ms, application-code: 408ms)
+ GET /logo.png 404 in 124ms (next.js: 37ms, application-code: 88ms)
+ GET /ar 404 in 161ms (next.js: 21ms, proxy.ts: 13ms, application-code: 126ms)
+ GET /logo.png 404 in 252ms (next.js: 55ms, application-code: 197ms)
+○ Compiling /[locale]/dashboard ...
+ GET /ar/dashboard 500 in 6.8s (next.js: 5.2s, proxy.ts: 12ms, application-code: 1543ms)
+ GET /ar/logo.png 404 in 291ms (next.js: 81ms, application-code: 210ms)
+ GET /ar/dashboard 500 in 2.3s (next.js: 50ms, proxy.ts: 21ms, application-code: 2.2s)
+ GET /ar/logo.png 404 in 473ms (next.js: 147ms, application-code: 327ms)
+ GET /logo.png 404 in 237ms (next.js: 44ms, application-code: 193ms)
+ GET /ar 404 in 205ms (next.js: 25ms, proxy.ts: 21ms, application-code: 160ms)
+ GET /logo.png 404 in 275ms (next.js: 73ms, application-code: 202ms)
+[32m✔[0m [33mConsole Ninja[0m extension is connected to [33mNext.js[0m, see [36mhttps://tinyurl.com/2vt8jxzw[0m
+▲ Next.js 16.2.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://172.27.192.1:3000
+- Environments: .env.local
+✓ Ready in 1758ms
+⚠ Console Ninja Turbopack support is a PRO feature, [33mcurrently available to community users while in preview[0m
+
+ GET /ar 404 in 1065ms (next.js: 280ms, proxy.ts: 415ms, application-code: 370ms)
+ GET /logo.png 404 in 113ms (next.js: 19ms, application-code: 94ms)
+ GET /ar 200 in 4.8s (next.js: 4.3s, proxy.ts: 11ms, application-code: 553ms)
+ GET /ar 200 in 1037ms (next.js: 40ms, proxy.ts: 17ms, application-code: 980ms)
+ GET /ar 200 in 1010ms (next.js: 103ms, proxy.ts: 41ms, application-code: 866ms)
+ GET /ar 200 in 1251ms (next.js: 248ms, proxy.ts: 37ms, application-code: 966ms)
+ GET /ar 200 in 1265ms (next.js: 375ms, proxy.ts: 44ms, application-code: 845ms)
+ GET /ar 200 in 1211ms (next.js: 541ms, proxy.ts: 21ms, application-code: 649ms)
+ GET /ar 200 in 1026ms (next.js: 297ms, proxy.ts: 33ms, application-code: 697ms)
+ GET /ar 307 in 890ms (next.js: 175ms, proxy.ts: 21ms, application-code: 694ms)
+ GET /ar 200 in 837ms (next.js: 56ms, proxy.ts: 30ms, application-code: 751ms)
+ GET /ar 200 in 858ms (next.js: 178ms, proxy.ts: 29ms, application-code: 651ms)
+ GET /ar 200 in 863ms (next.js: 255ms, proxy.ts: 31ms, application-code: 576ms)
+ GET /ar 200 in 1813ms (next.js: 306ms, proxy.ts: 30ms, application-code: 1477ms)
+ GET /ar 200 in 1651ms (next.js: 186ms, proxy.ts: 14ms, application-code: 1450ms)
+ GET /ar 200 in 1693ms (next.js: 179ms, proxy.ts: 443ms, application-code: 1072ms)
+ GET /ar 200 in 1701ms (next.js: 249ms, proxy.ts: 473ms, application-code: 979ms)
+ GET /ar 200 in 1280ms (next.js: 458ms, proxy.ts: 90ms, application-code: 733ms)
+ GET /ar 200 in 1033ms (next.js: 90ms, proxy.ts: 62ms, application-code: 881ms)
+ GET /ar 200 in 968ms (next.js: 196ms, proxy.ts: 20ms, application-code: 752ms)
+ GET /ar 200 in 935ms (next.js: 113ms, proxy.ts: 241ms, application-code: 580ms)
+ GET /ar 200 in 733ms (next.js: 198ms, proxy.ts: 38ms, application-code: 496ms)
+ GET /ar 200 in 778ms (next.js: 287ms, proxy.ts: 25ms, application-code: 466ms)
+ GET /ar 200 in 1181ms (next.js: 66ms, proxy.ts: 29ms, application-code: 1086ms)
+ GET /ar/dashboard 307 in 6.0s (next.js: 4.0s, proxy.ts: 105ms, application-code: 1954ms)
+ GET /ar/dashboard 307 in 5.4s (next.js: 3.4s, proxy.ts: 18ms, application-code: 1983ms)
+ GET /ar 200 in 2.8s (next.js: 292ms, proxy.ts: 24ms, application-code: 2.4s)
+ GET /ar 200 in 2.7s (next.js: 63ms, proxy.ts: 321ms, application-code: 2.3s)
+ GET /ar 200 in 2.4s (next.js: 121ms, proxy.ts: 38ms, application-code: 2.2s)
+ GET /ar/sign-in?next=%2Far%2F(teacher) 200 in 2.6s (next.js: 2.3s, proxy.ts: 35ms, application-code: 279ms)
+ GET /ar/sign-in 200 in 2.7s (next.js: 2.3s, proxy.ts: 37ms, application-code: 302ms)
+ GET /ar/logo.png 404 in 300ms (next.js: 122ms, application-code: 179ms)
+ GET /ar/sign-in 200 in 436ms (next.js: 62ms, proxy.ts: 23ms, application-code: 351ms)
+ GET /en/dashboard 307 in 1584ms (next.js: 48ms, proxy.ts: 35ms, application-code: 1502ms)
+ GET /en/sign-in?next=%2Fen%2F(teacher) 200 in 1597ms (next.js: 1358ms, proxy.ts: 24ms, application-code: 214ms)
+ GET /ar/dashboard 307 in 2.1s (next.js: 113ms, proxy.ts: 62ms, application-code: 1889ms)
+ GET /ar/sign-in?next=%2Far%2F(teacher) 200 in 740ms (next.js: 40ms, proxy.ts: 65ms, application-code: 635ms)
+ GET /ar/logo.png 404 in 393ms (next.js: 92ms, application-code: 301ms)
+ POST /ar/api/auth/mock-login 307 in 4.4s (next.js: 4.3s, proxy.ts: 31ms, application-code: 139ms)
+ POST /ar/(teacher) 404 in 235ms (next.js: 83ms, proxy.ts: 13ms, application-code: 139ms)
+ GET /ar/logo.png 404 in 415ms (next.js: 137ms, application-code: 279ms)
+[?25h

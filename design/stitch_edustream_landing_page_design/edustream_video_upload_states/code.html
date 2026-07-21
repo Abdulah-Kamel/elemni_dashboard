@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+
+<html dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EduStream Upload Modals</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+</style>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "surface-bright": "#fff7fe",
+                "on-tertiary-fixed": "#2e004d",
+                "secondary-fixed": "#e9ddff",
+                "on-secondary": "#ffffff",
+                "surface-dim": "#e1d7e3",
+                "on-surface": "#1f1a22",
+                "on-primary-fixed": "#2d0050",
+                "surface-tint": "#8234c6",
+                "primary": "#6100a4",
+                "outline": "#7e7384",
+                "on-error-container": "#93000a",
+                "primary-container": "#7b2cbf",
+                "surface-container-highest": "#eadfec",
+                "on-background": "#1f1a22",
+                "tertiary-container": "#7c32b2",
+                "on-tertiary-container": "#e7c1ff",
+                "on-primary": "#ffffff",
+                "surface-container": "#f5eaf7",
+                "surface-container-lowest": "#ffffff",
+                "primary-fixed-dim": "#deb7ff",
+                "on-surface-variant": "#4c4353",
+                "tertiary-fixed-dim": "#e1b6ff",
+                "secondary-fixed-dim": "#d0bcff",
+                "inverse-primary": "#deb7ff",
+                "on-secondary-fixed-variant": "#532ca2",
+                "on-primary-container": "#e4c2ff",
+                "outline-variant": "#cfc2d5",
+                "on-tertiary": "#ffffff",
+                "error-container": "#ffdad6",
+                "secondary": "#6b47bc",
+                "surface-container-low": "#fbf0fd",
+                "on-error": "#ffffff",
+                "inverse-on-surface": "#f8edfa",
+                "surface-container-high": "#efe5f1",
+                "on-primary-fixed-variant": "#680eac",
+                "primary-fixed": "#f1dbff",
+                "on-tertiary-fixed-variant": "#691a9f",
+                "tertiary": "#620f99",
+                "error": "#ba1a1a",
+                "surface": "#fff7fe",
+                "tertiary-fixed": "#f2daff",
+                "secondary-container": "#aa86ff",
+                "surface-variant": "#eadfec",
+                "background": "#fff7fe",
+                "on-secondary-container": "#3e0e8e",
+                "inverse-surface": "#342e38",
+                "on-secondary-fixed": "#23005c",
+                "amber": "#FFB020",
+                "teal": "#2ED3B7",
+                "custom-red": "#E85D5D",
+                "ink": "#1A1523",
+                "page-bg": "#FAF8FF",
+                "tint": "#F3E8FF",
+                "deep-violet": "#3C098C",
+                "magenta": "#C77DFF"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "2xl": "1rem",
+                "full": "9999px"
+        },
+        "spacing": {
+                "sm": "8px",
+                "md": "16px",
+                "grid-gutter": "16px",
+                "container-margin": "24px",
+                "xs": "4px",
+                "lg": "24px",
+                "unit": "4px",
+                "sidebar-width": "260px",
+                "xl": "32px",
+                "modal-w": "480px"
+        },
+        "fontFamily": {
+                "title-md": [
+                        "Cairo"
+                ],
+                "title-lg": [
+                        "Cairo"
+                ],
+                "headline-sm": [
+                        "Cairo"
+                ],
+                "display-lg": [
+                        "Cairo"
+                ],
+                "label-sm": [
+                        "Cairo"
+                ],
+                "label-md": [
+                        "Cairo"
+                ],
+                "headline-md": [
+                        "Cairo"
+                ],
+                "body-md": [
+                        "Cairo"
+                ],
+                "body-lg": [
+                        "Cairo"
+                ]
+        },
+        "fontSize": {
+                "title-md": [
+                        "16px",
+                        {
+                                "lineHeight": "24px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "title-lg": [
+                        "18px",
+                        {
+                                "lineHeight": "26px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "headline-sm": [
+                        "20px",
+                        {
+                                "lineHeight": "28px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "display-lg": [
+                        "30px",
+                        {
+                                "lineHeight": "38px",
+                                "fontWeight": "700"
+                        }
+                ],
+                "label-sm": [
+                        "11px",
+                        {
+                                "lineHeight": "14px",
+                                "fontWeight": "500"
+                        }
+                ],
+                "label-md": [
+                        "12px",
+                        {
+                                "lineHeight": "16px",
+                                "letterSpacing": "0.02em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "headline-md": [
+                        "24px",
+                        {
+                                "lineHeight": "32px",
+                                "fontWeight": "700"
+                        }
+                ],
+                "body-md": [
+                        "13px",
+                        {
+                                "lineHeight": "20px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "body-lg": [
+                        "14px",
+                        {
+                                "lineHeight": "22px",
+                                "fontWeight": "400"
+                        }
+                ]
+        }
+},
+    },
+  }
+</script>
+</head>
+<body class="bg-page-bg font-body-md text-on-surface min-h-screen p-8 flex items-center justify-center">
+<div class="flex flex-row gap-8 overflow-x-auto pb-4">
+<!-- STATE 1: EMPTY -->
+<div class="flex flex-col gap-4">
+<div class="text-center font-bold text-on-surface-variant font-title-md text-title-md tracking-wider" dir="ltr">1. EMPTY</div>
+<div class="w-modal-w bg-surface-container-lowest rounded-2xl border border-tint shadow-sm overflow-hidden flex flex-col">
+<!-- Header -->
+<div class="flex items-center justify-between p-4 border-b border-tint">
+<h2 class="font-bold text-[15px] text-ink">رفع فيديو</h2>
+<button class="text-outline hover:text-ink transition-colors">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Body -->
+<div class="p-6 h-[260px] flex flex-col justify-center items-center">
+<div class="w-full h-full border-2 border-dashed border-primary-container/30 bg-primary-container/5 rounded-xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-primary-container/10 transition-colors">
+<span class="material-symbols-outlined text-primary-container text-[32px] mb-2">cloud_upload</span>
+<div class="font-bold text-[14px] text-ink">اسحب الفيديو هنا</div>
+<div class="text-[12px] text-on-surface-variant">أو اضغط للاختيار من جهازك</div>
+<div class="text-[11px] text-outline mt-2">MP4, MOV — أقصى حجم ٢ جيجا</div>
+</div>
+</div>
+</div>
+</div>
+<!-- STATE 2: UPLOADING -->
+<div class="flex flex-col gap-4">
+<div class="text-center font-bold text-on-surface-variant font-title-md text-title-md tracking-wider" dir="ltr">2. UPLOADING</div>
+<div class="w-modal-w bg-surface-container-lowest rounded-2xl border border-tint shadow-sm overflow-hidden flex flex-col">
+<!-- Header -->
+<div class="flex items-center justify-between p-4 border-b border-tint">
+<h2 class="font-bold text-[15px] text-ink">رفع فيديو</h2>
+<button class="text-outline hover:text-ink transition-colors">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Body -->
+<div class="p-6 flex-1 flex flex-col justify-center">
+<div class="flex items-center gap-4 mb-6">
+<div class="w-10 h-10 rounded-lg bg-primary-container/10 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary-container text-[20px]">movie</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="font-bold text-[13px] text-ink truncate" dir="ltr">lesson-01.mp4</div>
+<div class="text-[11px] text-on-surface-variant">١.٢ جيجا</div>
+</div>
+<button class="text-outline hover:text-ink transition-colors shrink-0">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<div class="w-full bg-tint rounded-full h-[6px] mb-2 overflow-hidden">
+<div class="bg-primary-container h-full rounded-full w-[65%]"></div>
+</div>
+<div class="flex justify-between items-center mt-1">
+<span class="font-bold text-[12px] text-primary-container">٦٥٪</span>
+<span class="text-[11px] text-on-surface-variant">باقي ٣ دقايق تقريباً</span>
+</div>
+</div>
+<!-- Footer -->
+<div class="p-4 border-t border-tint flex justify-end">
+<button class="text-[13px] font-bold text-on-surface-variant hover:text-ink transition-colors">إلغاء</button>
+</div>
+</div>
+</div>
+<!-- STATE 3: PROCESSING -->
+<div class="flex flex-col gap-4">
+<div class="text-center font-bold text-on-surface-variant font-title-md text-title-md tracking-wider" dir="ltr">3. PROCESSING</div>
+<div class="w-modal-w bg-surface-container-lowest rounded-2xl border border-tint shadow-sm overflow-hidden flex flex-col">
+<!-- Header -->
+<div class="flex items-center justify-between p-4 border-b border-tint">
+<h2 class="font-bold text-[15px] text-ink">رفع فيديو</h2>
+<button class="text-outline hover:text-ink transition-colors">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Body -->
+<div class="p-6 h-[260px] flex flex-col justify-center items-center text-center">
+<div class="w-12 h-12 rounded-full bg-amber/10 flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-amber text-[24px] animate-spin">progress_activity</span>
+</div>
+<div class="font-bold text-[14px] text-ink mb-2">بنجهّز الفيديو...</div>
+<div class="text-[13px] text-on-surface-variant max-w-[300px] mb-1">بنحوّل الفيديو لجودات مختلفة عشان يشتغل على أي نت.</div>
+<div class="text-[13px] text-on-surface-variant max-w-[300px]">ممكن تقفل الصفحة — هنبعتلك إشعار لما يخلص.</div>
+</div>
+<!-- Footer -->
+<div class="p-4 border-t border-tint flex justify-end">
+<button class="bg-amber text-on-secondary font-bold text-[13px] px-6 py-2 rounded-lg hover:opacity-90 transition-opacity">تمام</button>
+</div>
+</div>
+</div>
+<!-- STATE 4: FAILED -->
+<div class="flex flex-col gap-4">
+<div class="text-center font-bold text-on-surface-variant font-title-md text-title-md tracking-wider" dir="ltr">4. FAILED</div>
+<div class="w-modal-w bg-surface-container-lowest rounded-2xl border border-tint shadow-sm overflow-hidden flex flex-col">
+<!-- Header -->
+<div class="flex items-center justify-between p-4 border-b border-tint">
+<h2 class="font-bold text-[15px] text-ink">رفع فيديو</h2>
+<button class="text-outline hover:text-ink transition-colors">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Body -->
+<div class="p-6 h-[260px] flex flex-col justify-center items-center text-center">
+<div class="w-12 h-12 rounded-full bg-custom-red/10 flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-custom-red text-[24px]">warning</span>
+</div>
+<div class="font-bold text-[14px] text-ink mb-2">الرفع فشل</div>
+<div class="text-[13px] text-on-surface-variant max-w-[300px] mb-4">الاتصال اتقطع أثناء الرفع. جرب تاني.</div>
+<div class="bg-custom-red/5 border border-custom-red/20 text-custom-red text-[11px] font-mono px-3 py-1.5 rounded w-full max-w-[200px]" dir="ltr">UPLOAD_TIMEOUT</div>
+</div>
+<!-- Footer -->
+<div class="p-4 border-t border-tint flex justify-between items-center">
+<button class="text-[13px] font-bold text-on-surface-variant hover:text-ink transition-colors">إلغاء</button>
+<button class="bg-amber text-on-secondary font-bold text-[13px] px-6 py-2 rounded-lg hover:opacity-90 transition-opacity">جرب تاني</button>
+</div>
+</div>
+</div>
+</div>
+</body></html>

@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+
+<html dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EduStream - Teacher Dashboard</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Cairo -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "background": "#FAF8FF", // Override default background
+                        "inverse-on-surface": "#f8edfa",
+                        "surface-container-highest": "#eadfec",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-primary": "#deb7ff",
+                        "surface-container-high": "#efe5f1",
+                        "primary-fixed": "#f1dbff",
+                        "on-tertiary": "#ffffff",
+                        "surface-bright": "#fff7fe",
+                        "on-secondary-container": "#3e0e8e",
+                        "on-secondary": "#ffffff",
+                        "surface-container-low": "#fbf0fd",
+                        "on-primary": "#ffffff",
+                        "on-surface-variant": "#4c4353",
+                        "on-primary-container": "#e4c2ff",
+                        "primary": "#6100a4",
+                        "primary-container": "#7b2cbf",
+                        "error": "#ba1a1a",
+                        "outline-variant": "#F3E8FF", // Override for thin borders
+                        "surface-tint": "#8234c6",
+                        "tertiary-fixed-dim": "#e1b6ff",
+                        "primary-fixed-dim": "#deb7ff",
+                        "surface-container": "#f5eaf7",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed": "#2e004d",
+                        "secondary-fixed": "#e9ddff",
+                        "surface-dim": "#e1d7e3",
+                        "tertiary-fixed": "#f2daff",
+                        "secondary-fixed-dim": "#d0bcff",
+                        "on-secondary-fixed": "#23005c",
+                        "tertiary": "#620f99",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed": "#2d0050",
+                        "tertiary-container": "#7c32b2",
+                        "on-error-container": "#93000a",
+                        "surface": "#ffffff", // Cards background
+                        "secondary-container": "#aa86ff",
+                        "on-tertiary-fixed-variant": "#691a9f",
+                        "on-background": "#1f1a22",
+                        "on-surface": "#1f1a22",
+                        "secondary": "#6b47bc",
+                        "on-primary-fixed-variant": "#680eac",
+                        "outline": "#7e7384",
+                        "surface-variant": "#eadfec",
+                        "on-tertiary-container": "#e7c1ff",
+                        "on-secondary-fixed-variant": "#532ca2",
+                        "inverse-surface": "#342e38",
+                        // Custom Brand Colors
+                        "brand-amber": "#F59E0B",
+                        "brand-amber-tint": "#FEF3C7",
+                        "brand-teal": "#0D9488",
+                        "brand-teal-tint": "#CCFBF1",
+                        "brand-magenta": "#DB2777",
+                        "brand-magenta-tint": "#FCE7F3",
+                        "brand-violet": "#7B2CBF",
+                        "brand-violet-tint": "#F3E8FF",
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "1rem", // 16px radius
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "grid-gutter": "16px",
+                        "unit": "4px",
+                        "md": "16px",
+                        "xl": "32px",
+                        "sidebar-width": "260px",
+                        "container-margin": "24px",
+                        "lg": "24px",
+                        "sm": "8px",
+                        "xs": "4px"
+                    },
+                    "fontFamily": {
+                        "title-lg": ["Cairo"],
+                        "headline-md": ["Cairo"],
+                        "headline-sm": ["Cairo"],
+                        "label-sm": ["Cairo"],
+                        "body-lg": ["Cairo"],
+                        "title-md": ["Cairo"],
+                        "body-md": ["Cairo"],
+                        "label-md": ["Cairo"],
+                        "display-lg": ["Cairo"]
+                    },
+                    "fontSize": {
+                        "title-lg": ["18px", {"lineHeight": "26px", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "700"}], // Bold 20px
+                        "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                        "body-lg": ["14px", {"lineHeight": "22px", "fontWeight": "400"}],
+                        "title-md": ["16px", {"lineHeight": "24px", "fontWeight": "700"}], // Bold 16px
+                        "body-md": ["13px", {"lineHeight": "20px", "fontWeight": "400"}], // Muted 13px
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                        "display-lg": ["30px", {"lineHeight": "38px", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        /* Base styles to enforce Flatness and RTL setup */
+        body {
+            background-color: theme('colors.background');
+            color: theme('colors.on-background');
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        
+        /* Material Symbols Fill override */
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1;
+        }
+        
+        /* High density layout adjustments */
+        * {
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body class="flex h-screen w-full rtl overflow-hidden bg-background">
+<!-- SideNavBar (Right-Aligned) -->
+<aside class="flex flex-col h-full rtl docked fixed right-0 top-0 h-full w-[260px] bg-surface dark:bg-surface-container border-l border-outline-variant dark:border-outline flat no shadows z-20">
+<!-- Header / Brand -->
+<div class="p-lg border-b border-outline-variant dark:border-outline">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container rounded-lg flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined" data-weight="fill">school</span>
+</div>
+<div>
+<h1 class="font-headline-sm text-headline-sm text-primary dark:text-primary-fixed">إيدو ستريم</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">EduStream</p>
+</div>
+</div>
+</div>
+<!-- Navigation Tabs -->
+<nav class="flex-1 py-4 overflow-y-auto flex flex-col gap-1">
+<!-- Active: الرئيسية -->
+<a class="flex items-center gap-3 px-4 py-3 bg-brand-violet-tint text-primary-container border-r-[3px] border-primary-container font-title-md text-title-md transition-all duration-200" href="#" style="transform: scale(0.98);">
+<span class="material-symbols-outlined" data-weight="fill">home</span>
+<span>الرئيسية</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-inverse-surface transition-colors font-body-md text-body-md border-r-[3px] border-transparent" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+<span>دوراتي</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-inverse-surface transition-colors font-body-md text-body-md border-r-[3px] border-transparent" href="#">
+<span class="material-symbols-outlined">layers</span>
+<span>المناهج</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-inverse-surface transition-colors font-body-md text-body-md border-r-[3px] border-transparent" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>الإعدادات</span>
+</a>
+</nav>
+<!-- Footer / User Info -->
+<div class="p-4 border-t border-outline-variant dark:border-outline mt-auto">
+<div class="flex items-center gap-3 mb-4">
+<img class="w-10 h-10 rounded-full object-cover border border-outline-variant" data-alt="A professional headshot of a middle-aged male teacher with short dark hair and a neat beard, wearing a casual smart shirt, looking friendly. White background. Studio lighting, highly detailed." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAcmGkBaJ2xWZ1xrK4tTiBQDA9qJKGlF5GqvIM6H8r6SZyUOOnLIpb6HNq0E_NhGcoxIpyggkDZNTTjU28Sl1N6t8j3LHbMev9puvU1QSgNiy7vSnXVgaVMR14zWOk1cDLAyEncdYxUBtWyyaYLGsfizL35stoTUnZl_zPOeD4xH_Y2hyUMVlmfmNRzlOlve66hFsHZ1YrLskAtnK3H3Ojpw4YFcirn8fTn1pNNBFEaPDNjm7K3jK_S"/>
+<div class="flex-1 min-w-0">
+<p class="font-title-md text-body-lg text-on-background truncate">أ. أحمد محمود</p>
+<p class="font-body-md text-label-sm text-on-surface-variant truncate">مدرس فيزياء</p>
+</div>
+</div>
+<a class="flex items-center gap-3 px-2 py-2 text-error hover:bg-error-container/20 transition-colors rounded-md font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span>تسجيل الخروج</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col h-full mr-[260px] overflow-hidden">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center px-lg h-[64px] rtl bg-surface dark:bg-surface-container border-b border-outline-variant dark:border-outline flat no shadows sticky top-0 z-10">
+<!-- Title (Right) -->
+<div class="flex items-center gap-4">
+<h2 class="font-title-lg text-title-lg text-on-background">الرئيسية</h2>
+</div>
+<!-- Actions (Left) -->
+<div class="flex items-center gap-2">
+<button class="w-10 h-10 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors font-label-md text-label-md font-bold uppercase">
+                    AR
+                </button>
+<button class="w-10 h-10 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full border border-surface"></span>
+</button>
+<div class="w-px h-6 bg-outline-variant mx-2"></div>
+<button class="w-10 h-10 rounded-full border border-outline-variant overflow-hidden hover:opacity-80 transition-opacity">
+<img class="w-full h-full object-cover" data-alt="A close up shot of a friendly male teacher's face smiling, professional attire, well lit, white background, high quality portrait." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzZOxE4CcADfH9uVICew-cWLJW2K_WOfs2tcn2v4QAsXlnlBF8MMWLqW7--3ldLaqwBaoXe1QNh6R-lKHdK9S1YLaWSTxW0IX2nWIKrYmuW2wMd5XmEN5CmaCfZel2HpEWZQDjfQcgFBb9Bb_tJ2jsJ9Mz91WM9Zp2iGspJ2sFPL5-vAeSw9XAg0bG5JhmNiCzFCuRV3mJ4FxlnzrTowp58XygBi2WqyZvhHZ6TODA6dESo_FNlOVw"/>
+</button>
+</div>
+</header>
+<!-- Scrollable Page Content -->
+<div class="flex-1 overflow-y-auto p-container-margin">
+<div class="max-w-7xl mx-auto space-y-xl">
+<!-- Greeting -->
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-background">أهلاً يا أحمد 👋</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">عندك ٣ كورسات نشطة.</p>
+</div>
+<!-- Stats Row (Bento Grid Style) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-grid-gutter">
+<!-- Stat 1: My Courses -->
+<div class="bg-surface rounded-xl border border-outline-variant p-md flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-brand-violet-tint text-brand-violet flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">menu_book</span>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface-variant">الكورسات</p>
+<p class="font-display-lg text-display-lg text-on-background mt-1">٣</p>
+</div>
+</div>
+<!-- Stat 2: Classes -->
+<div class="bg-surface rounded-xl border border-outline-variant p-md flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-brand-amber-tint text-brand-amber flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">layers</span>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface-variant">الفصول</p>
+<p class="font-display-lg text-display-lg text-on-background mt-1">١٢</p>
+</div>
+</div>
+<!-- Stat 3: Lessons -->
+<div class="bg-surface rounded-xl border border-outline-variant p-md flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-brand-teal-tint text-brand-teal flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]" data-weight="fill">play_circle</span>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface-variant">الدروس</p>
+<p class="font-display-lg text-display-lg text-on-background mt-1">٤٨</p>
+</div>
+</div>
+<!-- Stat 4: Files -->
+<div class="bg-surface rounded-xl border border-outline-variant p-md flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-brand-magenta-tint text-brand-magenta flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">folder</span>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface-variant">الملفات</p>
+<p class="font-display-lg text-display-lg text-on-background mt-1">١٥٦</p>
+</div>
+</div>
+</div>
+<!-- Courses Section -->
+<section class="space-y-4">
+<!-- Section Header -->
+<div class="flex items-center justify-between">
+<h3 class="font-title-md text-title-md text-on-background">كورساتك</h3>
+<button class="bg-brand-amber text-on-primary font-label-md text-label-md px-4 py-2 rounded-lg hover:bg-brand-amber/90 transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                            كورس جديد
+                        </button>
+</div>
+<!-- Course List -->
+<div class="space-y-3">
+<!-- Course Card 1 -->
+<div class="bg-surface rounded-xl border border-outline-variant p-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-2">
+<h4 class="font-title-md text-title-md text-on-background">فيزياء - تالتة ثانوي</h4>
+<span class="bg-brand-teal/10 text-brand-teal px-2 py-0.5 rounded-full font-label-sm text-label-sm">منشور</span>
+</div>
+<div class="flex items-center gap-4 font-body-md text-body-md text-on-surface-variant mb-3">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">layers</span> ٤ فصول</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">play_circle</span> ١٦ درس</span>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="bg-surface-variant text-on-surface-variant px-2 py-1 rounded font-label-sm text-label-sm">فيزياء</span>
+<span class="bg-surface-variant text-on-surface-variant px-2 py-1 rounded font-label-sm text-label-sm">تالتة ثانوي</span>
+<span class="bg-surface-variant text-on-surface-variant px-2 py-1 rounded font-label-sm text-label-sm">علمي علوم</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="w-8 h-8 rounded-md bg-transparent border-none text-primary-container hover:bg-brand-violet-tint flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="w-8 h-8 rounded-md bg-transparent border-none text-on-surface-variant hover:bg-surface-container-high flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Course Card 2 -->
+<div class="bg-surface rounded-xl border border-outline-variant p-md flex flex-col md:flex-row md:items-center justify-between gap-4 opacity-75">
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-2">
+<h4 class="font-title-md text-title-md text-on-background">فيزياء - تانية ثانوي</h4>
+<span class="bg-surface-container-highest text-on-surface-variant px-2 py-0.5 rounded-full font-label-sm text-label-sm">مسودة</span>
+</div>
+<div class="flex items-center gap-4 font-body-md text-body-md text-on-surface-variant mb-3">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">layers</span> ٣ فصول</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">play_circle</span> ١٢ درس</span>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="bg-surface-variant text-on-surface-variant px-2 py-1 rounded font-label-sm text-label-sm">فيزياء</span>
+<span class="bg-surface-variant text-on-surface-variant px-2 py-1 rounded font-label-sm text-label-sm">تانية ثانوي</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="w-8 h-8 rounded-md bg-transparent border-none text-primary-container hover:bg-brand-violet-tint flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="w-8 h-8 rounded-md bg-transparent border-none text-on-surface-variant hover:bg-surface-container-high flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Course Card 3 -->
+<div class="bg-surface rounded-xl border border-outline-variant p-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-2">
+<h4 class="font-title-md text-title-md text-on-background">مراجعة نهائية - فيزياء</h4>
+<span class="bg-brand-teal/10 text-brand-teal px-2 py-0.5 rounded-full font-label-sm text-label-sm">منشور</span>
+</div>
+<div class="flex items-center gap-4 font-body-md text-body-md text-on-surface-variant mb-3">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">layers</span> ٥ فصول</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">play_circle</span> ٢٠ درس</span>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="bg-surface-variant text-on-surface-variant px-2 py-1 rounded font-label-sm text-label-sm">فيزياء</span>
+<span class="bg-surface-variant text-on-surface-variant px-2 py-1 rounded font-label-sm text-label-sm">مراجعة</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="w-8 h-8 rounded-md bg-transparent border-none text-primary-container hover:bg-brand-violet-tint flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="w-8 h-8 rounded-md bg-transparent border-none text-on-surface-variant hover:bg-surface-container-high flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+</body></html>

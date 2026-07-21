@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Film, FileText, ClipboardList, File, Pencil, Trash2, Upload } from "lucide-react";
@@ -17,6 +17,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { UploadDialog } from "./upload-dialog";
 import type { ItemOut } from "@/features/course-management/items-schema";
 
 function itemType(item: ItemOut): { label: string; icon: React.ReactNode; bg: string } {
@@ -43,13 +44,18 @@ export function ItemCard({
   const [uploading, setUploading] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [uploadDialogType, setUploadDialogType] = useState<"video" | "document">("video");
   const [editTitle, setEditTitle] = useState(item.title);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
-  const docInputRef = useRef<HTMLInputElement>(null);
 
   const type = itemType(item);
+
+  const openUploadDialog = useCallback((uploadType: "video" | "document") => {
+    setUploadDialogType(uploadType);
+    setUploadDialogOpen(true);
+  }, []);
 
   const handleVideoUpload = useCallback(async (file: File) => {
     setUploading(true);
@@ -59,6 +65,7 @@ export function ItemCard({
       const result = await uploadItemVideo(courseId, lessonId, item.id, formData);
       if (result.success) {
         onUpdate(result.data);
+        setUploadDialogOpen(false);
         toast.success(t("upload_success"));
       } else {
         toast.error(result.error.message || t("upload_error"));
@@ -79,6 +86,7 @@ export function ItemCard({
       const confirmResult = await confirmUpload(courseId, lessonId, item.id, urlResult.data.key);
       if (confirmResult.success) {
         onUpdate(confirmResult.data);
+        setUploadDialogOpen(false);
         toast.success(t("upload_success"));
       } else {
         toast.error(confirmResult.error.message || t("upload_error"));
@@ -133,17 +141,14 @@ export function ItemCard({
 
       <span className="min-w-0 flex-1 text-sm text-foreground truncate">{item.title}</span>
 
-      <input ref={videoInputRef} type="file" accept="video/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleVideoUpload(f); }} />
-      <input ref={docInputRef} type="file" accept=".pdf,application/pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleDocUpload(f); }} />
-
       <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
         {!item.bunny_stream_id && (
-          <Button size="icon" variant="ghost" className="size-6" disabled={uploading} onClick={() => videoInputRef.current?.click()} aria-label={t("upload_video")} title={t("upload_video")}>
+          <Button size="icon" variant="ghost" className="size-6" disabled={uploading} onClick={() => openUploadDialog("video")} aria-label={t("upload_video")} title={t("upload_video")}>
             <Upload className="size-3.5" />
           </Button>
         )}
         {!item.document_path && (
-          <Button size="icon" variant="ghost" className="size-6" disabled={uploading} onClick={() => docInputRef.current?.click()} aria-label={t("upload_document")} title={t("upload_document")}>
+          <Button size="icon" variant="ghost" className="size-6" disabled={uploading} onClick={() => openUploadDialog("document")} aria-label={t("upload_document")} title={t("upload_document")}>
             <FileText className="size-3.5" />
           </Button>
         )}
@@ -155,7 +160,13 @@ export function ItemCard({
         </Button>
       </div>
 
-      {uploading && <span className="text-xs text-on-surface-muted animate-pulse">{t("uploading")}</span>}
+      <UploadDialog
+        open={uploadDialogOpen}
+        onOpenChange={setUploadDialogOpen}
+        type={uploadDialogType}
+        uploading={uploading}
+        onUpload={uploadDialogType === "video" ? handleVideoUpload : handleDocUpload}
+      />
 
       <Dialog open={editOpen} onOpenChange={(val) => { setEditOpen(val); if (!val) setError(null); }}>
         <DialogContent>

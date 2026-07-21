@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+
+<html dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Course Content Editor - EduStream</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-highest": "#eadfec",
+                        "outline": "#7e7384",
+                        "on-surface-variant": "#4c4353",
+                        "on-secondary-fixed-variant": "#532ca2",
+                        "on-surface": "#1f1a22",
+                        "inverse-primary": "#deb7ff",
+                        "secondary": "#6b47bc",
+                        "surface-bright": "#fff7fe",
+                        "primary-fixed": "#f1dbff",
+                        "on-primary-container": "#e4c2ff",
+                        "on-tertiary-fixed": "#2e004d",
+                        "background": "#fff7fe",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed-dim": "#deb7ff",
+                        "on-primary-fixed": "#2d0050",
+                        "surface-container-low": "#fbf0fd",
+                        "inverse-surface": "#342e38",
+                        "tertiary-fixed-dim": "#e1b6ff",
+                        "on-primary-fixed-variant": "#680eac",
+                        "on-primary": "#ffffff",
+                        "primary": "#6100a4",
+                        "outline-variant": "#cfc2d5",
+                        "on-secondary-container": "#3e0e8e",
+                        "secondary-fixed-dim": "#d0bcff",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed": "#e9ddff",
+                        "surface-tint": "#8234c6",
+                        "on-tertiary-container": "#e7c1ff",
+                        "surface-dim": "#e1d7e3",
+                        "surface-container-high": "#efe5f1",
+                        "primary-container": "#7b2cbf",
+                        "on-secondary-fixed": "#23005c",
+                        "error-container": "#ffdad6",
+                        "surface-container": "#f5eaf7",
+                        "on-tertiary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-fixed-variant": "#691a9f",
+                        "inverse-on-surface": "#f8edfa",
+                        "tertiary-fixed": "#f2daff",
+                        "tertiary-container": "#7c32b2",
+                        "tertiary": "#620f99",
+                        "error": "#ba1a1a",
+                        "secondary-container": "#aa86ff",
+                        "on-background": "#1f1a22",
+                        "surface-variant": "#eadfec",
+                        "surface": "#fff7fe",
+                        "tint-border": "#F3E8FF",
+                        "page-bg": "#FAF8FF",
+                        "amber-accent": "#F59E0B",
+                        "amber-bg": "rgba(245, 158, 11, 0.1)",
+                        "teal-accent": "#14B8A6",
+                        "teal-bg": "rgba(20, 184, 166, 0.1)"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xs": "4px",
+                        "lg": "24px",
+                        "unit": "4px",
+                        "xl": "32px",
+                        "grid-gutter": "16px",
+                        "container-margin": "24px",
+                        "sm": "8px",
+                        "md": "16px",
+                        "sidebar-width": "260px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Cairo"],
+                        "title-lg": ["Cairo"],
+                        "headline-md": ["Cairo"],
+                        "body-md": ["Cairo"],
+                        "display-lg": ["Cairo"],
+                        "body-lg": ["Cairo"],
+                        "title-md": ["Cairo"],
+                        "headline-sm": ["Cairo"],
+                        "label-md": ["Cairo"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["11px", { "lineHeight": "14px", "fontWeight": "500" }],
+                        "title-lg": ["18px", { "lineHeight": "26px", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "body-md": ["13px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "display-lg": ["30px", { "lineHeight": "38px", "fontWeight": "700" }],
+                        "body-lg": ["14px", { "lineHeight": "22px", "fontWeight": "400" }],
+                        "title-md": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-page-bg text-on-surface font-body-md min-h-screen flex text-body-md rtl">
+<!-- Shell: Sidebar (Mock from JSON) -->
+<aside class="docked fixed right-0 top-0 h-full w-[260px] bg-surface border-l border-tint-border flex flex-col h-full rtl z-20">
+<div class="p-lg border-b border-tint-border">
+<h1 class="font-headline-sm text-headline-sm text-primary flex items-center gap-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">school</span>
+                إيدو ستريم
+            </h1>
+<p class="text-on-surface-variant text-label-sm mt-1">EduStream</p>
+</div>
+<nav class="flex-1 py-4 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">home</span>
+                الرئيسية
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 bg-surface-container-low text-primary border-r-4 border-primary font-title-md text-title-md transition-colors hover:bg-surface-container-high" href="#">
+<span class="material-symbols-outlined">school</span>
+                دوراتي
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+                المناهج
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">settings</span>
+                الإعدادات
+            </a>
+</nav>
+<div class="p-4 border-t border-tint-border">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors font-body-md text-body-md" href="#">
+<span class="material-symbols-outlined">logout</span>
+                تسجيل الخروج
+            </a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<div class="flex-1 mr-[260px] flex flex-col min-h-screen">
+<!-- Shell: Topbar -->
+<header class="h-[64px] bg-surface border-b border-tint-border flex justify-between items-center px-lg sticky top-0 z-10">
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors text-body-md font-body-md">
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+                    رجوع
+                </button>
+<div class="h-6 w-px bg-tint-border"></div>
+<h2 class="font-title-lg text-title-lg text-on-surface">فيزياء - تالتة ثانوي</h2>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant">
+<button class="hover:text-primary transition-colors"><span class="material-symbols-outlined">language</span></button>
+<button class="hover:text-primary transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="hover:text-primary transition-colors"><span class="material-symbols-outlined">account_circle</span></button>
+</div>
+</header>
+<!-- Main Workspace -->
+<main class="flex-1 p-lg flex gap-lg container mx-auto max-w-7xl items-start h-[calc(100vh-64px)] overflow-hidden">
+<!-- Right Column: Course Tree (~380px) -->
+<div class="w-[380px] bg-surface-container-lowest border border-tint-border rounded-[16px] flex flex-col h-full shrink-0">
+<!-- Header -->
+<div class="p-4 border-b border-tint-border flex justify-between items-center bg-surface-bright rounded-t-[16px]">
+<h3 class="font-title-md text-[14px] text-on-surface">محتوى الكورس</h3>
+<button class="bg-amber-bg text-amber-accent font-label-sm text-label-sm px-3 py-1.5 rounded-full flex items-center gap-1 hover:bg-amber-accent hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[16px]">add</span>
+                        فصل
+                    </button>
+</div>
+<!-- Tree Content -->
+<div class="flex-1 overflow-y-auto p-2 flex flex-col gap-1">
+<!-- Chapter 1 (Expanded) -->
+<div class="rounded-lg bg-surface-container-high/30 border border-tint-border overflow-hidden">
+<!-- Chapter Header -->
+<div class="flex items-center gap-2 p-2 hover:bg-surface-container-high transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant cursor-grab opacity-50 group-hover:opacity-100">drag_indicator</span>
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant transition-transform transform rotate-90">chevron_left</span>
+<span class="font-title-md text-body-md flex-1 text-on-surface">فصل ١: الكهربية الساكنة</span>
+<span class="text-label-sm font-label-sm text-on-surface-variant bg-surface-variant px-2 py-0.5 rounded-full">٤ دروس</span>
+<button class="opacity-0 group-hover:opacity-100 transition-opacity text-on-surface-variant hover:text-primary">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+<!-- Lessons Level -->
+<div class="flex flex-col border-t border-tint-border bg-surface-container-lowest">
+<!-- Lesson 1 (Expanded) -->
+<div>
+<div class="flex items-center gap-2 p-2 pr-[20px] hover:bg-surface-container-lowest transition-colors cursor-pointer group border-b border-tint-border/50">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant cursor-grab opacity-50 group-hover:opacity-100">drag_indicator</span>
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant transition-transform transform rotate-90">chevron_left</span>
+<span class="font-title-md text-[13px] flex-1 text-on-surface">درس ١: قانون كولوم</span>
+<button class="opacity-0 group-hover:opacity-100 transition-opacity text-on-surface-variant hover:text-primary">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+<!-- Items Level -->
+<div class="flex flex-col bg-surface-container-lowest/50 py-1 border-b border-tint-border/50">
+<!-- Item 1 (Selected) -->
+<div class="flex items-center gap-2 p-2 pr-[40px] bg-primary-fixed/30 border-r-[2px] border-primary group cursor-pointer">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant cursor-grab opacity-50 group-hover:opacity-100">drag_indicator</span>
+<span class="material-symbols-outlined text-[16px] text-primary">play_circle</span>
+<span class="font-body-md text-[13px] flex-1 text-primary">فيديو الشرح</span>
+<span class="bg-teal-bg text-teal-accent text-[10px] px-2 py-0.5 rounded-full font-label-sm">جاهز</span>
+</div>
+<!-- Item 2 -->
+<div class="flex items-center gap-2 p-2 pr-[40px] hover:bg-surface-container-lowest transition-colors group cursor-pointer">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant cursor-grab opacity-50 group-hover:opacity-100">drag_indicator</span>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">description</span>
+<span class="font-body-md text-[13px] flex-1 text-on-surface-variant">ملخص PDF</span>
+<span class="bg-teal-bg text-teal-accent text-[10px] px-2 py-0.5 rounded-full font-label-sm">جاهز</span>
+</div>
+<!-- Item 3 -->
+<div class="flex items-center gap-2 p-2 pr-[40px] hover:bg-surface-container-lowest transition-colors group cursor-pointer">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant cursor-grab opacity-50 group-hover:opacity-100">drag_indicator</span>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">help_center</span>
+<span class="font-body-md text-[13px] flex-1 text-on-surface-variant">امتحان قصير</span>
+<span class="bg-teal-bg text-teal-accent text-[10px] px-2 py-0.5 rounded-full font-label-sm">جاهز</span>
+</div>
+<!-- Add Item Button -->
+<button class="flex items-center gap-2 p-2 pr-[40px] text-on-surface-variant hover:text-primary transition-colors text-[12px] border-t border-dashed border-tint-border mt-1 mx-2">
+<span class="material-symbols-outlined text-[16px]">add</span>
+                                        إضافة عنصر
+                                    </button>
+</div>
+</div>
+<!-- Mid-Drag Indicator Example -->
+<div class="relative z-10 border-y-2 border-primary bg-surface-container-lowest shadow-[0_2px_8px_rgba(123,44,191,0.15)] scale-[1.01] transition-transform">
+<div class="flex items-center gap-2 p-2 pr-[20px] group cursor-grabbing">
+<span class="material-symbols-outlined text-[18px] text-primary cursor-grabbing">drag_indicator</span>
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant transition-transform transform rotate-90">chevron_left</span>
+<span class="font-title-md text-[13px] flex-1 text-on-surface">درس ٢: المجال الكهربي</span>
+<button class="text-on-surface-variant hover:text-primary">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+<!-- Items Level (Dragged) -->
+<div class="flex flex-col bg-surface-container-lowest py-1 border-t border-tint-border/50">
+<div class="flex items-center gap-2 p-2 pr-[40px] group cursor-grabbing">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant cursor-grabbing opacity-100">drag_indicator</span>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">play_circle</span>
+<span class="font-body-md text-[13px] flex-1 text-on-surface-variant">فيديو الشرح</span>
+<span class="bg-amber-bg text-amber-accent text-[10px] px-2 py-0.5 rounded-full font-label-sm">بيتحول</span>
+</div>
+</div>
+</div>
+<!-- Lesson 3 (Collapsed) -->
+<div class="flex items-center gap-2 p-2 pr-[20px] hover:bg-surface-container-lowest transition-colors cursor-pointer group border-t border-tint-border/50">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant cursor-grab opacity-50 group-hover:opacity-100">drag_indicator</span>
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">chevron_left</span>
+<span class="font-title-md text-[13px] flex-1 text-on-surface">درس ٣: الجهد الكهربي</span>
+<button class="opacity-0 group-hover:opacity-100 transition-opacity text-on-surface-variant hover:text-primary">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+<!-- Add Lesson Button -->
+<button class="flex items-center gap-2 p-2 pr-[20px] text-on-surface-variant hover:text-primary transition-colors text-[12px] border-t border-dashed border-tint-border mt-1 mx-2">
+<span class="material-symbols-outlined text-[16px]">add</span>
+                                إضافة درس
+                            </button>
+</div>
+</div>
+<!-- Chapter 2 (Collapsed) -->
+<div class="rounded-lg border border-tint-border overflow-hidden bg-surface-container-lowest hover:bg-surface-container-high/30 transition-colors">
+<div class="flex items-center gap-2 p-2 cursor-pointer group">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant cursor-grab opacity-50 group-hover:opacity-100">drag_indicator</span>
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">chevron_left</span>
+<span class="font-title-md text-body-md flex-1 text-on-surface">فصل ٢: التيار الكهربي</span>
+<span class="text-label-sm font-label-sm text-on-surface-variant bg-surface-variant px-2 py-0.5 rounded-full">٦ دروس</span>
+<button class="opacity-0 group-hover:opacity-100 transition-opacity text-on-surface-variant hover:text-primary">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Chapter 3 (Collapsed) -->
+<div class="rounded-lg border border-tint-border overflow-hidden bg-surface-container-lowest hover:bg-surface-container-high/30 transition-colors">
+<div class="flex items-center gap-2 p-2 cursor-pointer group">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant cursor-grab opacity-50 group-hover:opacity-100">drag_indicator</span>
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">chevron_left</span>
+<span class="font-title-md text-body-md flex-1 text-on-surface">فصل ٣: المغناطيسية</span>
+<span class="text-label-sm font-label-sm text-on-surface-variant bg-surface-variant px-2 py-0.5 rounded-full">٥ دروس</span>
+<button class="opacity-0 group-hover:opacity-100 transition-opacity text-on-surface-variant hover:text-primary">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Left Column: Detail Panel -->
+<div class="flex-1 bg-surface-container-lowest border border-tint-border rounded-[16px] flex flex-col h-full overflow-hidden">
+<!-- Panel Header -->
+<div class="p-lg border-b border-tint-border flex justify-between items-center bg-surface-bright">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-[24px]">play_circle</span>
+<input class="font-headline-sm text-headline-sm text-on-surface bg-transparent border-none focus:ring-0 p-0 hover:bg-surface-container-high transition-colors rounded px-2 w-[200px]" type="text" value="فيديو الشرح"/>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant cursor-text opacity-50">edit</span>
+</div>
+<span class="bg-teal-bg text-teal-accent px-3 py-1 rounded-full font-label-sm text-label-sm flex items-center gap-1 border border-teal-accent/20">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+                        جاهز
+                    </span>
+</div>
+<!-- Panel Content (Scrollable) -->
+<div class="flex-1 overflow-y-auto p-lg flex flex-col gap-xl">
+<!-- Video Preview Area -->
+<div class="relative w-full aspect-video bg-inverse-surface rounded-[12px] flex items-center justify-center border border-tint-border overflow-hidden group">
+<div class="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors"></div>
+<button class="relative z-10 w-16 h-16 bg-primary/90 text-white rounded-full flex items-center justify-center hover:bg-primary transition-colors hover:scale-105 transform duration-200">
+<span class="material-symbols-outlined text-[32px] ml-1">play_arrow</span>
+</button>
+<div class="absolute bottom-4 right-4 bg-black/70 text-white px-2 py-1 rounded text-[12px] font-label-sm flex items-center gap-1 backdrop-blur-sm">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+                            ٤٤:٢٠
+                        </div>
+<div class="absolute top-4 left-4 flex gap-2">
+<button class="bg-surface/90 text-on-surface p-2 rounded-lg hover:bg-surface transition-colors backdrop-blur-sm tooltip-trigger">
+<span class="material-symbols-outlined text-[18px]">cloud_upload</span>
+</button>
+<button class="bg-surface/90 text-on-surface p-2 rounded-lg hover:bg-surface transition-colors backdrop-blur-sm tooltip-trigger">
+<span class="material-symbols-outlined text-[18px]">settings</span>
+</button>
+</div>
+</div>
+<!-- Form Controls -->
+<div class="flex flex-col gap-6">
+<!-- Title Field -->
+<div class="flex flex-col gap-2">
+<label class="font-title-md text-[13px] text-on-surface-variant">عنوان العنصر</label>
+<input class="w-full bg-surface border border-tint-border rounded-[12px] px-4 py-3 text-[13px] text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm" type="text" value="فيديو الشرح"/>
+</div>
+<!-- Description Field -->
+<div class="flex flex-col gap-2">
+<label class="font-title-md text-[13px] text-on-surface-variant flex justify-between">
+                                الوصف
+                                <span class="text-[11px] font-normal opacity-70">اختياري</span>
+</label>
+<textarea class="w-full bg-surface border border-tint-border rounded-[12px] px-4 py-3 text-[13px] text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm resize-none" placeholder="أضف وصفاً مختصراً للدرس..." rows="3"></textarea>
+</div>
+<div class="grid grid-cols-2 gap-6">
+<!-- Type Select -->
+<div class="flex flex-col gap-2">
+<label class="font-title-md text-[13px] text-on-surface-variant">النوع</label>
+<div class="relative">
+<select class="w-full appearance-none bg-surface border border-tint-border rounded-[12px] px-4 py-3 pr-10 text-[13px] text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm">
+<option selected="" value="video">فيديو</option>
+<option value="pdf">ملف PDF</option>
+<option value="quiz">امتحان</option>
+<option value="text">نص مقالي</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-[18px]">expand_more</span>
+</div>
+</div>
+<!-- Free Preview Toggle -->
+<div class="flex flex-col gap-2 justify-center pt-6">
+<label class="flex items-center gap-3 cursor-pointer group w-fit">
+<div class="relative">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-variant peer-focus:outline-none rounded-full peer peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary border border-tint-border group-hover:border-primary/50 transition-colors"></div>
+</div>
+<span class="font-title-md text-[13px] text-on-surface-variant group-hover:text-on-surface transition-colors">مجاني للمعاينة</span>
+</label>
+<p class="text-[11px] text-on-surface-variant opacity-70 mt-1">يسمح للطلاب بمشاهدة هذا العنصر قبل الاشتراك.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Panel Footer -->
+<div class="p-lg border-t border-tint-border bg-surface flex justify-between items-center rounded-b-[16px]">
+<button class="text-error font-title-md text-body-md hover:bg-error-container/50 px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+                        حذف العنصر
+                    </button>
+<button class="bg-amber-accent text-white font-title-md text-body-md px-6 py-2.5 rounded-[8px] hover:bg-amber-500 transition-colors flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-[18px]">save</span>
+                        حفظ التغييرات
+                    </button>
+</div>
+</div>
+</main>
+</div>
+</body></html>
