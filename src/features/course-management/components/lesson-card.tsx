@@ -19,7 +19,6 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -177,10 +176,6 @@ export function LessonCard({
               >
                 <Trash2 className="size-3.5" />
                 {t("delete")}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem disabled>
-                {t("move_to_chapter")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

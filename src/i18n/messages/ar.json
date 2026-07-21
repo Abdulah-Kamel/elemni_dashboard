@@ -226,7 +226,6 @@
     "chapter_deleted": "تم حذف الفصل بنجاح",
     "lessons_count": "الدروس ({n})",
     "error_upstream": "الخدمة غير متاحة مؤقتًا",
-    "edit_chapter": "تعديل الفصل",
     "not_found": "الفصل غير موجود",
     "reorder_success": "تم إعادة ترتيب الفصول",
     "reorder_error": "فشل إعادة ترتيب الفصول",
@@ -274,8 +273,7 @@
     "single_lesson_tooltip": "أضف دروساً أكثر لإعادة الترتيب",
     "status_ready": "جاهز",
     "status_failed": "فشل",
-    "status_mixed": "متنوع",
-    "move_to_chapter": "نقل إلى فصل"
+    "status_mixed": "متنوع"
   },
   "courses": {
     "title": "دوراتي",

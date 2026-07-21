@@ -5,7 +5,6 @@ import { listChapters } from "@/features/course-management/chapters-queries";
 import { listLessons } from "@/features/course-management/lessons-queries";
 import { EditorToolbar } from "@/features/course-management/components/editor-toolbar";
 import { LessonList } from "@/features/course-management/components/lesson-list";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { redirect } from "next/navigation";
@@ -84,7 +83,6 @@ async function ChapterPageContent({
             {lt("count", { count: lessons.length })}
           </Badge>
         </div>
-        <Button variant="outline">{t("edit_chapter")}</Button>
       </div>
 
       <LessonList

@@ -231,7 +231,6 @@
     "reorder_conflict": "Course was modified. Please refresh and try again.",
     "drag_handle_label": "Drag to reorder",
     "drag_handle_description": "Press space to pick up, use arrow keys to move, press space again to drop",
-    "edit_chapter": "Edit Chapter",
     "not_found": "Chapter not found",
     "move_up": "Move up",
     "move_down": "Move down",
@@ -274,8 +273,7 @@
     "single_lesson_tooltip": "Add more lessons to reorder",
     "status_ready": "Ready",
     "status_failed": "Failed",
-    "status_mixed": "Mixed",
-    "move_to_chapter": "Move to Chapter"
+    "status_mixed": "Mixed"
   },
   "courses": {
     "title": "My Courses",
