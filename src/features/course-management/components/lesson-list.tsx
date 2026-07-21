@@ -67,7 +67,7 @@ function SortableLessonCard({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: lesson.id });
+  } = useSortable({ id: String(lesson.id) });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -111,7 +111,7 @@ export function LessonList({
   const [createOpen, setCreateOpen] = useState(false);
   const [createTitle, setCreateTitle] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [activeId, setActiveId] = useState<number | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [itemsMap, setItemsMap] = useState<
     Record<number, { count: number; status: "ready" | "processing" | null }>
   >({});
@@ -165,14 +165,14 @@ export function LessonList({
     }),
   );
 
-  const lessonIds = lessons.map((l) => l.id);
+  const lessonIds = lessons.map((l) => String(l.id));
   const activeLesson =
     activeId != null
-      ? lessons.find((l) => l.id === activeId) ?? null
+      ? lessons.find((l) => String(l.id) === activeId) ?? null
       : null;
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
-    setActiveId(event.active.id as number);
+    setActiveId(String(event.active.id));
   }, []);
 
   const handleDragEnd = useCallback(
@@ -182,8 +182,8 @@ export function LessonList({
 
       if (!over || active.id === over.id) return;
 
-      const oldIndex = lessons.findIndex((l) => l.id === active.id);
-      const newIndex = lessons.findIndex((l) => l.id === over.id);
+      const oldIndex = lessons.findIndex((l) => String(l.id) === active.id);
+      const newIndex = lessons.findIndex((l) => String(l.id) === over.id);
       if (oldIndex === -1 || newIndex === -1) return;
 
       previousLessonsRef.current = [...lessons];
