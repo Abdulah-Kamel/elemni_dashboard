@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslations } from "next-intl";
 import {
   DndContext,
@@ -37,7 +37,8 @@ import { Input } from "@/components/ui/input";
 import { ChapterCard } from "./chapter-card";
 import { listChapters } from "@/features/course-management/chapters-queries";
 import { listLessons } from "@/features/course-management/lessons-queries";
-import { createChapter } from "@/features/course-management/chapters-actions";
+import { createChapter, reorderChapters } from "@/features/course-management/chapters-actions";
+import { applyOptimisticReorder, buildReorderPayload, rollbackReorder } from "@/features/course-management/reorder-utils";
 import { toast } from "sonner";
 import type { ChapterOut } from "@/features/course-management/chapters-schema";
 
@@ -102,6 +103,7 @@ export function ChapterList({
   const [activeId, setActiveId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [lessonCounts, setLessonCounts] = useState<Map<number, number>>(new Map());
+  const previousChaptersRef = useRef<ChapterOut[]>(initialChapters);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -149,7 +151,7 @@ export function ChapterList({
   }, []);
 
   const handleDragEnd = useCallback(
-    (event: DragEndEvent) => {
+    async (event: DragEndEvent) => {
       const { active, over } = event;
       setActiveId(null);
 
@@ -159,9 +161,26 @@ export function ChapterList({
       const newIndex = chapters.findIndex((ch) => String(ch.id) === over.id);
       if (oldIndex === -1 || newIndex === -1) return;
 
-      setChapters(arrayMove(chapters, oldIndex, newIndex));
+      previousChaptersRef.current = chapters;
+      const reordered = applyOptimisticReorder(chapters, oldIndex, newIndex);
+      const payload = buildReorderPayload(reordered);
+      setChapters(reordered);
+
+      const result = await reorderChapters(courseId, payload);
+      if (result.success) {
+        toast.success(t("reorder_success"));
+      } else {
+        setChapters(rollbackReorder(previousChaptersRef.current));
+        if (result.error.type === "Conflict") {
+          toast.error(t("reorder_conflict"), {
+            action: { label: "Refresh", onClick: () => window.location.reload() },
+          });
+        } else {
+          toast.error(t("reorder_error"));
+        }
+      }
     },
-    [chapters],
+    [chapters, courseId, t],
   );
 
   const handleDragCancel = useCallback((_event: DragCancelEvent) => {
@@ -194,7 +213,7 @@ export function ChapterList({
       const result = await createChapter(courseId, { title: trimmed });
       if (result.success) {
         handleCreated(result.data);
-        toast.success(t("created"));
+        toast.success(t("chapter_created"));
       } else {
         setError(result.error.message);
       }
@@ -228,7 +247,7 @@ export function ChapterList({
     <div className="space-y-3">
       {chapters.length === 0 ? (
         <p className="text-center text-sm text-muted-foreground py-8">
-          {t("no_chapters")}
+          {t("empty")}
         </p>
       ) : chapters.length === 1 ? (
         chapters.map((chapter) => (

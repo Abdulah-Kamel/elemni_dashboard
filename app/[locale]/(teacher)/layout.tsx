@@ -5,6 +5,7 @@ import { DirectionProvider } from "@base-ui/react/direction-provider";
 import { verifySession } from "@/lib/auth/dal";
 import { Sidebar } from "@/features/shell/components/sidebar";
 import { Topbar } from "@/features/shell/components/topbar";
+import { ChapterNavigationProvider } from "@/features/course-management/chapter-navigation-context";
 
 export const dynamic = "force-dynamic";
 
@@ -41,9 +42,11 @@ export default async function TeacherLayout({
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <Topbar teacherName={user.name} />
           <main className="flex-1 overflow-auto">
-            <div className="mx-auto w-full max-w-7xl px-container-margin py-xl">
-              {children}
-            </div>
+            <ChapterNavigationProvider>
+              <div className="mx-auto w-full max-w-7xl px-container-margin py-xl">
+                {children}
+              </div>
+            </ChapterNavigationProvider>
           </main>
         </div>
       </div>
