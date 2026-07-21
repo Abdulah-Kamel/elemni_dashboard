@@ -1,5 +1,6 @@
 "use client";
 
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslations } from "next-intl";
 import {
   LayoutGrid,
@@ -25,6 +26,7 @@ export function Sidebar({ teacherName, teacherRole }: SidebarProps) {
   const tNav = useTranslations("sidebar");
   const tCommon = useTranslations("common");
   const pathname = usePathname();
+  const [navRef] = useAutoAnimate({ duration: 200 });
 
   return (
     <aside
@@ -52,7 +54,7 @@ export function Sidebar({ teacherName, teacherRole }: SidebarProps) {
         className="flex-1 overflow-y-auto px-sm py-sm"
         aria-label={tCommon("nav_label")}
       >
-        <ul className="flex flex-col gap-0.5">
+        <ul ref={navRef} className="flex flex-col gap-0.5">
           {PRIMARY_NAV.map(({ id, href, icon: Icon }) => {
             const isActive =
               pathname === href || pathname.startsWith(`${href}/`);

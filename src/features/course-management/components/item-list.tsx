@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslations } from "next-intl";
 import {
   DndContext,
@@ -104,6 +105,7 @@ export function ItemList({
   const [createTitle, setCreateTitle] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const previousRef = useRef(items);
+  const [parentRef] = useAutoAnimate({ duration: 200 });
 
   const t = useTranslations("items");
   const sensors = useSensors(
@@ -246,7 +248,7 @@ export function ItemList({
   }
 
   return (
-    <div className="space-y-1.5">
+    <div ref={parentRef} className="space-y-1.5">
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}

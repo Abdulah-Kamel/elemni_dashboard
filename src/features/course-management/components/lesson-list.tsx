@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import {
   DndContext,
   DragOverlay,
@@ -113,6 +114,7 @@ export function LessonList({
   >({});
   const [loadingItems, setLoadingItems] = useState(true);
   const previousLessonsRef = useRef(initialLessons);
+  const [parentRef] = useAutoAnimate({ duration: 200 });
 
   useEffect(() => {
     async function fetchItems() {
@@ -244,7 +246,7 @@ export function LessonList({
 
   if (loadingItems) {
     return (
-      <div className="space-y-2">
+    <div ref={parentRef} className="space-y-2">
         {Array.from({ length: 3 }).map((_, i) => (
           <Skeleton key={i} className="h-16 w-full rounded-lg" />
         ))}

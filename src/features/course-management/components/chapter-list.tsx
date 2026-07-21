@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslations } from "next-intl";
 import {
   DndContext,
@@ -98,6 +99,7 @@ export function ChapterList({
   const [submitting, setSubmitting] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const previousChaptersRef = useRef<ChapterOut[]>(initialChapters);
+  const [parentRef] = useAutoAnimate({ duration: 200 });
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -198,7 +200,7 @@ export function ChapterList({
   }
 
   return (
-    <div className="space-y-3">
+    <div ref={parentRef} className="space-y-3">
       {chapters.length === 0 ? (
         <p className="text-center text-sm text-muted-foreground py-8">
           {t("empty")}
