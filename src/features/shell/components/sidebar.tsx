@@ -2,12 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import {
-  LayoutGrid,
   BookOpen,
-  Users,
-  Wallet,
-  Inbox,
-  Settings as SettingsIcon,
   GraduationCap,
 } from "lucide-react";
 import { Link, usePathname } from "@/i18n/routing";
@@ -16,11 +11,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LogoutButton } from "@/features/shell/components/logout-button";
 
 const PRIMARY_NAV = [
-  { id: "overview", href: "/dashboard", icon: LayoutGrid },
   { id: "my_courses", href: "/courses", icon: BookOpen },
-  { id: "student_roster", href: "/students", icon: Users },
-  { id: "earnings", href: "/analytics", icon: Wallet },
-  { id: "inbox", href: "/billing", icon: Inbox },
 ] as const;
 
 type SidebarProps = {
@@ -89,21 +80,6 @@ export function Sidebar({ teacherName, teacherRole }: SidebarProps) {
       </nav>
 
       <div className="flex flex-col gap-1 px-sm pb-sm">
-        <Link
-          href={"/analytics" as never}
-          className="flex w-full items-center justify-center rounded-lg bg-primary px-md py-2.5 text-body-md text-body-md--line-height font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-        >
-          {tCommon("view_analytics")}
-        </Link>
-
-        <Link
-          href={"/billing" as never}
-          className="flex items-center gap-3 rounded-lg px-sm py-2 text-body-md text-body-md--line-height text-on-surface-muted transition-colors hover:bg-surface-strong hover:text-foreground"
-        >
-          <SettingsIcon className="size-5 shrink-0" aria-hidden="true" />
-          <span>{tCommon("settings")}</span>
-        </Link>
-
         <LogoutButton
           variant="sidebar"
           showIcon
