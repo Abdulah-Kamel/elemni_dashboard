@@ -25,7 +25,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, GripVertical, ChevronUp, ChevronDown, Pencil, Trash2 } from "lucide-react";
+import { Plus, GripVertical, ChevronUp, ChevronDown, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -36,6 +36,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { LessonCard } from "./lesson-card";
+import { ItemList } from "./item-list";
 import { createLesson, reorderLessons, updateLesson, deleteLesson } from "@/features/course-management/lessons-actions";
 import { toast } from "sonner";
 import type { LessonOut } from "@/features/course-management/lessons-schema";
@@ -75,6 +76,7 @@ function SortableLessonCard({
 
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [itemsExpanded, setItemsExpanded] = useState(false);
   const [editTitle, setEditTitle] = useState(lesson.title);
   const [editDescription, setEditDescription] = useState(lesson.description ?? "");
   const [submitting, setSubmitting] = useState(false);
@@ -205,6 +207,25 @@ function SortableLessonCard({
             </Button>
           </div>
         </div>
+      </div>
+
+      <div className="px-4 pb-2">
+        <button
+          onClick={() => setItemsExpanded((v) => !v)}
+          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {itemsExpanded ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
+          <span>{lt("items")}</span>
+        </button>
+        {itemsExpanded && (
+          <div className="mt-1.5">
+            <ItemList
+              courseId={courseId}
+              lessonId={lesson.id}
+              error={null}
+            />
+          </div>
+        )}
       </div>
 
       <Dialog open={editOpen} onOpenChange={(val) => { setEditOpen(val); if (!val) setError(null); }}>
