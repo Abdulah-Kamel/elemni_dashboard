@@ -102,7 +102,7 @@ export function ChapterCard({
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-2 rounded-lg bg-surface-raised px-4 py-3 transition-all duration-300 ease-out"
+      className="flex items-center gap-2 rounded-lg bg-surface-raised px-4 py-3 transition-all duration-300 ease-out cursor-pointer hover:bg-surface-muted/30"
     >
       <Button
         size="icon"

@@ -271,7 +271,11 @@
     "move_down": "تحريك لأسفل",
     "count": "{count} دروس",
     "items": "العناصر",
-    "single_lesson_tooltip": "أضف دروساً أكثر لإعادة الترتيب"
+    "single_lesson_tooltip": "أضف دروساً أكثر لإعادة الترتيب",
+    "status_ready": "جاهز",
+    "status_processing": "قيد المعالجة",
+    "status_failed": "فشل",
+    "status_mixed": "متنوع"
   },
   "courses": {
     "title": "دوراتي",

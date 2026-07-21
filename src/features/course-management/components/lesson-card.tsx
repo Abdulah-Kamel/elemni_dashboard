@@ -132,7 +132,7 @@ export function LessonCard({
       <Card className="rounded-lg border border-border ring-0 overflow-hidden">
         <div className="flex items-center gap-2 px-3 py-2.5">
           <GripVertical className="size-4 shrink-0 text-muted-foreground cursor-grab" />
-          <Collapsible.Trigger className="flex items-center gap-2 flex-1 min-w-0 text-start">
+          <Collapsible.Trigger className="flex items-center gap-2 flex-1 min-w-0 text-start cursor-pointer">
             {itemsExpanded ? (
               <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
             ) : (

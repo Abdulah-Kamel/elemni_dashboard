@@ -271,7 +271,11 @@
     "move_down": "Move down",
     "count": "{count} lessons",
     "items": "Items",
-    "single_lesson_tooltip": "Add more lessons to reorder"
+    "single_lesson_tooltip": "Add more lessons to reorder",
+    "status_ready": "Ready",
+    "status_processing": "Processing",
+    "status_failed": "Failed",
+    "status_mixed": "Mixed"
   },
   "courses": {
     "title": "My Courses",
