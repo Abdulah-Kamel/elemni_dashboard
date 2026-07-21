@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useTranslations } from "next-intl";
 import {
   DndContext,
@@ -19,11 +19,9 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
   useSortable,
-  arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Loader2 } from "lucide-react";
 import {
   Dialog,
@@ -35,8 +33,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ChapterCard } from "./chapter-card";
-import { listChapters } from "@/features/course-management/chapters-queries";
-import { listLessons } from "@/features/course-management/lessons-queries";
 import { createChapter, reorderChapters } from "@/features/course-management/chapters-actions";
 import { applyOptimisticReorder, buildReorderPayload, rollbackReorder } from "@/features/course-management/reorder-utils";
 import { toast } from "sonner";
@@ -101,8 +97,6 @@ export function ChapterList({
   const [createTitle, setCreateTitle] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [lessonCounts, setLessonCounts] = useState<Map<number, number>>(new Map());
   const previousChaptersRef = useRef<ChapterOut[]>(initialChapters);
 
   const sensors = useSensors(
@@ -115,36 +109,6 @@ export function ChapterList({
   const activeChapter = activeId
     ? chapters.find((ch) => String(ch.id) === activeId) ?? null
     : null;
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    Promise.all([
-      listChapters(courseId),
-      listLessons(courseId),
-    ])
-      .then(([chaptersData, lessonsData]) => {
-        if (cancelled) return;
-        setChapters(chaptersData);
-        setError(null);
-        const counts = new Map<number, number>();
-        for (const lesson of lessonsData) {
-          if (lesson.chapter_id != null) {
-            counts.set(lesson.chapter_id, (counts.get(lesson.chapter_id) ?? 0) + 1);
-          }
-        }
-        setLessonCounts(counts);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        const message = err instanceof Error ? err.message : "Failed to load chapters";
-        setError(message);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, [courseId]);
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveId(String(event.active.id));
@@ -222,16 +186,6 @@ export function ChapterList({
     }
   }, [courseId, createTitle, handleCreated, t]);
 
-  if (loading && chapters.length === 0) {
-    return (
-      <div className="space-y-3">
-        <Skeleton className="h-16 w-full rounded-lg" />
-        <Skeleton className="h-16 w-full rounded-lg" />
-        <Skeleton className="h-16 w-full rounded-lg" />
-      </div>
-    );
-  }
-
   if (error && chapters.length === 0) {
     return (
       <div className="text-center py-8">
@@ -255,7 +209,7 @@ export function ChapterList({
             key={chapter.id}
             chapter={chapter}
             courseId={courseId}
-            lessonCount={lessonCounts.get(chapter.id)}
+            lessonCount={undefined}
             onUpdate={handleUpdated}
             onDelete={handleDeleted}
           />
@@ -274,7 +228,7 @@ export function ChapterList({
                 key={chapter.id}
                 chapter={chapter}
                 courseId={courseId}
-                lessonCount={lessonCounts.get(chapter.id)}
+                lessonCount={undefined}
                 onUpdate={handleUpdated}
                 onDelete={handleDeleted}
               />
@@ -287,7 +241,7 @@ export function ChapterList({
                 <ChapterCard
                   chapter={activeChapter}
                   courseId={courseId}
-                  lessonCount={lessonCounts.get(activeChapter.id)}
+                  lessonCount={undefined}
                   onUpdate={handleUpdated}
                   onDelete={handleDeleted}
                 />
