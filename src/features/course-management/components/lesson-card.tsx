@@ -31,7 +31,6 @@ import {
   MoreHorizontal,
   Pencil,
   Trash2,
-  Loader2,
 } from "lucide-react";
 import { updateLesson, deleteLesson } from "@/features/course-management/lessons-actions";
 import { ItemList } from "@/features/course-management/components/item-list";
@@ -49,7 +48,7 @@ export function LessonCard({
   lesson: LessonOut;
   courseId: number;
   itemCount?: number;
-  status?: "ready" | "processing" | "failed" | "mixed" | null;
+  status?: "ready" | "failed" | "mixed" | null;
   onUpdate: (lesson: LessonOut) => void;
   onDelete: (lessonId: number) => void;
   dragHandleProps?: React.HTMLAttributes<HTMLButtonElement>;
@@ -106,13 +105,6 @@ export function LessonCard({
     statusBadge = (
       <Badge variant="default" className="bg-success/10 text-success border-0 text-[11px] px-2 py-px">
         {t("status_ready")}
-      </Badge>
-    );
-  } else if (status === "processing") {
-    statusBadge = (
-      <Badge variant="outline" className="border-warning/30 bg-warning/10 text-warning text-[11px] px-2 py-px">
-        <Loader2 className="size-3 me-1 animate-spin" />
-        {t("status_processing")}
       </Badge>
     );
   } else if (status === "failed") {

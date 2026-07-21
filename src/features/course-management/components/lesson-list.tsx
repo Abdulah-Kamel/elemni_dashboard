@@ -23,7 +23,6 @@ import { CSS } from "@dnd-kit/utilities";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Plus } from "lucide-react";
 import {
   Dialog,
@@ -43,7 +42,6 @@ import {
   rollbackReorder,
 } from "@/features/course-management/reorder-utils";
 import type { LessonOut } from "@/features/course-management/lessons-schema";
-import type { ItemOut } from "@/features/course-management/items-schema";
 
 function SortableLessonCard({
   lesson,
@@ -58,7 +56,7 @@ function SortableLessonCard({
   onUpdate: (lesson: LessonOut) => void;
   onDelete: (lessonId: number) => void;
   itemCount?: number;
-  status?: "ready" | "processing" | null;
+  status?: "ready" | null;
 }) {
   const {
     attributes,
@@ -111,7 +109,7 @@ export function LessonList({
   const [submitting, setSubmitting] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [itemsMap, setItemsMap] = useState<
-    Record<number, { count: number; status: "ready" | "processing" | null }>
+    Record<number, { count: number; status: "ready" | null }>
   >({});
   const [loadingItems, setLoadingItems] = useState(true);
   const previousLessonsRef = useRef(initialLessons);
@@ -121,7 +119,7 @@ export function LessonList({
       setLoadingItems(true);
       const results: Record<
         number,
-        { count: number; status: "ready" | "processing" | null }
+        { count: number; status: "ready" | null }
       > = {};
 
       await Promise.all(
@@ -129,21 +127,13 @@ export function LessonList({
           const result = await listItems(courseId, lesson.id);
           if (result.success) {
             const items = result.data;
-            const hasProcessing = items.some(
-              (item) =>
-                item.bunny_stream_id === null &&
-                item.document_path === null &&
-                item.exam_id === null,
-            );
             const hasReady = items.some(
               (item) =>
                 item.bunny_stream_id !== null ||
                 item.document_path !== null ||
                 item.exam_id !== null,
             );
-            let status: "ready" | "processing" | null = null;
-            if (hasProcessing) status = "processing";
-            else if (hasReady) status = "ready";
+            const status = hasReady ? "ready" as const : null;
             results[lesson.id] = { count: items.length, status };
           }
         }),

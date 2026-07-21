@@ -273,9 +273,9 @@
     "items": "Items",
     "single_lesson_tooltip": "Add more lessons to reorder",
     "status_ready": "Ready",
-    "status_processing": "Processing",
     "status_failed": "Failed",
-    "status_mixed": "Mixed"
+    "status_mixed": "Mixed",
+    "move_to_chapter": "Move to Chapter"
   },
   "courses": {
     "title": "My Courses",

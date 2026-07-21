@@ -273,9 +273,9 @@
     "items": "العناصر",
     "single_lesson_tooltip": "أضف دروساً أكثر لإعادة الترتيب",
     "status_ready": "جاهز",
-    "status_processing": "قيد المعالجة",
     "status_failed": "فشل",
-    "status_mixed": "متنوع"
+    "status_mixed": "متنوع",
+    "move_to_chapter": "نقل إلى فصل"
   },
   "courses": {
     "title": "دوراتي",

@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Film, FileText, ClipboardList, File, Pencil, Trash2, Upload, GripVertical, Loader2 } from "lucide-react";
+import { Film, FileText, ClipboardList, File, Pencil, Trash2, Upload, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { updateItem, uploadItemVideo, requestUploadUrl, confirmUpload } from "@/features/course-management/items-actions";
@@ -32,7 +32,7 @@ function itemType(item: ItemOut): { label: string; icon: React.ReactNode; bg: st
 function itemStatus(item: ItemOut): { text: string; variant: "default" | "outline" | "secondary"; icon?: React.ReactNode } | null {
   if (item.bunny_stream_id || item.document_path) return { text: "جاهز", variant: "default" };
   if (item.exam_id) return { text: "امتحان", variant: "outline" };
-  return { text: "processing", variant: "secondary", icon: <Loader2 className="size-3 animate-spin" /> };
+  return null;
 }
 
 export function ItemCard({
