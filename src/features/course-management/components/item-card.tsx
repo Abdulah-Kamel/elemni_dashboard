@@ -3,7 +3,9 @@
 import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { Film, FileText, ClipboardList, File, Pencil, Trash2, Upload } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Film, FileText, ClipboardList, File, Pencil, Trash2, Upload, GripVertical, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { updateItem, uploadItemVideo, requestUploadUrl, confirmUpload } from "@/features/course-management/items-actions";
 import { uploadToPresignedUrl } from "@/lib/upload";
@@ -21,10 +23,16 @@ import { UploadDialog } from "./upload-dialog";
 import type { ItemOut } from "@/features/course-management/items-schema";
 
 function itemType(item: ItemOut): { label: string; icon: React.ReactNode; bg: string } {
-  if (item.bunny_stream_id) return { label: "type_video", icon: <Film className="size-3.5" />, bg: "bg-brand-indigo" };
-  if (item.document_path) return { label: "type_document", icon: <FileText className="size-3.5" />, bg: "bg-brand-amber" };
-  if (item.exam_id) return { label: "type_exam", icon: <ClipboardList className="size-3.5" />, bg: "bg-brand-rose" };
-  return { label: "type_text", icon: <File className="size-3.5" />, bg: "bg-surface-strong" };
+  if (item.bunny_stream_id) return { label: "type_video", icon: <Film className="size-3.5 text-white" />, bg: "bg-brand-indigo" };
+  if (item.document_path) return { label: "type_document", icon: <FileText className="size-3.5 text-white" />, bg: "bg-brand-amber" };
+  if (item.exam_id) return { label: "type_exam", icon: <ClipboardList className="size-3.5 text-white" />, bg: "bg-brand-rose" };
+  return { label: "type_text", icon: <File className="size-3.5 text-white" />, bg: "bg-surface-strong" };
+}
+
+function itemStatus(item: ItemOut): { text: string; variant: "default" | "outline" | "secondary"; icon?: React.ReactNode } | null {
+  if (item.bunny_stream_id || item.document_path) return { text: "جاهز", variant: "default" };
+  if (item.exam_id) return { text: "امتحان", variant: "outline" };
+  return { text: "processing", variant: "secondary", icon: <Loader2 className="size-3 animate-spin" /> };
 }
 
 export function ItemCard({
@@ -51,6 +59,7 @@ export function ItemCard({
   const [error, setError] = useState<string | null>(null);
 
   const type = itemType(item);
+  const status = itemStatus(item);
 
   const openUploadDialog = useCallback((uploadType: "video" | "document") => {
     setUploadDialogType(uploadType);
@@ -134,12 +143,27 @@ export function ItemCard({
   }, [courseId, item.id, lessonId, onDelete]);
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2 transition-colors hover:bg-surface-muted/30 group">
-      <span className={`inline-flex items-center justify-center size-7 rounded-md text-white ${type.bg}`} title={t(type.label)}>
+    <div className="flex items-center gap-2.5 px-3.5 py-2 transition-colors hover:bg-surface-muted/30 group">
+      <GripVertical className="size-3.5 text-foreground/35 shrink-0" />
+
+      <span className="inline-flex items-center justify-center size-[22px] rounded-md text-white shrink-0" title={t(type.label)}>
         {type.icon}
       </span>
 
       <span className="min-w-0 flex-1 text-sm text-foreground truncate">{item.title}</span>
+
+      {status && (
+        <Badge
+          variant={status.variant}
+          className={cn(
+            status.variant === "default" && "bg-success-tint text-success border-success/20",
+            status.variant === "secondary" && "bg-warning-tint text-warning border-warning/20",
+          )}
+        >
+          {status.icon}
+          {status.text}
+        </Badge>
+      )}
 
       <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
         {!item.bunny_stream_id && (

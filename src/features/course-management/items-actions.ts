@@ -15,6 +15,37 @@ type ActionResult<T> =
   | { success: true; data: T }
   | { success: false; error: { type: string; message: string; fields?: string[] } };
 
+export async function listItems(
+  courseId: number,
+  lessonId: number,
+): Promise<ActionResult<ItemOut[]>> {
+  logger.action("listItems", { courseId, lessonId });
+  const start = performance.now();
+
+  try {
+    const items = await apiFetch(
+      endpoints.courses.items.list(courseId, lessonId),
+      itemOutSchema.array(),
+    );
+    const elapsed = Math.round(performance.now() - start);
+    logger.actionDone("listItems", { count: items.length }, elapsed);
+    return { success: true, data: items };
+  } catch (err: unknown) {
+    const elapsed = Math.round(performance.now() - start);
+    if (err && typeof err === "object" && "type" in err) {
+      const apiErr = err as { type: string; message: string; fields?: string[] };
+      if (apiErr.type === "Unauthorized") {
+        logger.actionDone("listItems", { unauthorized: true }, elapsed);
+        await redirectToSignIn(`/courses/${courseId}`);
+      }
+      logger.actionError("listItems", apiErr, elapsed);
+      return { success: false, error: apiErr };
+    }
+    logger.actionError("listItems", err, elapsed);
+    return { success: false, error: { type: "Upstream", message: "Network error" } };
+  }
+}
+
 async function redirectToSignIn(nextPath: string): Promise<never> {
   const h = await headers();
   const locale = h.get("Accept-Language")?.startsWith("en") ? "en" : "ar";

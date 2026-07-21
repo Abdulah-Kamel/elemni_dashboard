@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import {
   DndContext,
@@ -23,8 +23,8 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Plus, GripVertical } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Plus, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -33,38 +33,26 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { ChapterCard } from "./chapter-card";
-import { createChapter, reorderChapters } from "@/features/course-management/chapters-actions";
+import { listChapters } from "@/features/course-management/chapters-queries";
+import { listLessons } from "@/features/course-management/lessons-queries";
+import { createChapter } from "@/features/course-management/chapters-actions";
 import { toast } from "sonner";
 import type { ChapterOut } from "@/features/course-management/chapters-schema";
-import type { LessonOut } from "@/features/course-management/lessons-schema";
 
-function SortableChapterCard({
+function SortableLessonCard({
   chapter,
   courseId,
-  lessons,
-  lessonError,
+  lessonCount,
   onUpdate,
   onDelete,
-  dragHandleLabel,
-  chapters,
-  onMoveUp,
-  onMoveDown,
-  expanded,
-  onToggle,
 }: {
   chapter: ChapterOut;
   courseId: number;
-  lessons: LessonOut[];
-  lessonError: string | null;
+  lessonCount?: number;
   onUpdate: (chapter: ChapterOut) => void;
   onDelete: (chapterId: number) => void;
-  dragHandleLabel: string;
-  chapters: ChapterOut[];
-  onMoveUp: (chapterId: number) => void;
-  onMoveDown: (chapterId: number) => void;
-  expanded: boolean;
-  onToggle: () => void;
 }) {
   const {
     attributes,
@@ -80,24 +68,17 @@ function SortableChapterCard({
     transition,
     opacity: isDragging ? 0.4 : 1,
     position: "relative" as const,
-    zIndex: isDragging ? 1 : "auto" as unknown as number,
+    zIndex: isDragging ? 1 : ("auto" as unknown as number),
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="transition-all duration-300 ease-out">
+    <div ref={setNodeRef} style={style}>
       <ChapterCard
         chapter={chapter}
         courseId={courseId}
-        lessons={lessons}
-        lessonError={lessonError}
+        lessonCount={lessonCount}
         onUpdate={onUpdate}
         onDelete={onDelete}
-        dragHandleProps={{ ...attributes, ...listeners, "aria-label": dragHandleLabel }}
-        chapters={chapters}
-        onMoveUp={onMoveUp}
-        onMoveDown={onMoveDown}
-        expanded={expanded}
-        onToggle={onToggle}
       />
     </div>
   );
@@ -106,26 +87,21 @@ function SortableChapterCard({
 export function ChapterList({
   initialChapters,
   courseId,
-  lessons = [],
-  lessonError = null,
   error: initialError,
 }: {
   initialChapters: ChapterOut[];
   courseId: number;
-  lessons?: LessonOut[];
-  lessonError?: string | null;
   error: string | null;
 }) {
   const t = useTranslations("chapters");
-  const [chapters, setChapters] = useState(initialChapters);
+  const [chapters, setChapters] = useState<ChapterOut[]>(initialChapters);
   const [error, setError] = useState<string | null>(initialError);
   const [createOpen, setCreateOpen] = useState(false);
   const [createTitle, setCreateTitle] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [expandedChapters, setExpandedChapters] = useState<Set<number>>(new Set());
-  const previousChaptersRef = useRef<ChapterOut[]>(initialChapters);
-  const lastFailedReorderRef = useRef<{ courseId: number; items: Array<{ id: number; order: number }> } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [lessonCounts, setLessonCounts] = useState<Map<number, number>>(new Map());
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -138,38 +114,42 @@ export function ChapterList({
     ? chapters.find((ch) => String(ch.id) === activeId) ?? null
     : null;
 
-  const liveRegionRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    Promise.all([
+      listChapters(courseId),
+      listLessons(courseId),
+    ])
+      .then(([chaptersData, lessonsData]) => {
+        if (cancelled) return;
+        setChapters(chaptersData);
+        setError(null);
+        const counts = new Map<number, number>();
+        for (const lesson of lessonsData) {
+          if (lesson.chapter_id != null) {
+            counts.set(lesson.chapter_id, (counts.get(lesson.chapter_id) ?? 0) + 1);
+          }
+        }
+        setLessonCounts(counts);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        const message = err instanceof Error ? err.message : "Failed to load chapters";
+        setError(message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [courseId]);
 
-  const announce = useCallback((message: string) => {
-    if (liveRegionRef.current) {
-      liveRegionRef.current.textContent = message;
-    }
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveId(String(event.active.id));
   }, []);
-
-  const toggleExpanded = useCallback((chapterId: number) => {
-    setExpandedChapters((prev) => {
-      const next = new Set(prev);
-      if (next.has(chapterId)) {
-        next.delete(chapterId);
-      } else {
-        next.add(chapterId);
-      }
-      return next;
-    });
-  }, []);
-
-  const handleDragStart = useCallback(
-    (event: DragStartEvent) => {
-      setActiveId(String(event.active.id));
-      setExpandedChapters(new Set());
-      const ch = chapters.find((c) => String(c.id) === event.active.id);
-      if (ch) announce(t("sr_picked_up", { title: ch.title }));
-    },
-    [chapters, announce, t],
-  );
 
   const handleDragEnd = useCallback(
-    async (event: DragEndEvent) => {
+    (event: DragEndEvent) => {
       const { active, over } = event;
       setActiveId(null);
 
@@ -179,116 +159,13 @@ export function ChapterList({
       const newIndex = chapters.findIndex((ch) => String(ch.id) === over.id);
       if (oldIndex === -1 || newIndex === -1) return;
 
-      previousChaptersRef.current = chapters;
-      const reordered = arrayMove(chapters, oldIndex, newIndex);
-      const items = reordered.map((ch, idx) => ({ id: ch.id, order: idx + 1 }));
-
-      setChapters(reordered);
-
-      lastFailedReorderRef.current = { courseId, items };
-      const activeChapter = chapters.find((c) => String(c.id) === active.id);
-
-      const result = await reorderChapters(courseId, items);
-      if (result.success) {
-        lastFailedReorderRef.current = null;
-        toast.success(t("reorder_success"));
-        const newIndex = reordered.findIndex((c) => String(c.id) === active.id);
-        if (activeChapter) {
-          announce(t("sr_dropped", { title: activeChapter.title, position: newIndex + 1 }));
-        }
-      } else {
-        setChapters(previousChaptersRef.current);
-        if (result.error.type === "Conflict") {
-          announce(t("sr_failed"));
-          toast.error(t("reorder_conflict"), {
-            action: { label: t("refresh"), onClick: () => window.location.reload() },
-          });
-        } else {
-          const retryData = lastFailedReorderRef.current;
-          announce(t("sr_failed"));
-          toast.error(t("reorder_error"), {
-            action: retryData ? {
-              label: t("retry"),
-              onClick: async () => {
-                const r = await reorderChapters(retryData.courseId, retryData.items);
-                if (r.success) {
-                  setChapters(r.data);
-                  lastFailedReorderRef.current = null;
-                  toast.success(t("reorder_success"));
-                }
-              },
-            } : undefined,
-          });
-        }
-      }
+      setChapters(arrayMove(chapters, oldIndex, newIndex));
     },
-    [chapters, courseId, t, announce],
+    [chapters],
   );
 
-  const handleDragCancel = useCallback(
-    (_event: DragCancelEvent) => {
-      setActiveId(null);
-      announce(t("sr_cancelled"));
-    },
-    [announce, t],
-  );
-
-  const handleMoveUp = useCallback(
-    async (chapterId: number) => {
-      const index = chapters.findIndex((ch) => ch.id === chapterId);
-      if (index <= 0) return;
-
-      previousChaptersRef.current = chapters;
-      const reordered = arrayMove(chapters, index, index - 1);
-      const items = reordered.map((ch, idx) => ({ id: ch.id, order: idx + 1 }));
-
-      setChapters(reordered);
-
-      const result = await reorderChapters(courseId, items);
-      if (result.success) {
-        toast.success(t("reorder_success"));
-      } else {
-        setChapters(previousChaptersRef.current);
-        if (result.error.type === "Conflict") {
-          toast.error(t("reorder_conflict"));
-        } else {
-          toast.error(t("reorder_error"));
-        }
-      }
-    },
-    [chapters, courseId, t],
-  );
-
-  const handleMoveDown = useCallback(
-    async (chapterId: number) => {
-      const index = chapters.findIndex((ch) => ch.id === chapterId);
-      if (index === -1 || index >= chapters.length - 1) return;
-
-      previousChaptersRef.current = chapters;
-      const reordered = arrayMove(chapters, index, index + 1);
-      const items = reordered.map((ch, idx) => ({ id: ch.id, order: idx + 1 }));
-
-      setChapters(reordered);
-
-      const result = await reorderChapters(courseId, items);
-      if (result.success) {
-        toast.success(t("reorder_success"));
-      } else {
-        setChapters(previousChaptersRef.current);
-        if (result.error.type === "Conflict") {
-          toast.error(t("reorder_conflict"));
-        } else {
-          toast.error(t("reorder_error"));
-        }
-      }
-    },
-    [chapters, courseId, t],
-  );
-
-  const handleCreated = useCallback((chapter: ChapterOut) => {
-    setChapters((prev) => [...prev, chapter]);
-    setCreateOpen(false);
-    setCreateTitle("");
+  const handleDragCancel = useCallback((_event: DragCancelEvent) => {
+    setActiveId(null);
   }, []);
 
   const handleUpdated = useCallback((updated: ChapterOut) => {
@@ -301,6 +178,12 @@ export function ChapterList({
     setChapters((prev) => prev.filter((ch) => ch.id !== chapterId));
   }, []);
 
+  const handleCreated = useCallback((chapter: ChapterOut) => {
+    setChapters((prev) => [...prev, chapter]);
+    setCreateOpen(false);
+    setCreateTitle("");
+  }, []);
+
   const handleCreate = useCallback(async () => {
     const trimmed = createTitle.trim();
     if (!trimmed) return;
@@ -311,13 +194,24 @@ export function ChapterList({
       const result = await createChapter(courseId, { title: trimmed });
       if (result.success) {
         handleCreated(result.data);
+        toast.success(t("created"));
       } else {
         setError(result.error.message);
       }
     } finally {
       setSubmitting(false);
     }
-  }, [courseId, createTitle, handleCreated]);
+  }, [courseId, createTitle, handleCreated, t]);
+
+  if (loading && chapters.length === 0) {
+    return (
+      <div className="space-y-3">
+        <Skeleton className="h-16 w-full rounded-lg" />
+        <Skeleton className="h-16 w-full rounded-lg" />
+        <Skeleton className="h-16 w-full rounded-lg" />
+      </div>
+    );
+  }
 
   if (error && chapters.length === 0) {
     return (
@@ -330,12 +224,24 @@ export function ChapterList({
     );
   }
 
-  const canReorder = chapters.length > 1;
-
   return (
     <div className="space-y-3">
-      <div aria-live="polite" className="sr-only" />
-      {canReorder ? (
+      {chapters.length === 0 ? (
+        <p className="text-center text-sm text-muted-foreground py-8">
+          {t("no_chapters")}
+        </p>
+      ) : chapters.length === 1 ? (
+        chapters.map((chapter) => (
+          <SortableLessonCard
+            key={chapter.id}
+            chapter={chapter}
+            courseId={courseId}
+            lessonCount={lessonCounts.get(chapter.id)}
+            onUpdate={handleUpdated}
+            onDelete={handleDeleted}
+          />
+        ))
+      ) : (
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -345,20 +251,13 @@ export function ChapterList({
         >
           <SortableContext items={chapterIds} strategy={verticalListSortingStrategy}>
             {chapters.map((chapter) => (
-              <SortableChapterCard
+              <SortableLessonCard
                 key={chapter.id}
                 chapter={chapter}
                 courseId={courseId}
-                lessons={lessons.filter((l) => l.chapter_id === chapter.id)}
-                lessonError={lessonError}
+                lessonCount={lessonCounts.get(chapter.id)}
                 onUpdate={handleUpdated}
                 onDelete={handleDeleted}
-                dragHandleLabel={t("drag_handle_label")}
-                chapters={chapters}
-                onMoveUp={handleMoveUp}
-                onMoveDown={handleMoveDown}
-                expanded={expandedChapters.has(chapter.id)}
-                onToggle={() => toggleExpanded(chapter.id)}
               />
             ))}
           </SortableContext>
@@ -369,36 +268,18 @@ export function ChapterList({
                 <ChapterCard
                   chapter={activeChapter}
                   courseId={courseId}
-                  lessons={lessons.filter((l) => l.chapter_id === activeChapter.id)}
-                  lessonError={lessonError}
+                  lessonCount={lessonCounts.get(activeChapter.id)}
                   onUpdate={handleUpdated}
                   onDelete={handleDeleted}
-                  showReorderControls={false}
                 />
               </div>
             ) : null}
           </DragOverlay>
         </DndContext>
-      ) : (
-        chapters.map((chapter) => (
-          <div key={chapter.id} className="relative" title={t("single_chapter_tooltip")}>
-            <ChapterCard
-              chapter={chapter}
-              courseId={courseId}
-              lessons={lessons.filter((l) => l.chapter_id === chapter.id)}
-              lessonError={lessonError}
-              onUpdate={handleUpdated}
-              onDelete={handleDeleted}
-              showReorderControls={false}
-              expanded={expandedChapters.has(chapter.id)}
-              onToggle={() => toggleExpanded(chapter.id)}
-            />
-          </div>
-        ))
       )}
 
       <Button
-        variant="outline"
+        variant="ghost"
         className="w-full"
         onClick={() => {
           setCreateTitle("");
@@ -438,7 +319,14 @@ export function ChapterList({
           <DialogFooter>
             <DialogClose render={<Button variant="outline" disabled={submitting}>{t("cancel")}</Button>} />
             <Button onClick={handleCreate} disabled={submitting || !createTitle.trim()}>
-              {submitting ? t("saving") : t("create")}
+              {submitting ? (
+                <>
+                  <Loader2 className="me-2 size-4 animate-spin" />
+                  {t("saving")}
+                </>
+              ) : (
+                t("create")
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

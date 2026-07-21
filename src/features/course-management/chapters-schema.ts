@@ -23,3 +23,8 @@ export const reorderItemSchema = z.object({
   order: z.number(),
 });
 export type ReorderItem = z.infer<typeof reorderItemSchema>;
+
+export const reorderRequestSchema = z.object({
+  items: z.array(reorderItemSchema).min(2, "At least 2 items required for reorder"),
+});
+export type ReorderRequest = z.infer<typeof reorderRequestSchema>;

@@ -2,10 +2,9 @@
 
 import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
+import { Collapsible } from "@base-ui/react/collapsible";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Pencil, Trash2, ChevronDown, ChevronRight } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -15,26 +14,46 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  GripVertical,
+  ChevronDown,
+  ChevronRight,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  Loader2,
+} from "lucide-react";
 import { updateLesson, deleteLesson } from "@/features/course-management/lessons-actions";
 import { ItemList } from "@/features/course-management/components/item-list";
 import type { LessonOut } from "@/features/course-management/lessons-schema";
-import type { ItemOut } from "@/features/course-management/items-schema";
 
 export function LessonCard({
   lesson,
   courseId,
+  itemCount,
+  status,
   onUpdate,
   onDelete,
-  initialItems,
 }: {
   lesson: LessonOut;
   courseId: number;
+  itemCount?: number;
+  status?: "ready" | "processing" | "failed" | "mixed" | null;
   onUpdate: (lesson: LessonOut) => void;
   onDelete: (lessonId: number) => void;
-  initialItems?: ItemOut[];
 }) {
-  const [itemsExpanded, setItemsExpanded] = useState(false);
   const t = useTranslations("lessons");
+  const [itemsExpanded, setItemsExpanded] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editTitle, setEditTitle] = useState(lesson.title);
@@ -80,69 +99,102 @@ export function LessonCard({
     }
   }, [courseId, lesson.id, onDelete]);
 
-  return (
-    <div className="px-4 py-2.5 transition-colors hover:bg-surface-muted/30">
-      <div className="flex items-center justify-between gap-2">
-        <div className="min-w-0 flex-1">
-          <h4 className="text-sm font-medium">
-            <span className="text-muted-foreground me-1">{lesson.order}.</span>
-            {lesson.title}
-          </h4>
-          {lesson.description && (
-            <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">
-              {lesson.description}
-            </p>
-          )}
-        </div>
-        <div className="flex items-center gap-1 shrink-0">
-          <Button
-            size="icon"
-            variant="ghost"
-            className="size-7"
-            onClick={() => {
-              setEditTitle(lesson.title);
-              setEditDescription(lesson.description ?? "");
-              setError(null);
-              setEditOpen(true);
-            }}
-            aria-label={t("edit")}
-          >
-            <Pencil className="size-3.5 rtl:rotate-180" />
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="size-7"
-            onClick={() => {
-              setError(null);
-              setDeleteOpen(true);
-            }}
-            aria-label={t("delete")}
-          >
-            <Trash2 className="size-3.5" />
-          </Button>
-        </div>
-      </div>
+  let statusBadge = null;
+  if (status === "ready") {
+    statusBadge = (
+      <Badge variant="default" className="bg-success/10 text-success border-0 text-[11px] px-2 py-px">
+        {t("status_ready")}
+      </Badge>
+    );
+  } else if (status === "processing") {
+    statusBadge = (
+      <Badge variant="outline" className="border-warning/30 bg-warning/10 text-warning text-[11px] px-2 py-px">
+        <Loader2 className="size-3 me-1 animate-spin" />
+        {t("status_processing")}
+      </Badge>
+    );
+  } else if (status === "failed") {
+    statusBadge = (
+      <Badge variant="destructive" className="text-[11px] px-2 py-px">
+        {t("status_failed")}
+      </Badge>
+    );
+  } else if (status === "mixed") {
+    statusBadge = (
+      <Badge variant="secondary" className="text-[11px] px-2 py-px">
+        {t("status_mixed")}
+      </Badge>
+    );
+  }
 
-      <div className="mt-1.5">
-        <button
-          onClick={() => setItemsExpanded((v) => !v)}
-          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-        >
-          {itemsExpanded ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
-          <span>{t("items")}</span>
-        </button>
-        {itemsExpanded && (
-          <div className="mt-1.5">
+  return (
+    <Collapsible.Root open={itemsExpanded} onOpenChange={setItemsExpanded}>
+      <Card className="rounded-lg border border-border ring-0 overflow-hidden">
+        <div className="flex items-center gap-2 px-3 py-2.5">
+          <GripVertical className="size-4 shrink-0 text-muted-foreground cursor-grab" />
+          <Collapsible.Trigger className="flex items-center gap-2 flex-1 min-w-0 text-start">
+            {itemsExpanded ? (
+              <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground rtl:rotate-180" />
+            )}
+            <span className="text-sm font-medium truncate">
+              {lesson.order}. {lesson.title}
+            </span>
+          </Collapsible.Trigger>
+          {itemCount != null && (
+            <span className="text-[11px] text-muted-foreground shrink-0 whitespace-nowrap">
+              {itemCount} {t("items")}
+            </span>
+          )}
+          {statusBadge}
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button variant="ghost" size="icon-sm" className="size-7 shrink-0" />
+              }
+            >
+              <MoreHorizontal className="size-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => {
+                  setEditTitle(lesson.title);
+                  setEditDescription(lesson.description ?? "");
+                  setError(null);
+                  setEditOpen(true);
+                }}
+              >
+                <Pencil className="size-3.5" />
+                {t("edit")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setError(null);
+                  setDeleteOpen(true);
+                }}
+                variant="destructive"
+              >
+                <Trash2 className="size-3.5" />
+                {t("delete")}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem disabled>
+                {t("move_to_chapter")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <Collapsible.Panel>
+          <div className="border-t border-border px-3 py-2">
             <ItemList
-              initialItems={initialItems}
               courseId={courseId}
               lessonId={lesson.id}
               error={null}
             />
           </div>
-        )}
-      </div>
+        </Collapsible.Panel>
+      </Card>
 
       <Dialog
         open={editOpen}
@@ -212,6 +264,6 @@ export function LessonCard({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </Collapsible.Root>
   );
 }

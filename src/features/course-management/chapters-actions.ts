@@ -19,6 +19,36 @@ async function redirectToSignIn(nextPath: string): Promise<never> {
   redirect(`/${locale}/sign-out?next=${encodeURIComponent(nextPath)}`);
 }
 
+export async function listChapters(
+  courseId: number,
+): Promise<ActionResult<ChapterOut[]>> {
+  logger.action("listChapters", { courseId });
+  const start = performance.now();
+
+  try {
+    const chapters = await apiFetch(
+      endpoints.courses.chapters.list(courseId),
+      chapterOutSchema.array(),
+    );
+    const elapsed = Math.round(performance.now() - start);
+    logger.actionDone("listChapters", { count: chapters.length }, elapsed);
+    return { success: true, data: chapters };
+  } catch (err: unknown) {
+    const elapsed = Math.round(performance.now() - start);
+    if (err && typeof err === "object" && "type" in err) {
+      const apiErr = err as { type: string; message: string; fields?: string[] };
+      if (apiErr.type === "Unauthorized") {
+        logger.actionDone("listChapters", { unauthorized: true }, elapsed);
+        await redirectToSignIn(`/courses/${courseId}`);
+      }
+      logger.actionError("listChapters", apiErr, elapsed);
+      return { success: false, error: apiErr };
+    }
+    logger.actionError("listChapters", err, elapsed);
+    return { success: false, error: { type: "Upstream", message: "Network error" } };
+  }
+}
+
 export async function createChapter(
   courseId: number,
   data: ChapterCreate,

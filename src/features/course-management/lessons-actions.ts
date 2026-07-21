@@ -23,6 +23,37 @@ async function redirectToSignIn(nextPath: string): Promise<never> {
   redirect(`/${locale}/sign-out?next=${encodeURIComponent(nextPath)}`);
 }
 
+export async function listLessons(
+  courseId: number,
+  chapterId?: number,
+): Promise<ActionResult<LessonOut[]>> {
+  logger.action("listLessons", { courseId, chapterId });
+  const start = performance.now();
+
+  try {
+    const url = chapterId != null
+      ? `${endpoints.courses.lessons.list(courseId)}?chapter_id=${chapterId}`
+      : endpoints.courses.lessons.list(courseId);
+    const lessons = await apiFetch(url, lessonOutSchema.array());
+    const elapsed = Math.round(performance.now() - start);
+    logger.actionDone("listLessons", { count: lessons.length }, elapsed);
+    return { success: true, data: lessons };
+  } catch (err: unknown) {
+    const elapsed = Math.round(performance.now() - start);
+    if (err && typeof err === "object" && "type" in err) {
+      const apiErr = err as { type: string; message: string; fields?: string[] };
+      if (apiErr.type === "Unauthorized") {
+        logger.actionDone("listLessons", { unauthorized: true }, elapsed);
+        await redirectToSignIn(`/courses/${courseId}`);
+      }
+      logger.actionError("listLessons", apiErr, elapsed);
+      return { success: false, error: apiErr };
+    }
+    logger.actionError("listLessons", err, elapsed);
+    return { success: false, error: { type: "Upstream", message: "Network error" } };
+  }
+}
+
 export async function createLesson(
   courseId: number,
   data: LessonCreate,

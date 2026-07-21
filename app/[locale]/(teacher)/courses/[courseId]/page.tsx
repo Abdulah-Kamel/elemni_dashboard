@@ -98,21 +98,15 @@ async function ContentArea({
   if (useChapters) {
     let chapters: Awaited<ReturnType<typeof listChapters>> = [];
     let chaptersError: string | null = null;
-    let lessons: Awaited<ReturnType<typeof listLessons>> = [];
-    let lessonsError: string | null = null;
 
     try {
-      [chapters, lessons] = await Promise.all([
-        listChapters(courseId),
-        listLessons(courseId),
-      ]);
+      chapters = await listChapters(courseId);
     } catch (err: unknown) {
       const apiErr = err as { type?: string };
       if (apiErr.type === "Unauthorized") {
         redirect(`/${locale}/sign-out?next=${encodeURIComponent(`/courses/${courseId}`)}`);
       }
       chaptersError = ct("error_upstream");
-      lessonsError = lt("error_upstream");
     }
 
     return (
@@ -123,8 +117,6 @@ async function ContentArea({
         <ChapterList
           initialChapters={chapters}
           courseId={courseId}
-          lessons={lessons}
-          lessonError={lessonsError}
           error={chaptersError}
         />
       </div>
