@@ -156,7 +156,7 @@ function StatCard({
   const tint = STAT_TINTS[stat.id];
 
   return (
-    <Card className="flex flex-col gap-3 p-md">
+    <Card className="flex flex-col gap-3 p-md card-hover">
       <div className="flex items-center justify-between">
         <div
           aria-hidden="true"
@@ -233,7 +233,7 @@ function PerformanceCard({
   legend: string;
 }) {
   return (
-    <Card className="flex flex-col gap-md p-md xl:col-span-2">
+    <Card className="flex flex-col gap-md p-md xl:col-span-2 card-hover">
       <div className="flex items-center justify-between">
         <h2 className="text-title-lg text-title-lg--line-height font-semibold text-foreground">
           {title}
@@ -266,7 +266,7 @@ function TopPerformingCard({
   locale: string;
 }) {
   return (
-    <Card className="flex flex-col gap-md p-md">
+    <Card className="flex flex-col gap-md p-md card-hover">
       <div className="flex items-center justify-between">
         <h2 className="text-title-lg text-title-lg--line-height font-semibold text-foreground">
           {title}

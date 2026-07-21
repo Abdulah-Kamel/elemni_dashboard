@@ -122,7 +122,7 @@ export function LessonCard({
 
   return (
     <Collapsible.Root open={itemsExpanded} onOpenChange={setItemsExpanded}>
-      <Card className="rounded-lg border border-border ring-0 overflow-hidden">
+      <Card className="rounded-lg border border-border ring-0 overflow-hidden card-hover">
         <div className="flex items-center gap-2 px-3 py-2.5">
           <button
             className="cursor-grab active:cursor-grabbing touch-none size-7 flex items-center justify-center shrink-0 rounded-md hover:bg-surface-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
