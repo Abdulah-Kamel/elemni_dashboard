@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import {
+  LayoutGrid,
   BookOpen,
   GraduationCap,
 } from "lucide-react";
@@ -11,6 +12,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LogoutButton } from "@/features/shell/components/logout-button";
 
 const PRIMARY_NAV = [
+  { id: "overview", href: "/dashboard", icon: LayoutGrid },
   { id: "my_courses", href: "/courses", icon: BookOpen },
 ] as const;
 

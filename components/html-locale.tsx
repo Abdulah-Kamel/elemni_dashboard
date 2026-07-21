@@ -11,15 +11,19 @@ export function HtmlLocale({
   isRtl: boolean
   fontVar: string
 }) {
+  const dir = isRtl ? "rtl" : "ltr";
+
   useEffect(() => {
     const root = document.documentElement;
-    const themeClasses = Array.from(root.classList).filter(
-      (c) => c === "dark" || c === "light",
-    );
     root.lang = locale;
-    root.dir = isRtl ? "rtl" : "ltr";
-    root.className = `antialiased font-sans ${fontVar} ${themeClasses.join(" ")}`.trim();
-  }, [locale, isRtl, fontVar]);
+    root.dir = dir;
+  }, [locale, dir]);
 
-  return null;
+  return (
+    <script
+      dangerouslySetInnerHTML={{
+        __html: `document.documentElement.lang='${locale}';document.documentElement.dir='${dir}';document.documentElement.className='${fontVar}'`,
+      }}
+    />
+  );
 }

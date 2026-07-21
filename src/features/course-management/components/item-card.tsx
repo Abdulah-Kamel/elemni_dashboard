@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Film, FileText, ClipboardList, File, Pencil, Trash2, Upload, GripVertical } from "lucide-react";
+import { Film, FileText, ClipboardList, File, Pencil, Trash2, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { updateItem, uploadItemVideo, requestUploadUrl, confirmUpload } from "@/features/course-management/items-actions";
@@ -144,7 +144,6 @@ export function ItemCard({
 
   return (
     <div className="flex items-center gap-2.5 px-3.5 py-2 transition-colors hover:bg-surface-muted/30 group">
-      <GripVertical className="size-3.5 text-foreground/35 shrink-0" />
 
       <span className="inline-flex items-center justify-center size-[22px] rounded-md text-white shrink-0" title={t(type.label)}>
         {type.icon}

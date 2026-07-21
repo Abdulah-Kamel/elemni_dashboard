@@ -26,16 +26,6 @@ export default async function SignInPage({
     <AuthShell
       title={t("title")}
       subtitle={t("subtitle")}
-      footer={
-        <p className="text-label-sm text-label-sm--line-height text-on-surface-muted">
-          <Link
-            href={"/sign-up" as never}
-            className="font-semibold text-primary hover:underline"
-          >
-            {t("no_account")}
-          </Link>
-        </p>
-      }
     >
       <SignInForm locale={locale} next={next} notice={notice} />
     </AuthShell>
