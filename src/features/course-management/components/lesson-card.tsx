@@ -44,6 +44,7 @@ export function LessonCard({
   status,
   onUpdate,
   onDelete,
+  dragHandleProps,
 }: {
   lesson: LessonOut;
   courseId: number;
@@ -51,6 +52,7 @@ export function LessonCard({
   status?: "ready" | "processing" | "failed" | "mixed" | null;
   onUpdate: (lesson: LessonOut) => void;
   onDelete: (lessonId: number) => void;
+  dragHandleProps?: React.HTMLAttributes<HTMLButtonElement>;
 }) {
   const t = useTranslations("lessons");
   const [itemsExpanded, setItemsExpanded] = useState(false);
@@ -131,7 +133,13 @@ export function LessonCard({
     <Collapsible.Root open={itemsExpanded} onOpenChange={setItemsExpanded}>
       <Card className="rounded-lg border border-border ring-0 overflow-hidden">
         <div className="flex items-center gap-2 px-3 py-2.5">
-          <GripVertical className="size-4 shrink-0 text-muted-foreground cursor-grab" />
+          <button
+            className="cursor-grab active:cursor-grabbing touch-none size-7 flex items-center justify-center shrink-0 rounded-md hover:bg-surface-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label="Drag to reorder"
+            {...(dragHandleProps ?? {})}
+          >
+            <GripVertical className="size-4 text-muted-foreground" />
+          </button>
           <Collapsible.Trigger className="flex items-center gap-2 flex-1 min-w-0 text-start cursor-pointer">
             {itemsExpanded ? (
               <ChevronDown className="size-4 shrink-0 text-muted-foreground" />

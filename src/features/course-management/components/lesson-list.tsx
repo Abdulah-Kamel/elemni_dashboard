@@ -76,7 +76,7 @@ function SortableLessonCard({
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="relative">
+    <div ref={setNodeRef} style={style}>
       <LessonCard
         lesson={lesson}
         courseId={courseId}
@@ -84,12 +84,10 @@ function SortableLessonCard({
         onDelete={onDelete}
         itemCount={itemCount}
         status={status}
-      />
-      <button
-        {...(attributes as React.ButtonHTMLAttributes<HTMLButtonElement>)}
-        {...(listeners as React.ButtonHTMLAttributes<HTMLButtonElement>)}
-        aria-label="Drag to reorder"
-        className="absolute inset-y-0 left-0 w-8 cursor-grab active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md z-10"
+        dragHandleProps={{
+          ...(attributes as React.HTMLAttributes<HTMLButtonElement>),
+          ...(listeners as React.HTMLAttributes<HTMLButtonElement>),
+        }}
       />
     </div>
   );
