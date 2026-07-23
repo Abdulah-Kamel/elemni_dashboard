@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { Settings } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { SecurityCard } from "@/features/settings/components/security-card";
 import { BrandingCard } from "@/features/settings/components/branding-card";
 import { PlayerPreview } from "@/features/settings/components/player-preview";
 
 export function SettingsDashboard() {
+  const t = useTranslations("settings");
   const [watermarkEnabled, setWatermarkEnabled] = useState(false);
   const [allowPdfDownload, setAllowPdfDownload] = useState(false);
   const [whitelistedDomains, setWhitelistedDomains] = useState("");
@@ -29,7 +31,7 @@ export function SettingsDashboard() {
   };
 
   const handleSave = () => {
-    toast.success("Settings saved successfully");
+    toast.success(t("saved"));
   };
 
   return (
@@ -37,10 +39,10 @@ export function SettingsDashboard() {
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Settings className="size-6 text-primary" />
-          <h1 className="text-headline-md font-semibold text-foreground">Settings</h1>
+          <h1 className="text-headline-md font-semibold text-foreground">{t("title")}</h1>
         </div>
         <Button onClick={handleSave} variant="default">
-          Save
+          {t("save")}
         </Button>
       </header>
 
