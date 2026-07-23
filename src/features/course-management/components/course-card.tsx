@@ -1,7 +1,5 @@
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
-import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import type { CourseOut } from "@/features/shell/schema";
 import { CourseCardActions } from "./course-card-actions";
 
@@ -28,34 +26,42 @@ export async function CourseCard({
   const t = await getTranslations({ locale, namespace: "courses" });
 
   return (
-    <Card
-      className={course.is_published ? undefined : "opacity-75"}
+    <div
+      className={`rounded-2xl border border-border bg-surface shadow-xs overflow-hidden transition-shadow hover:shadow-md ${course.is_published ? "" : "opacity-75"}`}
     >
+      <div className="h-40 bg-surface-muted relative overflow-hidden">
+        <div className="absolute inset-0 flex items-center justify-center text-4xl text-on-surface-subtle">
+          📚
+        </div>
+        <div
+          className={`absolute top-3 end-3 text-white px-3 py-1 rounded-xl text-[11px] font-bold shadow-xs ${
+            course.is_published ? "bg-emerald-600" : "bg-on-surface-muted"
+          }`}
+        >
+          {course.is_published ? t("published") : t("draft")}
+        </div>
+      </div>
       <Link
         href={`/${locale}/courses/${course.id}`}
-        className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
+        className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <CardHeader className="flex flex-row items-center justify-between gap-4">
-          <h3 className="text-base font-semibold">{course.title}</h3>
-          <Badge variant={course.is_published ? "default" : "secondary"}>
-            {course.is_published ? t("published") : t("draft")}
-          </Badge>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <p className="text-lg font-medium text-amber-600">
-            {course.price === "0.00" ? t("free") : formatPrice(course.price, locale)}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {course.subject_name && (
-              <Badge variant="outline">{course.subject_name}</Badge>
-            )}
-            <Badge variant="outline">{t("curriculum_placement")}</Badge>
+        <div className="p-4 space-y-2">
+          <h3 className="font-bold text-sm text-primary truncate">{course.title}</h3>
+          <div className="flex items-center justify-between text-on-surface-muted text-xs">
+            <span className="font-bold text-primary text-sm">
+              {course.price === "0.00" ? t("free") : formatPrice(course.price, locale)}
+            </span>
           </div>
-        </CardContent>
+          {course.subject_name && (
+            <span className="inline-block px-2 py-0.5 bg-surface-muted rounded-full text-[11px] font-semibold text-on-surface-muted">
+              {course.subject_name}
+            </span>
+          )}
+        </div>
       </Link>
-      <CardFooter className="justify-end gap-2">
+      <div className="px-4 pb-4 pt-2 border-t border-border flex gap-2">
         <CourseCardActions courseId={course.id} isPublished={course.is_published} teacherProfileId={teacherProfileId} />
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   );
 }

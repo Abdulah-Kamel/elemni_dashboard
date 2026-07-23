@@ -2,7 +2,6 @@ import { getTranslations } from "next-intl/server";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { CourseCard } from "./course-card";
 import { EmptyState } from "./empty-state";
 import type { CourseOut } from "@/features/shell/schema";
@@ -52,14 +51,16 @@ export function CourseListSkeleton() {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: 3 }).map((_, i) => (
-        <Card key={i} className="p-4">
-          <Skeleton className="mb-2 h-5 w-3/4" />
-          <Skeleton className="mb-4 h-4 w-1/4" />
-          <div className="flex gap-2">
-            <Skeleton className="h-5 w-16" />
+        <div key={i} className="rounded-2xl border border-border bg-surface shadow-xs overflow-hidden">
+          <Skeleton className="h-40 w-full rounded-none" />
+          <div className="p-4 space-y-3">
+            <Skeleton className="h-5 w-3/4" />
+            <Skeleton className="h-4 w-1/4" />
+          </div>
+          <div className="px-4 pb-4 pt-2 border-t border-border">
             <Skeleton className="h-5 w-16" />
           </div>
-        </Card>
+        </div>
       ))}
     </div>
   );
