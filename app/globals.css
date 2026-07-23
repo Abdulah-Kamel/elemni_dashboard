@@ -7,8 +7,7 @@
 /*
  * Elemni dashboard — design tokens.
  *
- * Source of truth: DESIGN.md (the original "Linear-inspired" indigo spec).
- * Indigo primary, Zinc neutrals, super-elliptical radii, 3px halo focus,
+ * Navy primary (#00236f), Zinc neutrals, super-elliptical radii, 3px halo focus,
  * no shadows by default, ambient lift on hover. Compact density.
  *
  * Tokens are split in three layers:
@@ -157,16 +156,16 @@
     --spacing-xl: 24px;
     --spacing-2xl: 32px;
     --spacing-3xl: 48px;
-    --spacing-sidebar-width: 240px;
+    --spacing-sidebar-width: 280px;
     --spacing-grid-gutter: 16px;
     --spacing-container-margin: 24px;
 }
 
 :root {
     /* Brand */
-    --brand-indigo: #4F46E5;
-    --brand-indigo-deep: #312E81;
-    --brand-indigo-tint: #EEF2FF;
+    --brand-indigo: #00236f;
+    --brand-indigo-deep: #00164e;
+    --brand-indigo-tint: #dce1ff;
     --brand-amber: #F59E0B;
     --brand-amber-tint: #FEF3C7;
     --brand-emerald: #10B981;
@@ -199,10 +198,10 @@
     --on-surface-muted: #71717A;
     --on-surface-subtle: #A1A1AA;
     --on-primary: #FFFFFF;
-    --on-primary-tint: #312E81;
+    --on-primary-tint: #00164e;
 
     /* Borders */
-    --border: #E4E4E7;
+    --border: #c5c5d3;
     --border-strong: #D4D4D8;
 
     /* Radius base */
@@ -214,6 +213,10 @@
 }
 
 .dark {
+    --brand-indigo: #90a8ff;
+    --brand-indigo-deep: #1e3a8a;
+    --brand-indigo-tint: #1e3a8a;
+
     --page: #09090B;
     --surface: #18181B;
     --surface-raised: #27272A;
