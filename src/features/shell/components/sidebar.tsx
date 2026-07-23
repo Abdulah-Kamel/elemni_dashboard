@@ -6,6 +6,8 @@ import {
   LayoutGrid,
   BookOpen,
   GraduationCap,
+  Cloud,
+  Settings,
 } from "lucide-react";
 import { Link, usePathname } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
@@ -15,6 +17,9 @@ import { LogoutButton } from "@/features/shell/components/logout-button";
 const PRIMARY_NAV = [
   { id: "overview", href: "/dashboard", icon: LayoutGrid },
   { id: "my_courses", href: "/courses", icon: BookOpen },
+  { id: "students", href: "/students", icon: GraduationCap },
+  { id: "storage", href: "/storage", icon: Cloud },
+  { id: "settings", href: "/settings", icon: Settings },
 ] as const;
 
 type SidebarProps = {
@@ -66,7 +71,7 @@ export function Sidebar({ teacherName, teacherRole }: SidebarProps) {
                   className={cn(
                     "flex items-center gap-3 rounded-lg px-sm py-2 text-body-md text-body-md--line-height font-medium transition-colors",
                     isActive
-                      ? "bg-primary-tint text-primary"
+                      ? "bg-primary-tint text-primary border-s-4 border-primary font-semibold"
                       : "text-on-surface-muted hover:bg-surface-strong hover:text-foreground",
                   )}
                 >

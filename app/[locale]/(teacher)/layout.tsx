@@ -5,6 +5,7 @@ import { DirectionProvider } from "@base-ui/react/direction-provider";
 import { verifySession } from "@/lib/auth/dal";
 import { Sidebar } from "@/features/shell/components/sidebar";
 import { Topbar } from "@/features/shell/components/topbar";
+import { MobileBottomNav } from "@/features/shell/components/mobile-bottom-nav";
 import { ChapterNavigationProvider } from "@/features/course-management/chapter-navigation-context";
 
 export const dynamic = "force-dynamic";
@@ -49,6 +50,7 @@ export default async function TeacherLayout({
             </ChapterNavigationProvider>
           </main>
         </div>
+        <MobileBottomNav />
       </div>
     </DirectionProvider>
   );

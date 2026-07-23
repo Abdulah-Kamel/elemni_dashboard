@@ -1,8 +1,9 @@
 import { useTranslations } from "next-intl";
-import { Search, HelpCircle, Bell } from "lucide-react";
+import { Search, HelpCircle, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AccountMenu } from "@/features/shell/components/account-menu";
+import { NotificationDropdown } from "@/features/shell/components/notification-dropdown";
 import { LocaleToggle } from "@/features/shell/components/locale-toggle";
 import { ThemeToggle } from "@/features/shell/components/theme-toggle";
 
@@ -13,9 +14,10 @@ type TopbarProps = {
 export function Topbar({ teacherName }: TopbarProps) {
   const t = useTranslations("common");
   const tTop = useTranslations("topbar");
+  const tOverview = useTranslations("overview");
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center gap-md border-b border-border bg-surface px-lg">
+    <header className="sticky top-0 z-10 flex h-16 items-center gap-md border-b border-border bg-surface/90 backdrop-blur-md px-lg">
       <div className="relative max-w-md flex-1">
         <Search
           className="pointer-events-none absolute top-1/2 start-3 size-4 -translate-y-1/2 text-on-surface-muted"
@@ -31,6 +33,11 @@ export function Topbar({ teacherName }: TopbarProps) {
       </div>
 
       <div className="ms-auto flex items-center gap-1">
+        <Button size="sm" className="gap-1.5">
+          <Plus className="size-4" aria-hidden="true" />
+          <span>{tOverview("create_course")}</span>
+        </Button>
+
         <LocaleToggle />
         <ThemeToggle />
         <Button
@@ -41,18 +48,7 @@ export function Topbar({ teacherName }: TopbarProps) {
           <HelpCircle className="size-5" aria-hidden="true" />
         </Button>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={tTop("notifications")}
-          className="relative"
-        >
-          <Bell className="size-5" aria-hidden="true" />
-          <span
-            aria-hidden="true"
-            className="absolute end-2 top-2 size-2 rounded-full border border-surface bg-error"
-          />
-        </Button>
+        <NotificationDropdown />
 
         <AccountMenu teacherName={teacherName} />
       </div>
