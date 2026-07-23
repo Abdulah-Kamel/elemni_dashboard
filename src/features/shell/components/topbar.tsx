@@ -13,7 +13,6 @@ type TopbarProps = {
 
 export function Topbar({ teacherName }: TopbarProps) {
   const t = useTranslations("common");
-  const tTop = useTranslations("topbar");
   const tOverview = useTranslations("overview");
 
   return (

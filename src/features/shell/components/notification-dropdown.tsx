@@ -28,7 +28,7 @@ export function NotificationDropdown() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 mt-2 w-80 rounded-2xl border border-border bg-surface p-4 shadow-xl z-50">
+          <div className="absolute start-0 mt-2 w-80 rounded-2xl border border-border bg-surface p-4 shadow-xl z-50">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <span className="text-sm font-semibold text-foreground">
                 {tTop("notifications")}

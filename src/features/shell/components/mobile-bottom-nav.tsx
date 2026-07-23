@@ -18,7 +18,7 @@ export function MobileBottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 z-50 flex w-full items-center justify-around border-t border-border bg-surface px-2 py-1 md:hidden shadow-lg">
+    <nav className="fixed bottom-0 start-0 z-50 flex w-full items-center justify-around border-t border-border bg-surface px-2 py-1 md:hidden shadow-lg">
       {NAV_ITEMS.map(({ id, href, icon: Icon }) => {
         const isActive = pathname === href;
         return (

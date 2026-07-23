@@ -44,7 +44,7 @@ export function PlayerPreview({ watermarkEnabled, primaryColor }: PlayerPreviewP
           </button>
         </div>
 
-        <div className="absolute bottom-0 left-0 right-0 p-2">
+        <div className="absolute bottom-0 start-0 end-0 p-2">
           <div
             className="h-1 w-2/3 rounded-full"
             style={{ backgroundColor: primaryColor }}

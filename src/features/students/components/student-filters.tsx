@@ -25,14 +25,14 @@ export function StudentFilters({
     <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface-muted p-3 sm:flex-row sm:items-center">
       <div className="relative flex-1">
         <Search
-          className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-on-surface-muted"
+          className="pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2 text-on-surface-muted"
           aria-hidden="true"
         />
         <Input
           placeholder={t("search_placeholder")}
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="border-border bg-surface pl-8"
+          className="border-border bg-surface ps-8"
         />
       </div>
       <div className="flex gap-1.5" role="group" aria-label={t("filter_all")}>

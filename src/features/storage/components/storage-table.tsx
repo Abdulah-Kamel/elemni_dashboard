@@ -38,13 +38,13 @@ export function StorageTable() {
     <div className="rounded-2xl border border-border bg-surface shadow-xs">
       <div className="border-b border-border px-4 py-3">
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-on-surface-muted" />
+          <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-on-surface-muted" />
           <input
             type="text"
             placeholder="Search courses..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-lg border border-border bg-surface py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-on-surface-muted focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full rounded-lg border border-border bg-surface py-2 ps-9 pe-3 text-sm text-foreground placeholder:text-on-surface-muted focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
       </div>
