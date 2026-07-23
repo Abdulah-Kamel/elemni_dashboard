@@ -1,7 +1,8 @@
 import { setRequestLocale } from "next-intl/server";
-import { getTranslations } from "next-intl/server";
-import {Placeholder} from "@/features/shell/components/placeholder";
-import {verifySession} from "@/lib/auth/dal";
+import { Placeholder } from "@/features/shell/components/placeholder";
+import { verifySession } from "@/lib/auth/dal";
+import { StudentRoster } from "@/features/students/components/student-roster";
+import type { ApiError } from "@/lib/api/errors";
 
 export const dynamic = "force-dynamic";
 
@@ -16,12 +17,13 @@ export default async function StudentsPage({
   const user = await verifySession();
 
   if (!user) {
-    return <Placeholder state="error" error={{ type: "Unauthorized", status: 401, message: "No session" }} />;
+    return (
+      <Placeholder
+        state="error"
+        error={{ type: "Unauthorized", status: 401, message: "No session" } satisfies ApiError}
+      />
+    );
   }
 
-  return (
-    <Placeholder state="empty">
-      <span className="text-sm text-muted-foreground">{user.name}</span>
-    </Placeholder>
-  );
+  return <StudentRoster />;
 }
