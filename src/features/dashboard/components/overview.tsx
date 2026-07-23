@@ -156,21 +156,21 @@ function StatCard({
   const tint = STAT_TINTS[stat.id];
 
   return (
-    <Card className="flex flex-col gap-3 p-md card-hover">
+    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-md shadow-xs hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between">
         <div
           aria-hidden="true"
-          className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${tint}`}
+          className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${tint}`}
         >
           <Icon className="size-5" />
         </div>
         <TrendBadge trend={stat.trend} locale={locale} />
       </div>
       <div>
-        <p className="text-body-md text-body-md--line-height text-on-surface-muted">
+        <p className="text-xs font-semibold text-on-surface-muted">
           {label}
         </p>
-        <p className="mt-1 text-headline-md text-headline-md--line-height font-semibold text-foreground" dir="ltr">
+        <p className="mt-1 text-3xl font-bold text-primary" dir="ltr">
           {formatStatValue(stat, locale)}
         </p>
       </div>
@@ -190,7 +190,7 @@ function StatCard({
           }
         />
       </div>
-    </Card>
+    </div>
   );
 }
 
@@ -233,15 +233,21 @@ function PerformanceCard({
   legend: string;
 }) {
   return (
-    <Card className="flex flex-col gap-md p-md xl:col-span-2 card-hover">
+    <Card className="flex flex-col gap-md rounded-2xl border-border p-md shadow-xs xl:col-span-2 hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between">
         <h2 className="text-title-lg text-title-lg--line-height font-semibold text-foreground">
           {title}
         </h2>
-        <span className="inline-flex items-center gap-1.5 text-body-md text-body-md--line-height text-on-surface-muted">
-          <span aria-hidden="true" className="size-2 rounded-full bg-primary" />
-          <span>{legend}</span>
-        </span>
+        <div className="flex items-center gap-2">
+          <div className="flex bg-surface-muted rounded-lg p-0.5 gap-0.5">
+            <button className="px-3 py-1 text-xs font-semibold rounded-md bg-surface shadow-xs text-foreground">
+              Weekly
+            </button>
+            <button className="px-3 py-1 text-xs font-semibold rounded-md text-on-surface-muted hover:text-foreground">
+              Monthly
+            </button>
+          </div>
+        </div>
       </div>
       <div className="h-64">
         <MonthlyEarningsChart months={months} ariaLabel={legend} />
@@ -266,7 +272,7 @@ function TopPerformingCard({
   locale: string;
 }) {
   return (
-    <Card className="flex flex-col gap-md p-md card-hover">
+    <Card className="flex flex-col gap-md rounded-2xl border-border p-md shadow-xs hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between">
         <h2 className="text-title-lg text-title-lg--line-height font-semibold text-foreground">
           {title}
@@ -350,10 +356,12 @@ function StudentActivityCard({
   };
 }) {
   return (
-    <Card className="flex flex-col gap-md p-md">
-      <h2 className="text-title-lg text-title-lg--line-height font-semibold text-foreground">
-        {title}
-      </h2>
+    <Card className="flex flex-col rounded-2xl border-border shadow-xs overflow-hidden">
+      <div className="px-md pt-md pb-3 border-b border-border">
+        <h2 className="text-title-lg text-title-lg--line-height font-semibold text-foreground">
+          {title}
+        </h2>
+      </div>
       <Table>
         <TableHeader>
           <TableRow className="grid grid-cols-[1.4fr_1.4fr_1.6fr_0.8fr_0.8fr] gap-md bg-surface-muted px-md py-2.5 text-label-sm text-label-sm--line-height font-semibold text-on-surface-muted">
