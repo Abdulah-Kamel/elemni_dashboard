@@ -11,7 +11,7 @@ import { z } from "zod";
  */
 
 export const signInFormSchema = z.object({
-  email: z.string().min(1, "email_required").email("email_invalid"),
+  email: z.string().min(1, "email_required"),
   password: z.string().min(1, "password_required"),
 });
 export type SignInFormValues = z.infer<typeof signInFormSchema>;
@@ -31,7 +31,7 @@ export const signUpFormSchema = z
 export type SignUpFormValues = z.infer<typeof signUpFormSchema>;
 
 export const forgotPasswordFormSchema = z.object({
-  email: z.string().min(1, "email_required").email("email_invalid"),
+  email: z.string().min(1, "email_required"),
 });
 export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordFormSchema>;
 

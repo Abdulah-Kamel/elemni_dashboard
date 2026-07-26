@@ -5,7 +5,7 @@ export type UserRole = z.infer<typeof userRoleSchema>;
 
 export const userOutSchema = z.object({
   id: z.number().int(),
-  email: z.string().email(),
+  email: z.string(),
   name: z.string(),
   phone_number: z.string().nullable(),
   role: userRoleSchema,
@@ -61,7 +61,7 @@ export const loginResponseSchema = z.object({
   access_token: z.string(),
   refresh_token: z.string(),
   token_type: z.string().default("bearer"),
-  email: z.string().email(),
+  email: z.string(),
   name: z.string(),
 });
 export type LoginResponse = z.infer<typeof loginResponseSchema>;
@@ -73,7 +73,7 @@ export type LoginResponse = z.infer<typeof loginResponseSchema>;
  * Contract: openapi.json#/components/schemas/UserRegister
  */
 export const userRegisterSchema = z.object({
-  email: z.string().email(),
+  email: z.string(),
   password: z.string().min(8),
   name: z.string().min(1).max(100),
   phone_number: z.string().max(20),
@@ -83,7 +83,7 @@ export const userRegisterSchema = z.object({
 export type UserRegister = z.infer<typeof userRegisterSchema>;
 
 export const userLoginSchema = z.object({
-  email: z.string().email(),
+  email: z.string(),
   password: z.string().min(1),
 });
 export type UserLogin = z.infer<typeof userLoginSchema>;
@@ -92,7 +92,7 @@ export type UserLogin = z.infer<typeof userLoginSchema>;
  * Contract: openapi.json#/components/schemas/ForgotPasswordRequest
  */
 export const forgotPasswordRequestSchema = z.object({
-  email: z.string().email(),
+  email: z.string(),
 });
 export type ForgotPasswordRequest = z.infer<typeof forgotPasswordRequestSchema>;
 
