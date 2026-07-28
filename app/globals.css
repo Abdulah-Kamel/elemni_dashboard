@@ -230,6 +230,9 @@
 
     --border: #27272A;
     --border-strong: #3F3F46;
+
+    --color-chart-grid: var(--zinc-800);
+    --color-chart-axis: var(--zinc-500);
 }
 
 @layer base {
