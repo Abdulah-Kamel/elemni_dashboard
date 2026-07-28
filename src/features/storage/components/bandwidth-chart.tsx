@@ -14,6 +14,16 @@ import { Line } from "react-chartjs-2";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip);
 
+function cssVar(name: string): string {
+  if (typeof document === "undefined") return "#000000";
+  const el = document.createElement("div");
+  el.style.cssText = `${name}: var(${name}); position:absolute;pointer-events:none;opacity:0;`;
+  document.body.appendChild(el);
+  const val = getComputedStyle(el).getPropertyValue(name.slice(4, -1));
+  document.body.removeChild(el);
+  return val.trim() || "#000000";
+}
+
 const DAYS_7 = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const DAYS_30 = Array.from({ length: 30 }, (_, i) => `${i + 1}`);
 
@@ -72,7 +82,7 @@ export function BandwidthChart() {
                     0,
                     chartArea.bottom,
                   );
-                  gradient.addColorStop(0, "var(--color-primary)");
+                  gradient.addColorStop(0, cssVar("--color-primary"));
                   gradient.addColorStop(1, "transparent");
                   return gradient;
                 },
