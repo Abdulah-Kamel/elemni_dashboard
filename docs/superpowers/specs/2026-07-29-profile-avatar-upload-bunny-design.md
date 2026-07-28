@@ -30,6 +30,10 @@ Wire the teacher profile avatar to Bunny Storage using the existing presigned-UR
       └─ Sidebar + topbar consume the same query → avatar appears everywhere
 ```
 
+**Phase split (clarification):**
+- **This slice** ships: avatar crop modal, PATCH-`img`-on-save fix, cover-section removal, sidebar/topbar avatar wired against whatever profile source is currently available (initially the static `STATIC_PROFILE` until the backend endpoint lands).
+- **Pending backend**: `GET /api/v1/teachers/me` returning real data — once it lands, `queries.ts` swaps to it and the avatar immediately appears everywhere.
+
 **Boundaries:**
 - Server actions in `src/features/profile/actions.ts` are the only Bunny-auth touchpoint (via backend).
 - UI crop/preview state stays local to the page; only the final blob flows to the server.
@@ -38,7 +42,7 @@ Wire the teacher profile avatar to Bunny Storage using the existing presigned-UR
 ## 3. Components & Files
 
 **New:**
-- `src/features/profile/components/avatar-crop-modal.tsx` — client component wrapping `react-easy-crop`. Props: `{ src: string; open: boolean; onClose(): void; onApply(blob: Blob): void }`. Uses base-ui `Dialog` for the modal shell. Outputs 256×256 JPEG `Blob` (quality 0.9).
+- `src/features/profile/components/avatar-crop-modal.tsx` — client component wrapping `react-easy-crop`. Props: `{ src: string; open: boolean; onClose(): void; onApply(blob: Blob): void }`. Uses base-ui `Dialog` for the modal shell. Modal flow: zoom/pan controls → user clicks **Apply** once → modal produces a single 256×256 JPEG `Blob` (quality 0.9) via `canvas.toBlob()` and calls `onApply(blob)`, then closes. There is no separate in-modal confirm step.
 
 **Modified:**
 - `src/features/profile/components/teacher-profile-page.tsx`:
@@ -49,15 +53,19 @@ Wire the teacher profile avatar to Bunny Storage using the existing presigned-UR
   - Track `croppedBlob` separately from file selection.
 - `src/features/profile/queries.ts` — replace `STATIC_PROFILE` with real `apiFetch(endpoints.teachers.me, teacherProfileSchema, { cache: "no-store", next: { tags: ["profile"] } })` once backend ships the new GET endpoint.
 - `src/features/profile/schema.ts` — tighten `updateProfileRequestSchema.img` to `z.string().url().nullable().optional()` (was unconstrained string).
-- Sidebar component (verify exact path before editing — likely `src/components/layout/sidebar.tsx`) — render `<Avatar>` (from `src/components/ui/avatar.tsx`) reading the teacher profile query, fallback to initials via `AvatarFallback`.
-- Topbar component (likely `src/components/layout/topbar.tsx`) — small avatar top-right, same query source.
+- Sidebar component (verify exact path before editing — likely `src/components/layout/sidebar.tsx`) — render `<Avatar>` (from `src/components/ui/avatar.tsx`) reading the teacher profile, fallback to initials via `AvatarFallback`. Initials are computed as: take the first letter of `name`, then if `name` contains a space, append the first letter of the second word (e.g. "Jane Doe" → "JD"); otherwise use just the first letter. Empty `name` → render the `User` lucide icon.
+- Topbar component (likely `src/components/layout/topbar.tsx`) — small avatar top-right, same profile source.
+
+**Profile data flow for sidebar/topbar:**
+- Server components (e.g. the `(teacher)` layout) already render the sidebar/topbar. They can call `getTeacherProfile()` directly during render and pass the result down to client avatar subcomponents as a prop.
+- Alternatively, expose a client-safe `useTeacherProfile()` hook backed by `@tanstack/react-query` that fetches `GET /api/v1/teachers/me` from the client. Choose the simpler approach at planning time based on how the rest of the layout consumes server data.
 - `src/i18n/messages/en.json` + `ar.json` — add keys (see §6).
 
 **Removed:**
 - The entire cover/background block in `teacher-profile-page.tsx`.
 
 **Dependency:**
-- Add `react-easy-crop` to `package.json` (latest version compatible with React 19).
+- Add `react-easy-crop` to `package.json`. **Verify React 19 compatibility** before installing — `react-easy-crop` v5+ declares React 18 peer support; if React 19 fails, fall back to v5 with `--legacy-peer-deps` or pick an alternative cropper. The plan must surface this verification step.
 
 ## 4. Backend Contract & Types
 
@@ -70,13 +78,14 @@ Wire the teacher profile avatar to Bunny Storage using the existing presigned-UR
 
 **Frontend Zod additions:**
 ```ts
-// tightened — img must be a valid URL or null
+// tightened — img must be a valid URL or null when provided
 const updateProfileRequestSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   description: z.string().max(500).nullable().optional(),
   img: z.string().url().nullable().optional(),
 });
 ```
+Note: this is the **outbound** (PATCH) request schema. The static profile currently sets `img: null`, which remains valid. Once the backend ships `GET /me`, validate that the response satisfies `teacherProfileSchema.img: z.string().url().nullable()`; if the backend ever returns a relative path, prepend the CDN base URL on the client before display.
 
 **Crop modal output spec:**
 - `Blob` (image/jpeg), 256×256 px, quality 0.9.
@@ -149,3 +158,5 @@ New keys in `profile` namespace (`en.json` / `ar.json`):
 - [ ] No new Bunny env vars introduced; backend handles auth.
 - [ ] `react-easy-crop` added to `package.json`.
 - [ ] `getTeacherProfile` wired to real backend endpoint (pending backend).
+- [ ] React 19 / `react-easy-crop` peer-dependency verified (install succeeds; see §3 "Dependency").
+- [ ] Sidebar/topbar avatar initials follow the rule documented in §3 (first letter; second letter if multi-word name).
