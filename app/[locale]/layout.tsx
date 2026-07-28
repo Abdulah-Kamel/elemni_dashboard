@@ -3,6 +3,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { Cairo } from "next/font/google";
 import { HtmlLocale } from "@/components/html-locale";
+import { QueryProvider } from "@/providers/query-provider";
 
 const cairo = Cairo({
   subsets: ["arabic", "latin"],
@@ -29,7 +30,7 @@ export default async function LocaleLayout({
     <>
       <HtmlLocale locale={locale} isRtl={isRtl} fontVar={cairo.variable} />
       <NextIntlClientProvider messages={messages}>
-        {children}
+        <QueryProvider>{children}</QueryProvider>
       </NextIntlClientProvider>
     </>
   );
