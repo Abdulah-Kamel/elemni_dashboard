@@ -4,8 +4,8 @@ import { headers } from "next/headers";
 import { apiFetch } from "@/lib/api/client";
 import { z } from "zod";
 import { adminCreateTeacherRequestSchema, adminCreateTeacherResponseSchema, setPasswordResponseSchema, taxonomyCreateSchema, taxonomyUpdateSchema } from "@/features/admin/schema";
-import type { PublicTeacherOut } from "@/features/admin/schema";
-import { listTeachers as listTeachersQuery } from "@/features/admin/queries";
+import type { AdminTeacherListItem } from "@/features/admin/schema";
+import { listAdminTeachers } from "@/features/admin/queries";
 import { gradeOutSchema, streamOutSchema, subjectOutSchema } from "@/features/course-management/schema";
 import { logger } from "@/lib/logger";
 
@@ -77,8 +77,8 @@ export async function sendSetPasswordEmail(userId: number): Promise<
   }
 }
 
-export async function listTeachersAction(): Promise<PublicTeacherOut[]> {
-  return listTeachersQuery();
+export async function listTeachersAction(): Promise<AdminTeacherListItem[]> {
+  return listAdminTeachers();
 }
 
 type TaxonomyKind = "grades" | "streams" | "subjects";
