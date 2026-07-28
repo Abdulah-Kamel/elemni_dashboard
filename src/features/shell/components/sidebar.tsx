@@ -8,6 +8,10 @@ import {
   GraduationCap,
   Cloud,
   Settings,
+  User,
+  Layers,
+  GitBranch,
+  Library,
 } from "lucide-react";
 import { Link, usePathname } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
@@ -18,20 +22,30 @@ const PRIMARY_NAV = [
   { id: "overview", href: "/dashboard", icon: LayoutGrid },
   { id: "my_courses", href: "/courses", icon: BookOpen },
   { id: "students", href: "/students", icon: GraduationCap },
+  { id: "profile", href: "/profile", icon: User },
   { id: "storage", href: "/storage", icon: Cloud },
   { id: "settings", href: "/settings", icon: Settings },
+] as const;
+
+const ADMIN_NAV = [
+  { id: "teachers", href: "/admin/teachers", icon: GraduationCap },
+  { id: "grades", href: "/admin/grades", icon: Layers },
+  { id: "streams", href: "/admin/streams", icon: GitBranch },
+  { id: "subjects", href: "/admin/subjects", icon: Library },
 ] as const;
 
 type SidebarProps = {
   teacherName?: string;
   teacherRole?: string;
+  userRole?: string;
 };
 
-export function Sidebar({ teacherName, teacherRole }: SidebarProps) {
+export function Sidebar({ teacherName, teacherRole, userRole }: SidebarProps) {
   const tNav = useTranslations("sidebar");
   const tCommon = useTranslations("common");
   const pathname = usePathname();
   const [navRef] = useAutoAnimate({ duration: 200 });
+  const navItems = userRole === "ADMIN" ? ADMIN_NAV : PRIMARY_NAV;
 
   return (
     <aside
@@ -60,7 +74,7 @@ export function Sidebar({ teacherName, teacherRole }: SidebarProps) {
         aria-label={tCommon("nav_label")}
       >
         <ul ref={navRef} className="flex flex-col gap-0.5">
-          {PRIMARY_NAV.map(({ id, href, icon: Icon }) => {
+          {navItems.map(({ id, href, icon: Icon }) => {
             const isActive =
               pathname === href || pathname.startsWith(`${href}/`);
             return (
@@ -77,7 +91,6 @@ export function Sidebar({ teacherName, teacherRole }: SidebarProps) {
                 >
                   <Icon
                     className="size-5 shrink-0"
-                    fill={isActive ? "currentColor" : "none"}
                     aria-hidden="true"
                   />
                   <span className="truncate">{tNav(id)}</span>
