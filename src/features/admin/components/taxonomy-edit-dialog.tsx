@@ -33,9 +33,13 @@ export function TaxonomyEditDialog({ kind, fields, item, open, onOpenChange }: P
   const handleSubmit = async () => {
     if (!item) return;
     try {
-      await update.mutateAsync({ id: item.id, data });
-      toast.success(t("updated"));
-      onOpenChange(false);
+      const outcome = await update.mutateAsync({ id: item.id, data });
+      if (outcome.success) {
+        toast.success(t("updated"));
+        onOpenChange(false);
+      } else {
+        toast.error(outcome.error.message);
+      }
     } catch (err) {
       const msg = err && typeof err === "object" && "message" in err ? (err as { message: string }).message : "Error";
       toast.error(msg);

@@ -5,7 +5,7 @@ import { apiFetch } from "@/lib/api/client";
 import { z } from "zod";
 import { adminCreateTeacherRequestSchema, adminCreateTeacherResponseSchema, setPasswordResponseSchema, taxonomyCreateSchema, taxonomyUpdateSchema } from "@/features/admin/schema";
 import type { AdminTeacherListItem } from "@/features/admin/schema";
-import { listAdminTeachers } from "@/features/admin/queries";
+import { listAdminTeachers as listTeachersQuery } from "@/features/admin/queries";
 import { gradeOutSchema, streamOutSchema, subjectOutSchema } from "@/features/course-management/schema";
 import { logger } from "@/lib/logger";
 
@@ -78,7 +78,7 @@ export async function sendSetPasswordEmail(userId: number): Promise<
 }
 
 export async function listTeachersAction(): Promise<AdminTeacherListItem[]> {
-  return listAdminTeachers();
+  return listTeachersQuery();
 }
 
 type TaxonomyKind = "grades" | "streams" | "subjects";
@@ -120,6 +120,20 @@ export async function updateTaxonomyItem(kind: TaxonomyKind, id: number, data: u
   } catch (err: unknown) {
     const elapsed = Math.round(performance.now() - start);
     return handleActionResultErr(err, elapsed, "updateTaxonomyItem");
+  }
+}
+
+export async function deleteTeacher(id: number): Promise<ActionResult<void>> {
+  const start = performance.now();
+  logger.action("deleteTeacher", { id });
+  try {
+    await apiFetch(`/api/v1/admin/teachers/${id}`, z.void(), { method: "DELETE" });
+    const elapsed = Math.round(performance.now() - start);
+    logger.actionDone("deleteTeacher", { id }, elapsed);
+    return { success: true, data: undefined };
+  } catch (err: unknown) {
+    const elapsed = Math.round(performance.now() - start);
+    return handleActionResultErr(err, elapsed, "deleteTeacher");
   }
 }
 

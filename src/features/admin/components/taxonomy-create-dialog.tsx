@@ -23,10 +23,14 @@ export function TaxonomyCreateDialog({ kind, fields, open, onOpenChange }: Props
 
   const handleSubmit = async () => {
     try {
-      await create.mutateAsync(data);
-      toast.success(t("created"));
-      setData({});
-      onOpenChange(false);
+      const outcome = await create.mutateAsync(data);
+      if (outcome.success) {
+        toast.success(t("created"));
+        setData({});
+        onOpenChange(false);
+      } else {
+        toast.error(outcome.error.message);
+      }
     } catch (err) {
       const msg = err && typeof err === "object" && "message" in err ? (err as { message: string }).message : "Error";
       toast.error(msg);

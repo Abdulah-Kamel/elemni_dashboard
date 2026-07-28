@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminKeys } from "@/features/admin/query-keys";
-import { listTeachersAction, createTeacher } from "@/features/admin/actions";
+import { listTeachersAction, createTeacher, deleteTeacher } from "@/features/admin/actions";
 
 export function useTeachersQuery() {
   return useQuery({
@@ -20,5 +20,10 @@ export function useTeacherMutations() {
     onSuccess: invalidate,
   });
 
-  return { create };
+  const remove = useMutation({
+    mutationFn: (id: number) => deleteTeacher(id),
+    onSuccess: invalidate,
+  });
+
+  return { create, remove };
 }

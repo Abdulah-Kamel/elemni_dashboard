@@ -23,9 +23,13 @@ export function TaxonomyDeleteDialog({ kind, item, open, onOpenChange }: Props) 
   const handleDelete = async () => {
     if (!item) return;
     try {
-      await remove.mutateAsync(item.id);
-      toast.success(t("deleted"));
-      onOpenChange(false);
+      const outcome = await remove.mutateAsync(item.id);
+      if (outcome.success) {
+        toast.success(t("deleted"));
+        onOpenChange(false);
+      } else {
+        toast.error(outcome.error.message);
+      }
     } catch (err) {
       const msg = err && typeof err === "object" && "message" in err ? (err as { message: string }).message : "Error";
       toast.error(msg);

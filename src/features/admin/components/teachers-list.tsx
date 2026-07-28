@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { Plus, Search, ChevronRight, ChevronLeft } from "lucide-react";
+import { Plus, Search, ChevronRight, ChevronLeft, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -115,6 +115,7 @@ export function TeachersList() {
               <th className="px-4 py-3">{t("field_call_status")}</th>
               <th className="px-4 py-3">{t("field_interest_level")}</th>
               <th className="px-4 py-3">{t("table_level")}</th>
+              <th className="px-4 py-3 w-12" />
             </tr>
           </thead>
           <tbody>
@@ -184,6 +185,17 @@ export function TeachersList() {
                     ) : (
                       <span className="text-on-surface-muted">—</span>
                     )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-8 text-on-surface-muted hover:text-destructive"
+                      onClick={() => setDeleteTeacher({ id: tchr.id, name: tchr.name })}
+                      aria-label={t("dialog_confirm_delete")}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
                   </td>
                 </tr>
               );
