@@ -26,3 +26,17 @@ export const uploadUrlResponseSchema = z.object({
   key: z.string(),
 });
 export type UploadUrlResponse = z.infer<typeof uploadUrlResponseSchema>;
+
+export const tusCredentialsSchema = z.object({
+  video_id: z.string(),
+  library_id: z.number(),
+  expiration_time: z.number(),
+  signature: z.string(),
+  embed_url: z.string(),
+});
+export type TusCredentials = z.infer<typeof tusCredentialsSchema>;
+
+export const videoConfirmRequestSchema = z.object({
+  video_id: z.string(),
+});
+export type VideoConfirmRequest = z.infer<typeof videoConfirmRequestSchema>;

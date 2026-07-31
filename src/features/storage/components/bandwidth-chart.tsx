@@ -72,7 +72,7 @@ export function BandwidthChart() {
             datasets: [
               {
                 data: values,
-                borderColor: cssVar("--color-primary"),
+                borderColor: "var(--color-chart-1)",
                 backgroundColor: (ctx) => {
                   if (!ctx.chart.chartArea) return "transparent";
                   const { ctx: canvasCtx, chartArea } = ctx.chart;
@@ -82,8 +82,8 @@ export function BandwidthChart() {
                     0,
                     chartArea.bottom,
                   );
-                  gradient.addColorStop(0, cssVar("--color-primary"));
-                  gradient.addColorStop(1, cssVar("--color-primary-tint"));
+                  gradient.addColorStop(0, cssVar("--color-chart-1"));
+                  gradient.addColorStop(1, "transparent");
                   return gradient;
                 },
                 fill: true,

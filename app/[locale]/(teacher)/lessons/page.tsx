@@ -21,17 +21,10 @@ export default async function LessonsPage({
     return <Placeholder state="error" error={{ type: "Unauthorized", status: 401, message: "No session" }} />;
   }
 
+  let courses, t;
   try {
-    const courses = await apiFetch("/api/v1/courses", courseOutSchema.array());
-    const t = await getTranslations({ locale, namespace: "lessons" });
-
-    return (
-      <Placeholder state="success">
-        <h1 className="text-lg font-medium text-foreground">
-          {t("course_count", { count: courses.length })}
-        </h1>
-      </Placeholder>
-    );
+    courses = await apiFetch("/api/v1/courses", courseOutSchema.array());
+    t = await getTranslations({ locale, namespace: "lessons" });
   } catch (err) {
     const errorType = (err as Error)?.name?.replace("ApiError:", "") ?? "Upstream";
     return (
@@ -41,4 +34,12 @@ export default async function LessonsPage({
       />
     );
   }
+
+  return (
+    <Placeholder state="success">
+      <h1 className="text-lg font-medium text-foreground">
+        {t("course_count", { count: courses.length })}
+      </h1>
+    </Placeholder>
+  );
 }

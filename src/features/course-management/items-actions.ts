@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 import { apiFetch } from "@/lib/api/client";
 import { env } from "@/env";
 import { endpoints } from "@/lib/api/endpoints";
-import { itemOutSchema, itemCreateSchema, itemUpdateSchema, uploadUrlResponseSchema } from "@/features/course-management/items-schema";
+import { itemOutSchema, itemCreateSchema, itemUpdateSchema, uploadUrlResponseSchema, tusCredentialsSchema } from "@/features/course-management/items-schema";
 import { reorderItemSchema } from "@/features/course-management/chapters-schema";
 import type { ItemOut, ItemCreate, ItemUpdate } from "@/features/course-management/items-schema";
 import type { ReorderItem } from "@/features/course-management/chapters-schema";
@@ -295,6 +295,65 @@ export async function confirmUpload(
       return { success: false, error: err as { type: string; message: string; fields?: string[] } };
     }
     logger.actionError("confirmUpload", err, elapsed);
+    return { success: false, error: { type: "Upstream", message: "Network error" } };
+  }
+}
+
+export async function requestVideoUpload(
+  courseId: number,
+  lessonId: number,
+  itemId: number,
+  title: string,
+): Promise<ActionResult<{ video_id: string; library_id: number; expiration_time: number; signature: string; embed_url: string }>> {
+  logger.action("requestVideoUpload", { courseId, lessonId, itemId, title });
+  const start = performance.now();
+
+  try {
+    const result = await apiFetch(
+      endpoints.courses.items.requestVideoUpload(courseId, lessonId, itemId),
+      tusCredentialsSchema,
+      { method: "POST", body: JSON.stringify({ title }) },
+    );
+    const elapsed = Math.round(performance.now() - start);
+    logger.actionDone("requestVideoUpload", { video_id: result.video_id }, elapsed);
+    return { success: true, data: result };
+  } catch (err: unknown) {
+    const elapsed = Math.round(performance.now() - start);
+    if (err && typeof err === "object" && "type" in err) {
+      logger.actionError("requestVideoUpload", err, elapsed);
+      return { success: false, error: err as { type: string; message: string; fields?: string[] } };
+    }
+    logger.actionError("requestVideoUpload", err, elapsed);
+    return { success: false, error: { type: "Upstream", message: "Network error" } };
+  }
+}
+
+export async function confirmVideoUpload(
+  courseId: number,
+  lessonId: number,
+  itemId: number,
+  videoId: string,
+): Promise<ActionResult<ItemOut>> {
+  logger.action("confirmVideoUpload", { courseId, lessonId, itemId, videoId });
+  const start = performance.now();
+
+  try {
+    const result = await apiFetch(
+      endpoints.courses.items.confirmVideoUpload(courseId, lessonId, itemId),
+      itemOutSchema,
+      { method: "POST", body: JSON.stringify({ video_id: videoId }) },
+    );
+    revalidateTag(`items:${courseId}:${lessonId}`, "default");
+    const elapsed = Math.round(performance.now() - start);
+    logger.actionDone("confirmVideoUpload", { itemId: result.id }, elapsed);
+    return { success: true, data: result };
+  } catch (err: unknown) {
+    const elapsed = Math.round(performance.now() - start);
+    if (err && typeof err === "object" && "type" in err) {
+      logger.actionError("confirmVideoUpload", err, elapsed);
+      return { success: false, error: err as { type: string; message: string; fields?: string[] } };
+    }
+    logger.actionError("confirmVideoUpload", err, elapsed);
     return { success: false, error: { type: "Upstream", message: "Network error" } };
   }
 }

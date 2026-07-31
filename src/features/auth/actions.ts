@@ -128,6 +128,17 @@ export async function signInAction(
   const elapsed = Math.round(performance.now() - start)
   logger.actionDone("signInAction", undefined, elapsed)
 
+  // Fetch the user profile to determine role-based redirect.
+  try {
+    const user = await apiFetch(endpoints.auth.me, userOutSchema, { noAuth: false })
+    if (user.role === "ADMIN") {
+      redirectOrRethrow(() => redirect(`/${locale}/admin`))
+    }
+  } catch (err) {
+    if (isRedirectError(err)) throw err
+    // fall through to default redirect
+  }
+
   // Outside the try — the redirect must propagate, not become an error state.
   redirectOrRethrow(() => redirect(readSafeNext(formData, locale)))
 }

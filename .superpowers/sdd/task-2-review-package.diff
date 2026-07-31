@@ -1,0 +1,8 @@
+﻿Commits:
+543eac0 feat: tighten profile img field to url().nullable()
+
+Files changed:
+ src/features/profile/schema.ts | 19 +++++++++++++++++++  1 file changed, 19 insertions(+)
+
+Diff:
+diff --git a/src/features/profile/schema.ts b/src/features/profile/schema.ts new file mode 100644 index 0000000..a7e67c9 --- /dev/null +++ b/src/features/profile/schema.ts @@ -0,0 +1,19 @@ +import { z } from "zod"; + +export const teacherProfileSchema = z.object({ +  id: z.number(), +  name: z.string(), +  email: z.string(), +  slug: z.string(), +  phone_number: z.string().nullable(), +  description: z.string().nullable(), +  img: z.string().nullable(), +}); +export type TeacherProfile = z.infer<typeof teacherProfileSchema>; + +export const updateProfileRequestSchema = z.object({ +  name: z.string().min(1, "Name is required").max(100), +  description: z.string().max(500).nullable().optional(), +  img: z.string().url().nullable().optional(), +}); +export type UpdateProfileRequest = z.infer<typeof updateProfileRequestSchema>;

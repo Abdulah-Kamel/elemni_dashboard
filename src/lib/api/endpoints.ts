@@ -32,6 +32,10 @@ export const endpoints = {
         `/api/v1/courses/${courseId}/lessons/${lessonId}/items/reorder`,
       uploadVideo: (courseId: number, lessonId: number, itemId: number) =>
         `/api/v1/courses/${courseId}/lessons/${lessonId}/items/${itemId}/upload-video`,
+      requestVideoUpload: (courseId: number, lessonId: number, itemId: number) =>
+        `/api/v1/courses/${courseId}/lessons/${lessonId}/items/${itemId}/request-video-upload`,
+      confirmVideoUpload: (courseId: number, lessonId: number, itemId: number) =>
+        `/api/v1/courses/${courseId}/lessons/${lessonId}/items/${itemId}/confirm-video-upload`,
       requestUploadUrl: (courseId: number, lessonId: number, itemId: number) =>
         `/api/v1/courses/${courseId}/lessons/${lessonId}/items/${itemId}/request-upload-url`,
       confirmUpload: (courseId: number, lessonId: number, itemId: number) =>
@@ -42,5 +46,9 @@ export const endpoints = {
     subjects: "/api/v1/subjects",
     grades: "/api/v1/grades",
     streams: "/api/v1/streams",
+  },
+  teachers: {
+    me: "/api/v1/teachers/me",
+    requestImageUpload: "/api/v1/teachers/me/request-image-upload",
   },
 } as const;
