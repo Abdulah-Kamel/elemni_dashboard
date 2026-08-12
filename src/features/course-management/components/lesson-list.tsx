@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useTranslations } from "next-intl";
 import {
   DndContext,
   DragOverlay,
@@ -12,7 +13,6 @@ import {
   useSensors,
   type DragStartEvent,
   type DragEndEvent,
-  type DragCancelEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -21,7 +21,6 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus } from "lucide-react";
@@ -51,6 +50,7 @@ function SortableLessonCard({
   onDelete,
   itemCount,
   status,
+  nested,
 }: {
   lesson: LessonOut;
   courseId: number;
@@ -58,6 +58,7 @@ function SortableLessonCard({
   onDelete: (lessonId: number) => void;
   itemCount?: number;
   status?: "ready" | null;
+  nested?: boolean;
 }) {
   const {
     attributes,
@@ -83,6 +84,7 @@ function SortableLessonCard({
         onDelete={onDelete}
         itemCount={itemCount}
         status={status}
+        nested={nested}
         dragHandleProps={{
           ...(attributes as React.HTMLAttributes<HTMLButtonElement>),
           ...(listeners as React.HTMLAttributes<HTMLButtonElement>),
@@ -97,12 +99,17 @@ export function LessonList({
   courseId,
   chapterId,
   error: initialError,
+  nested = false,
+  onCountChange,
 }: {
   initialLessons: LessonOut[];
   courseId: number;
   chapterId?: number;
   error: string | null;
+  nested?: boolean;
+  onCountChange?: (count: number) => void;
 }) {
+  const t = useTranslations("lessons");
   const [lessons, setLessons] = useState(initialLessons);
   const [error, setError] = useState<string | null>(initialError);
   const [createOpen, setCreateOpen] = useState(false);
@@ -112,13 +119,15 @@ export function LessonList({
   const [itemsMap, setItemsMap] = useState<
     Record<number, { count: number; status: "ready" | null }>
   >({});
-  const [loadingItems, setLoadingItems] = useState(true);
   const previousLessonsRef = useRef(initialLessons);
   const [parentRef] = useAutoAnimate({ duration: 200 });
 
   useEffect(() => {
+    onCountChange?.(lessons.length);
+  }, [lessons.length, onCountChange]);
+
+  useEffect(() => {
     async function fetchItems() {
-      setLoadingItems(true);
       const results: Record<
         number,
         { count: number; status: "ready" | null }
@@ -129,20 +138,19 @@ export function LessonList({
           const result = await listItems(courseId, lesson.id);
           if (result.success) {
             const items = result.data;
-            const hasReady = items.some(
+            const allReady = items.length > 0 && items.every(
               (item) =>
                 item.bunny_stream_id !== null ||
                 item.document_path !== null ||
                 item.exam_id !== null,
             );
-            const status = hasReady ? "ready" as const : null;
+            const status = allReady ? "ready" as const : null;
             results[lesson.id] = { count: items.length, status };
           }
         }),
       );
 
       setItemsMap(results);
-      setLoadingItems(false);
     }
 
     fetchItems();
@@ -191,7 +199,7 @@ export function LessonList({
     [lessons, courseId, chapterId],
   );
 
-  const handleDragCancel = useCallback((_event: DragCancelEvent) => {
+  const handleDragCancel = useCallback(() => {
     setActiveId(null);
   }, []);
 
@@ -238,28 +246,18 @@ export function LessonList({
       <div className="text-center py-4">
         <p className="text-sm text-destructive mb-3">{error}</p>
         <Button variant="outline" onClick={() => window.location.reload()}>
-          Retry
+          {t("retry")}
         </Button>
       </div>
     );
   }
 
-  if (loadingItems) {
-    return (
-    <div ref={parentRef} className="space-y-2">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton key={i} className="h-16 w-full rounded-lg" />
-        ))}
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-2">
+    <div ref={parentRef} className={nested ? "space-y-2" : "space-y-3"}>
       {lessons.length === 0 ? (
         <div className="text-center py-8">
           <p className="text-sm text-muted-foreground mb-3">
-            No lessons yet
+            {t("empty")}
           </p>
           <Button
             variant="outline"
@@ -270,7 +268,7 @@ export function LessonList({
             }}
           >
             <Plus className="me-1 size-3.5" />
-            New Lesson
+            {t("create")}
           </Button>
         </div>
       ) : (
@@ -294,6 +292,7 @@ export function LessonList({
                 onDelete={handleDeleted}
                 itemCount={itemsMap[lesson.id]?.count}
                 status={itemsMap[lesson.id]?.status ?? null}
+                nested={nested}
               />
             ))}
           </SortableContext>
@@ -322,7 +321,7 @@ export function LessonList({
           }}
         >
           <Plus className="me-1 size-3.5" />
-          New Lesson
+          {t("create")}
         </Button>
       )}
 
@@ -335,15 +334,15 @@ export function LessonList({
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>New Lesson</DialogTitle>
+            <DialogTitle>{t("create")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Title</label>
+              <label className="text-sm font-medium">{t("title_label")}</label>
               <Input
                 value={createTitle}
                 onChange={(e) => setCreateTitle(e.target.value)}
-                placeholder="Lesson title"
+                placeholder={t("create_title_placeholder")}
                 disabled={submitting}
                 autoFocus
                 onKeyDown={(e) => {
@@ -360,7 +359,7 @@ export function LessonList({
             <DialogClose
               render={
                 <Button variant="outline" disabled={submitting}>
-                  Cancel
+                  {t("cancel")}
                 </Button>
               }
             />
@@ -368,7 +367,7 @@ export function LessonList({
               onClick={handleCreate}
               disabled={submitting || !createTitle.trim()}
             >
-              {submitting ? "Creating..." : "Create"}
+              {submitting ? t("creating") : t("create")}
             </Button>
           </DialogFooter>
         </DialogContent>

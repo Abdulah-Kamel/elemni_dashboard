@@ -13,7 +13,6 @@ import {
   useSensors,
   type DragStartEvent,
   type DragEndEvent,
-  type DragCancelEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -23,7 +22,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2 } from "lucide-react";
+import { BookOpen, Plus, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -38,17 +37,22 @@ import { createChapter, reorderChapters } from "@/features/course-management/cha
 import { applyOptimisticReorder, buildReorderPayload, rollbackReorder } from "@/features/course-management/reorder-utils";
 import { toast } from "sonner";
 import type { ChapterOut } from "@/features/course-management/chapters-schema";
+import type { LessonOut } from "@/features/course-management/lessons-schema";
 
-function SortableLessonCard({
+function SortableChapterCard({
   chapter,
   courseId,
-  lessonCount,
+  initialLessons,
+  lessonsError,
+  defaultExpanded,
   onUpdate,
   onDelete,
 }: {
   chapter: ChapterOut;
   courseId: number;
-  lessonCount?: number;
+  initialLessons: LessonOut[];
+  lessonsError: string | null;
+  defaultExpanded?: boolean;
   onUpdate: (chapter: ChapterOut) => void;
   onDelete: (chapterId: number) => void;
 }) {
@@ -74,9 +78,15 @@ function SortableLessonCard({
       <ChapterCard
         chapter={chapter}
         courseId={courseId}
-        lessonCount={lessonCount}
+        initialLessons={initialLessons}
+        lessonsError={lessonsError}
+        defaultExpanded={defaultExpanded}
         onUpdate={onUpdate}
         onDelete={onDelete}
+        dragHandleProps={{
+          ...(attributes as React.HTMLAttributes<HTMLButtonElement>),
+          ...(listeners as React.HTMLAttributes<HTMLButtonElement>),
+        }}
       />
     </div>
   );
@@ -84,10 +94,14 @@ function SortableLessonCard({
 
 export function ChapterList({
   initialChapters,
+  initialLessonsByChapter = {},
+  lessonErrorsByChapter = {},
   courseId,
   error: initialError,
 }: {
   initialChapters: ChapterOut[];
+  initialLessonsByChapter?: Record<number, LessonOut[]>;
+  lessonErrorsByChapter?: Record<number, string | null>;
   courseId: number;
   error: string | null;
 }) {
@@ -149,7 +163,7 @@ export function ChapterList({
     [chapters, courseId, t],
   );
 
-  const handleDragCancel = useCallback((_event: DragCancelEvent) => {
+  const handleDragCancel = useCallback(() => {
     setActiveId(null);
   }, []);
 
@@ -193,7 +207,7 @@ export function ChapterList({
       <div className="text-center py-8">
         <p className="text-sm text-destructive mb-4">{error}</p>
         <Button variant="outline" onClick={() => window.location.reload()}>
-          {t("error_upstream")}
+          {t("retry")}
         </Button>
       </div>
     );
@@ -207,11 +221,13 @@ export function ChapterList({
         </p>
       ) : chapters.length === 1 ? (
         chapters.map((chapter) => (
-          <SortableLessonCard
+          <ChapterCard
             key={chapter.id}
             chapter={chapter}
             courseId={courseId}
-            lessonCount={undefined}
+            initialLessons={initialLessonsByChapter[chapter.id] ?? []}
+            lessonsError={lessonErrorsByChapter[chapter.id] ?? null}
+            defaultExpanded
             onUpdate={handleUpdated}
             onDelete={handleDeleted}
           />
@@ -226,11 +242,13 @@ export function ChapterList({
         >
           <SortableContext items={chapterIds} strategy={verticalListSortingStrategy}>
             {chapters.map((chapter) => (
-              <SortableLessonCard
+              <SortableChapterCard
                 key={chapter.id}
                 chapter={chapter}
                 courseId={courseId}
-                lessonCount={undefined}
+                initialLessons={initialLessonsByChapter[chapter.id] ?? []}
+                lessonsError={lessonErrorsByChapter[chapter.id] ?? null}
+                defaultExpanded={chapter.id === chapters[0]?.id}
                 onUpdate={handleUpdated}
                 onDelete={handleDeleted}
               />
@@ -239,14 +257,16 @@ export function ChapterList({
 
           <DragOverlay>
             {activeChapter ? (
-              <div className="opacity-90 shadow-lg rounded-lg border bg-card">
-                <ChapterCard
-                  chapter={activeChapter}
-                  courseId={courseId}
-                  lessonCount={undefined}
-                  onUpdate={handleUpdated}
-                  onDelete={handleDeleted}
-                />
+              <div className="flex min-h-16 items-center gap-3 rounded-xl border bg-card px-4 opacity-95 shadow-lg">
+                <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <BookOpen className="size-4" />
+                </span>
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    {t("chapter_number", { n: activeChapter.order })}
+                  </p>
+                  <p className="font-semibold">{activeChapter.title}</p>
+                </div>
               </div>
             ) : null}
           </DragOverlay>

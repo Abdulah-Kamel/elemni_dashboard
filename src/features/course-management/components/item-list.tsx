@@ -50,6 +50,7 @@ function SortableItemCard({
   onUpdate: (item: ItemOut) => void;
   onDelete: (itemId: number) => void;
 }) {
+  const t = useTranslations("items");
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: String(item.id),
   });
@@ -68,7 +69,7 @@ function SortableItemCard({
           className="cursor-grab active:cursor-grabbing touch-none"
           {...attributes}
           {...listeners}
-          aria-label="Drag to reorder"
+          aria-label={t("drag_handle_label")}
         >
           <GripVertical className="size-3.5 text-on-surface-subtle" />
         </button>
@@ -117,10 +118,8 @@ export function ItemList({
 
   useEffect(() => {
     if (_initialItems) {
-      setLoading(false);
       return;
     }
-    setLoading(true);
     listItems(courseId, lessonId)
       .then((result) => {
         if (result.success) {
@@ -136,6 +135,25 @@ export function ItemList({
         setLoading(false);
       });
   }, [courseId, lessonId, _initialItems, t]);
+
+  const hasProcessingVideo = items.some(
+    (item) =>
+      item.bunny_stream_id !== null &&
+      item.bunny_stream_status !== "ready" &&
+      item.bunny_stream_status !== "failed",
+  );
+
+  useEffect(() => {
+    if (!hasProcessingVideo) return;
+
+    const interval = window.setInterval(() => {
+      void listItems(courseId, lessonId).then((result) => {
+        if (result.success) setItems(result.data);
+      });
+    }, 10_000);
+
+    return () => window.clearInterval(interval);
+  }, [courseId, lessonId, hasProcessingVideo]);
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveId(String(event.active.id));

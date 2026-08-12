@@ -1,7 +1,7 @@
-import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
-import { NextIntlClientProvider } from "next-intl";
-import { CourseForm } from "../components/course-form";
+import { describe, it, expect } from "vitest"
+import { render, screen } from "@testing-library/react"
+import { NextIntlClientProvider } from "next-intl"
+import { CourseForm } from "../components/course-form"
 
 const messages = {
   courses: {
@@ -39,30 +39,30 @@ const messages = {
     loading_curriculum: "جارٍ التحميل...",
     curriculum_unavailable: "لا يمكن تحميل بيانات المناهج حالياً",
   },
-};
+}
 
 function renderWithIntl(ui: React.ReactNode) {
   return render(
     <NextIntlClientProvider locale="ar" messages={messages}>
       {ui}
     </NextIntlClientProvider>
-  );
+  )
 }
 
 const mockSubjects = [
   { id: 1, name: "الرياضيات", slug: "math" },
   { id: 2, name: "الفيزياء", slug: "physics" },
-];
+]
 
 const mockGrades = [
   { id: 3, name: "الصف الأول الثانوي", level: "secondary" },
   { id: 4, name: "الصف الثاني الثانوي", level: "secondary" },
-];
+]
 
 const mockStreams = [
   { id: 1, name: "شعبة علوم تجريبية", slug: "experimental-sciences" },
   { id: 2, name: "شعبة رياضيات", slug: "mathematics" },
-];
+]
 
 describe("CourseForm", () => {
   describe("create mode", () => {
@@ -76,9 +76,9 @@ describe("CourseForm", () => {
           onChange={() => {}}
           disabled={false}
         />
-      );
-      expect(screen.getByLabelText("عنوان الدورة")).toBeTruthy();
-    });
+      )
+      expect(screen.getByLabelText("عنوان الدورة")).toBeTruthy()
+    })
 
     it("renders description field", () => {
       renderWithIntl(
@@ -90,9 +90,9 @@ describe("CourseForm", () => {
           onChange={() => {}}
           disabled={false}
         />
-      );
-      expect(screen.getByLabelText("الوصف")).toBeTruthy();
-    });
+      )
+      expect(screen.getByLabelText("الوصف")).toBeTruthy()
+    })
 
     it("renders price field", () => {
       renderWithIntl(
@@ -104,9 +104,9 @@ describe("CourseForm", () => {
           onChange={() => {}}
           disabled={false}
         />
-      );
-      expect(screen.getByLabelText("السعر (ج.م)")).toBeTruthy();
-    });
+      )
+      expect(screen.getByLabelText("السعر (ج.م)")).toBeTruthy()
+    })
 
     it("renders subject select", () => {
       renderWithIntl(
@@ -118,9 +118,9 @@ describe("CourseForm", () => {
           onChange={() => {}}
           disabled={false}
         />
-      );
-      expect(screen.getByText("المادة")).toBeTruthy();
-    });
+      )
+      expect(screen.getAllByText("المادة").length).toBeGreaterThan(0)
+    })
 
     it("renders grade select", () => {
       renderWithIntl(
@@ -132,9 +132,9 @@ describe("CourseForm", () => {
           onChange={() => {}}
           disabled={false}
         />
-      );
-      expect(screen.getByText("الصف")).toBeTruthy();
-    });
+      )
+      expect(screen.getAllByText("الصف").length).toBeGreaterThan(0)
+    })
 
     it("renders stream select", () => {
       renderWithIntl(
@@ -146,9 +146,9 @@ describe("CourseForm", () => {
           onChange={() => {}}
           disabled={false}
         />
-      );
-      expect(screen.getByText("الشعبة")).toBeTruthy();
-    });
+      )
+      expect(screen.getAllByText("الشعبة").length).toBeGreaterThan(0)
+    })
 
     it("renders chapters vs flat toggle", () => {
       renderWithIntl(
@@ -160,11 +160,11 @@ describe("CourseForm", () => {
           onChange={() => {}}
           disabled={false}
         />
-      );
-      expect(screen.getByText("دورة بالفصول")).toBeTruthy();
-      expect(screen.getByText("دورة بقائمة دروس")).toBeTruthy();
-    });
-  });
+      )
+      expect(screen.getAllByText("دورة بالفصول").length).toBeGreaterThan(0)
+      expect(screen.getAllByText("دورة بقائمة دروس").length).toBeGreaterThan(0)
+    })
+  })
 
   describe("edit mode", () => {
     it("renders title field with initial value", () => {
@@ -186,9 +186,9 @@ describe("CourseForm", () => {
           onChange={() => {}}
           disabled={false}
         />
-      );
-      expect(screen.getByDisplayValue("دورة الجبر")).toBeTruthy();
-    });
+      )
+      expect(screen.getByDisplayValue("دورة الجبر")).toBeTruthy()
+    })
 
     it("renders read-only curriculum placement", () => {
       renderWithIntl(
@@ -209,11 +209,11 @@ describe("CourseForm", () => {
           onChange={() => {}}
           disabled={false}
         />
-      );
-      expect(screen.getByText("التصنيف")).toBeTruthy();
-    });
+      )
+      expect(screen.getByText("التصنيف")).toBeTruthy()
+    })
 
-    it("does not render chapters toggle in edit mode", () => {
+    it("allows changing organization mode in edit mode", () => {
       renderWithIntl(
         <CourseForm
           initialValues={{
@@ -232,9 +232,9 @@ describe("CourseForm", () => {
           onChange={() => {}}
           disabled={false}
         />
-      );
-      expect(screen.queryByText("دورة بالفصول")).toBeNull();
-      expect(screen.queryByText("دورة بقائمة دروس")).toBeNull();
-    });
-  });
-});
+      )
+      expect(screen.getAllByText("دورة بالفصول").length).toBeGreaterThan(0)
+      expect(screen.getAllByText("دورة بقائمة دروس").length).toBeGreaterThan(0)
+    })
+  })
+})

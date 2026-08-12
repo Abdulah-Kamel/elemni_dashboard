@@ -7,8 +7,15 @@ import { Badge } from "@/components/ui/badge";
 import { Film, FileText, ClipboardList, File, Pencil, Trash2, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { updateItem, uploadItemVideo, requestUploadUrl, confirmUpload } from "@/features/course-management/items-actions";
+import {
+  confirmUpload,
+  confirmVideoUpload,
+  requestUploadUrl,
+  requestVideoUpload,
+  updateItem,
+} from "@/features/course-management/items-actions";
 import { uploadToPresignedUrl } from "@/lib/upload";
+import { uploadVideoToBunnyTus } from "@/lib/tus-upload";
 import {
   Dialog,
   DialogContent,
@@ -29,9 +36,15 @@ function itemType(item: ItemOut): { label: string; icon: React.ReactNode; bg: st
   return { label: "type_text", icon: <File className="size-3.5 text-white" />, bg: "bg-surface-strong" };
 }
 
-function itemStatus(item: ItemOut): { text: string; variant: "default" | "outline" | "secondary"; icon?: React.ReactNode } | null {
-  if (item.bunny_stream_id || item.document_path) return { text: "جاهز", variant: "default" };
-  if (item.exam_id) return { text: "امتحان", variant: "outline" };
+function itemStatus(item: ItemOut): { text: string; variant: "default" | "outline" | "secondary"; error?: boolean } | null {
+  if (item.bunny_stream_id) {
+    if (item.bunny_stream_status === "ready") return { text: "status_ready", variant: "default" };
+    if (item.bunny_stream_status === "failed") return { text: "status_failed", variant: "outline", error: true };
+    if (item.bunny_stream_status === "uploading") return { text: "status_uploading", variant: "secondary" };
+    return { text: "status_processing", variant: "secondary" };
+  }
+  if (item.document_path) return { text: "status_ready", variant: "default" };
+  if (item.exam_id) return { text: "status_exam", variant: "outline" };
   return null;
 }
 
@@ -50,6 +63,7 @@ export function ItemCard({
 }) {
   const t = useTranslations("items");
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
@@ -68,30 +82,53 @@ export function ItemCard({
 
   const handleVideoUpload = useCallback(async (file: File) => {
     setUploading(true);
+    setUploadProgress(0);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const result = await uploadItemVideo(courseId, lessonId, item.id, formData);
-      if (result.success) {
-        onUpdate(result.data);
-        setUploadDialogOpen(false);
-        toast.success(t("upload_success"));
-      } else {
-        toast.error(result.error.message || t("upload_error"));
+      const credentialsResult = await requestVideoUpload(
+        courseId,
+        lessonId,
+        item.id,
+        item.title,
+      );
+      if (!credentialsResult.success) {
+        toast.error(credentialsResult.error.message || t("upload_error"));
+        return;
       }
+
+      await uploadVideoToBunnyTus(file, credentialsResult.data, setUploadProgress);
+      const confirmResult = await confirmVideoUpload(
+        courseId,
+        lessonId,
+        item.id,
+        credentialsResult.data.video_id,
+      );
+      if (!confirmResult.success) {
+        toast.error(confirmResult.error.message || t("upload_error"));
+        return;
+      }
+
+      onUpdate(confirmResult.data);
+      setUploadDialogOpen(false);
+      toast.success(t("upload_success_processing"));
     } catch {
       toast.error(t("upload_error"));
     } finally {
       setUploading(false);
+      setUploadProgress(0);
     }
-  }, [courseId, lessonId, item.id, onUpdate, t]);
+  }, [courseId, lessonId, item.id, item.title, onUpdate, t]);
 
   const handleDocUpload = useCallback(async (file: File) => {
     setUploading(true);
+    setUploadProgress(0);
     try {
       const urlResult = await requestUploadUrl(courseId, lessonId, item.id, file.name);
       if (!urlResult.success) { toast.error(urlResult.error.message || t("upload_error")); return; }
-      await uploadToPresignedUrl(urlResult.data.url, file);
+      const uploadResponse = await uploadToPresignedUrl(urlResult.data.upload_url, file);
+      if (!uploadResponse.ok) {
+        toast.error(t("upload_error"));
+        return;
+      }
       const confirmResult = await confirmUpload(courseId, lessonId, item.id, urlResult.data.key);
       if (confirmResult.success) {
         onUpdate(confirmResult.data);
@@ -145,7 +182,7 @@ export function ItemCard({
   return (
     <div className="flex items-center gap-2.5 px-3.5 py-2 transition-colors hover:bg-surface-muted/30 group">
 
-      <span className="inline-flex items-center justify-center size-[22px] rounded-md text-white shrink-0" title={t(type.label)}>
+      <span className={cn("inline-flex size-7 shrink-0 items-center justify-center rounded-md text-white", type.bg)} title={t(type.label)}>
         {type.icon}
       </span>
 
@@ -157,14 +194,14 @@ export function ItemCard({
           className={cn(
             status.variant === "default" && "bg-success-tint text-success border-success/20",
             status.variant === "secondary" && "bg-warning-tint text-warning border-warning/20",
+            status.error && "border-destructive/20 bg-destructive/10 text-destructive",
           )}
         >
-          {status.icon}
-          {status.text}
+          {t(status.text)}
         </Badge>
       )}
 
-      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="flex items-center gap-0.5 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
         {!item.bunny_stream_id && (
           <Button size="icon" variant="ghost" className="size-6" disabled={uploading} onClick={() => openUploadDialog("video")} aria-label={t("upload_video")} title={t("upload_video")}>
             <Upload className="size-3.5" />
@@ -188,6 +225,7 @@ export function ItemCard({
         onOpenChange={setUploadDialogOpen}
         type={uploadDialogType}
         uploading={uploading}
+        progress={uploadProgress}
         onUpload={uploadDialogType === "video" ? handleVideoUpload : handleDocUpload}
       />
 

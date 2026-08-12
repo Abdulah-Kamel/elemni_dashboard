@@ -21,7 +21,6 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   GripVertical,
@@ -43,6 +42,7 @@ export function LessonCard({
   onUpdate,
   onDelete,
   dragHandleProps,
+  nested = false,
 }: {
   lesson: LessonOut;
   courseId: number;
@@ -51,6 +51,7 @@ export function LessonCard({
   onUpdate: (lesson: LessonOut) => void;
   onDelete: (lessonId: number) => void;
   dragHandleProps?: React.HTMLAttributes<HTMLButtonElement>;
+  nested?: boolean;
 }) {
   const t = useTranslations("lessons");
   const [itemsExpanded, setItemsExpanded] = useState(false);
@@ -122,11 +123,17 @@ export function LessonCard({
 
   return (
     <Collapsible.Root open={itemsExpanded} onOpenChange={setItemsExpanded}>
-      <Card className="rounded-lg border border-border ring-0 overflow-hidden card-hover">
-        <div className="flex items-center gap-2 px-3 py-2.5">
+      <div
+        className={
+          nested
+            ? "overflow-hidden rounded-lg border border-border/80 bg-card transition-shadow hover:shadow-xs"
+            : "overflow-hidden rounded-xl border border-border bg-card shadow-xs transition-shadow hover:shadow-sm"
+        }
+      >
+        <div className="flex min-h-14 items-center gap-2 px-3 py-2.5 sm:px-4">
           <button
             className="cursor-grab active:cursor-grabbing touch-none size-7 flex items-center justify-center shrink-0 rounded-md hover:bg-surface-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            aria-label="Drag to reorder"
+            aria-label={t("drag_handle_label")}
             {...(dragHandleProps ?? {})}
           >
             <GripVertical className="size-4 text-muted-foreground" />
@@ -181,7 +188,7 @@ export function LessonCard({
           </DropdownMenu>
         </div>
         <Collapsible.Panel>
-          <div className="border-t border-border px-3 py-2">
+          <div className="border-t border-border bg-muted/20 px-2 py-2 sm:px-3">
             <ItemList
               courseId={courseId}
               lessonId={lesson.id}
@@ -189,7 +196,7 @@ export function LessonCard({
             />
           </div>
         </Collapsible.Panel>
-      </Card>
+      </div>
 
       <Dialog
         open={editOpen}

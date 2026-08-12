@@ -1,10 +1,8 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { Collapsible } from "@base-ui/react/collapsible";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -23,46 +21,47 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
-import { GripVertical, Pencil, Trash2, MoreHorizontal } from "lucide-react";
+import {
+  BookOpen,
+  ChevronDown,
+  ChevronRight,
+  GripVertical,
+  Pencil,
+  Trash2,
+  MoreHorizontal,
+} from "lucide-react";
 import { updateChapter, deleteChapter } from "@/features/course-management/chapters-actions";
+import { LessonList } from "./lesson-list";
 import type { ChapterOut } from "@/features/course-management/chapters-schema";
+import type { LessonOut } from "@/features/course-management/lessons-schema";
 
 export function ChapterCard({
   chapter,
   courseId,
-  lessonCount,
+  initialLessons,
+  lessonsError,
+  defaultExpanded = false,
   onUpdate,
   onDelete,
+  dragHandleProps,
 }: {
   chapter: ChapterOut;
   courseId: number;
-  lessonCount?: number;
+  initialLessons: LessonOut[];
+  lessonsError: string | null;
+  defaultExpanded?: boolean;
   onUpdate: (chapter: ChapterOut) => void;
   onDelete: (chapterId: number) => void;
+  dragHandleProps?: React.HTMLAttributes<HTMLButtonElement>;
 }) {
-  const router = useRouter();
   const t = useTranslations("chapters");
+  const [expanded, setExpanded] = useState(defaultExpanded);
+  const [lessonCount, setLessonCount] = useState(initialLessons.length);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editTitle, setEditTitle] = useState(chapter.title);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: String(chapter.id),
-  });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.4 : 1,
-    position: "relative" as const,
-    zIndex: isDragging ? 1 : ("auto" as unknown as number),
-  };
-
-  const handleClick = useCallback(() => {
-    router.push(`/courses/${courseId}/chapters/${chapter.id}`);
-  }, [router, courseId, chapter.id]);
 
   const handleSave = useCallback(async () => {
     const trimmed = editTitle.trim();
@@ -99,61 +98,79 @@ export function ChapterCard({
   }, [courseId, chapter.id, onDelete]);
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className="flex items-center gap-2 rounded-lg bg-surface-raised px-4 py-3 transition-all duration-300 ease-out cursor-pointer hover:bg-surface-muted/30"
-    >
-      <Button
-        size="icon"
-        variant="ghost"
-        className="size-7 shrink-0 cursor-grab active:cursor-grabbing"
-        {...attributes}
-        {...listeners}
-        aria-label={t("drag_handle_label")}
-      >
-        <GripVertical className="size-4 text-muted-foreground" />
-      </Button>
-
-      <button
-        type="button"
-        className="flex flex-1 items-center gap-2 min-w-0 text-start"
-        onClick={handleClick}
-      >
-        <span className="text-muted-foreground">{chapter.order}.</span>
-        <span className="truncate text-base font-medium">{chapter.title}</span>
-      </button>
-
-      {lessonCount !== undefined && (
-        <Badge variant="secondary" className="shrink-0">
-          {t("lessons_count", { n: lessonCount })}
-        </Badge>
-      )}
-
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          render={
-            <Button variant="ghost" size="icon" className="size-7">
-              <MoreHorizontal className="size-4" />
-            </Button>
-          }
-        />
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            onClick={() => {
-              setEditTitle(chapter.title);
-              setEditOpen(true);
-            }}
+    <Collapsible.Root open={expanded} onOpenChange={setExpanded}>
+      <section className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
+        <div className="flex min-h-16 items-center gap-2 bg-muted/35 px-3 sm:px-4">
+          <button
+            type="button"
+            className="flex size-8 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-muted-foreground hover:bg-background active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label={t("drag_handle_label")}
+            {...(dragHandleProps ?? {})}
           >
-            <Pencil className="me-2 size-4" />
-            {t("edit")}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setDeleteOpen(true)}>
-            <Trash2 className="me-2 size-4" />
-            {t("delete")}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+            <GripVertical className="size-4" />
+          </button>
+
+          <Collapsible.Trigger className="flex min-w-0 flex-1 items-center gap-3 text-start">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <BookOpen className="size-4" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-xs font-medium text-muted-foreground">
+                {t("chapter_number", { n: chapter.order })}
+              </span>
+              <span className="block truncate text-sm font-semibold sm:text-base">
+                {chapter.title}
+              </span>
+            </span>
+            <Badge variant="secondary" className="hidden shrink-0 sm:inline-flex">
+              {t("lessons_count", { n: lessonCount })}
+            </Badge>
+            {expanded ? (
+              <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground rtl:rotate-180" />
+            )}
+          </Collapsible.Trigger>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button variant="ghost" size="icon" className="size-7">
+                  <MoreHorizontal className="size-4" />
+                </Button>
+              }
+            />
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => {
+                  setEditTitle(chapter.title);
+                  setEditOpen(true);
+                }}
+              >
+                <Pencil className="me-2 size-4" />
+                {t("edit")}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setDeleteOpen(true)}>
+                <Trash2 className="me-2 size-4" />
+                {t("delete")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        <Collapsible.Panel>
+          <div className="border-t border-border bg-background/60 p-3 sm:p-4">
+            <LessonList
+              initialLessons={initialLessons}
+              courseId={courseId}
+              chapterId={chapter.id}
+              error={lessonsError}
+              nested
+              onCountChange={setLessonCount}
+            />
+          </div>
+        </Collapsible.Panel>
+      </section>
 
       <Dialog
         open={editOpen}
@@ -209,6 +226,6 @@ export function ChapterCard({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </Collapsible.Root>
   );
 }

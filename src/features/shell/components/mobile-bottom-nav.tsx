@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { LayoutGrid, BookOpen, GraduationCap, Cloud, Settings } from "lucide-react";
+import { LayoutGrid, BookOpen, GraduationCap, Cloud, Settings, User } from "lucide-react";
 import { Link, usePathname } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 
@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { id: "overview", href: "/dashboard", icon: LayoutGrid },
   { id: "my_courses", href: "/courses", icon: BookOpen },
   { id: "students", href: "/students", icon: GraduationCap },
+  { id: "profile", href: "/profile", icon: User },
   { id: "storage", href: "/storage", icon: Cloud },
   { id: "settings", href: "/settings", icon: Settings },
 ] as const;

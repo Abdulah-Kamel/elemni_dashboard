@@ -5,6 +5,7 @@ export const itemOutSchema = z.object({
   lesson_id: z.number().int(),
   title: z.string(),
   bunny_stream_id: z.string().nullable(),
+  bunny_stream_status: z.string().nullable(),
   document_path: z.string().nullable(),
   exam_id: z.number().int().nullable(),
   order: z.number(),
@@ -22,7 +23,17 @@ export const itemUpdateSchema = z.object({
 export type ItemUpdate = z.infer<typeof itemUpdateSchema>;
 
 export const uploadUrlResponseSchema = z.object({
-  url: z.string(),
+  upload_url: z.string().url(),
   key: z.string(),
+  public_url: z.string().url(),
 });
 export type UploadUrlResponse = z.infer<typeof uploadUrlResponseSchema>;
+
+export const tusCredentialsSchema = z.object({
+  video_id: z.string().min(1),
+  library_id: z.number().int(),
+  expiration_time: z.number().int(),
+  signature: z.string().min(1),
+  embed_url: z.string().url(),
+});
+export type TusCredentials = z.infer<typeof tusCredentialsSchema>;

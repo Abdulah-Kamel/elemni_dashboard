@@ -3,11 +3,22 @@ import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { apiFetch } from "@/lib/api/client";
-import { env } from "@/env";
 import { endpoints } from "@/lib/api/endpoints";
-import { itemOutSchema, itemCreateSchema, itemUpdateSchema, uploadUrlResponseSchema } from "@/features/course-management/items-schema";
+import {
+  itemOutSchema,
+  itemCreateSchema,
+  itemUpdateSchema,
+  tusCredentialsSchema,
+  uploadUrlResponseSchema,
+} from "@/features/course-management/items-schema";
 import { reorderItemSchema } from "@/features/course-management/chapters-schema";
-import type { ItemOut, ItemCreate, ItemUpdate } from "@/features/course-management/items-schema";
+import type {
+  ItemOut,
+  ItemCreate,
+  ItemUpdate,
+  TusCredentials,
+  UploadUrlResponse,
+} from "@/features/course-management/items-schema";
 import type { ReorderItem } from "@/features/course-management/chapters-schema";
 import { logger } from "@/lib/logger";
 
@@ -203,40 +214,59 @@ export async function reorderItems(
   }
 }
 
-export async function uploadItemVideo(
+export async function requestVideoUpload(
   courseId: number,
   lessonId: number,
   itemId: number,
-  formData: FormData,
-): Promise<ActionResult<ItemOut>> {
-  logger.action("uploadItemVideo", { courseId, lessonId, itemId });
+  title: string,
+): Promise<ActionResult<TusCredentials>> {
+  logger.action("requestVideoUpload", { courseId, lessonId, itemId });
   const start = performance.now();
 
   try {
-    const { getSession } = await import("@/lib/auth/session");
-    const session = await getSession();
-    const token = session?.access_token;
-    const url = `${env.API_URL}${endpoints.courses.items.uploadVideo(courseId, lessonId, itemId)}`;
-
-    const res = await fetch(url, {
-      method: "POST",
-      body: formData,
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    });
-
-    if (!res.ok) {
-      const text = await res.text();
-      return { success: false, error: { type: "Upstream", message: text || "Upload failed" } };
-    }
-
-    const data: ItemOut = await res.json();
-    revalidateTag(`items:${courseId}:${lessonId}`, "default");
+    const data = await apiFetch(
+      endpoints.courses.items.requestVideoUpload(courseId, lessonId, itemId),
+      tusCredentialsSchema,
+      { method: "POST", body: JSON.stringify({ title }) },
+    );
     const elapsed = Math.round(performance.now() - start);
-    logger.actionDone("uploadItemVideo", { itemId: data.id }, elapsed);
+    logger.actionDone("requestVideoUpload", { itemId, videoId: data.video_id }, elapsed);
     return { success: true, data };
   } catch (err: unknown) {
     const elapsed = Math.round(performance.now() - start);
-    logger.actionError("uploadItemVideo", err, elapsed);
+    logger.actionError("requestVideoUpload", err, elapsed);
+    if (err && typeof err === "object" && "type" in err) {
+      return { success: false, error: err as { type: string; message: string; fields?: string[] } };
+    }
+    return { success: false, error: { type: "Upstream", message: "Network error" } };
+  }
+}
+
+export async function confirmVideoUpload(
+  courseId: number,
+  lessonId: number,
+  itemId: number,
+  videoId: string,
+): Promise<ActionResult<ItemOut>> {
+  logger.action("confirmVideoUpload", { courseId, lessonId, itemId, videoId });
+  const start = performance.now();
+
+  try {
+    const result = await apiFetch(
+      endpoints.courses.items.confirmVideoUpload(courseId, lessonId, itemId),
+      itemOutSchema,
+      { method: "POST", body: JSON.stringify({ video_id: videoId }) },
+    );
+    revalidateTag(`items:${courseId}:${lessonId}`, "default");
+    const elapsed = Math.round(performance.now() - start);
+    logger.actionDone("confirmVideoUpload", { itemId, videoId }, elapsed);
+    return { success: true, data: result };
+  } catch (err: unknown) {
+    const elapsed = Math.round(performance.now() - start);
+    logger.actionError("confirmVideoUpload", err, elapsed);
+    if (err && typeof err === "object" && "type" in err) {
+      return { success: false, error: err as { type: string; message: string; fields?: string[] } };
+    }
     return { success: false, error: { type: "Upstream", message: "Network error" } };
   }
 }
@@ -246,7 +276,7 @@ export async function requestUploadUrl(
   lessonId: number,
   itemId: number,
   filename: string,
-): Promise<ActionResult<{ url: string; key: string }>> {
+): Promise<ActionResult<UploadUrlResponse>> {
   logger.action("requestUploadUrl", { courseId, lessonId, itemId, filename });
   const start = performance.now();
 
@@ -254,6 +284,7 @@ export async function requestUploadUrl(
     const result = await apiFetch(
       endpoints.courses.items.requestUploadUrl(courseId, lessonId, itemId) + `?filename=${encodeURIComponent(filename)}`,
       uploadUrlResponseSchema,
+      { method: "POST" },
     );
     const elapsed = Math.round(performance.now() - start);
     logger.actionDone("requestUploadUrl", { key: result.key }, elapsed);

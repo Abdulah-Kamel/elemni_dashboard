@@ -15,6 +15,7 @@ import {
 import { Upload, FileVideo, FileText, Loader2, X } from "lucide-react";
 
 export type UploadType = "video" | "document";
+const MAX_VIDEO_SIZE = 500 * 1024 * 1024;
 
 export function UploadDialog({
   open,
@@ -22,16 +23,19 @@ export function UploadDialog({
   type,
   onUpload,
   uploading,
+  progress,
 }: {
   open: boolean;
   onOpenChange: (val: boolean) => void;
   type: UploadType;
   onUpload: (file: File) => void;
   uploading: boolean;
+  progress: number;
 }) {
   const t = useTranslations("items");
   const [file, setFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const accept = type === "video" ? "video/*" : ".pdf,application/pdf";
@@ -41,10 +45,25 @@ export function UploadDialog({
 
   const handleFile = useCallback((selected: File | null) => {
     if (!selected) return;
-    if (type === "video" && !selected.type.startsWith("video/")) return;
-    if (type === "document" && selected.type !== "application/pdf") return;
+    if (type === "video" && !selected.type.startsWith("video/")) {
+      setValidationError(t("invalid_video"));
+      return;
+    }
+    if (type === "video" && selected.size > MAX_VIDEO_SIZE) {
+      setValidationError(t("video_too_large"));
+      return;
+    }
+    if (
+      type === "document" &&
+      selected.type !== "application/pdf" &&
+      !selected.name.toLowerCase().endsWith(".pdf")
+    ) {
+      setValidationError(t("invalid_document"));
+      return;
+    }
+    setValidationError(null);
     setFile(selected);
-  }, [type]);
+  }, [type, t]);
 
   const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -70,6 +89,7 @@ export function UploadDialog({
   const reset = useCallback(() => {
     setFile(null);
     setDragOver(false);
+    setValidationError(null);
   }, []);
 
   return (
@@ -136,10 +156,16 @@ export function UploadDialog({
           </div>
         )}
 
+        {validationError && (
+          <p className="text-sm text-destructive" role="alert">
+            {validationError}
+          </p>
+        )}
+
         {uploading && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin" />
-            <span>{t("uploading_progress")}</span>
+            <span>{t("uploading_progress", { progress })}</span>
           </div>
         )}
 

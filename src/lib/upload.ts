@@ -8,6 +8,6 @@ export async function uploadToPresignedUrl(url: string, file: File): Promise<Res
   return fetch(url, {
     method: "PUT",
     body: file,
-    headers: { "Content-Type": "application/octet-stream" },
+    headers: { "Content-Type": file.type || "application/octet-stream" },
   });
 }
