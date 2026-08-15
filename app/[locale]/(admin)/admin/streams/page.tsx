@@ -11,6 +11,6 @@ export default async function StreamsPage({ params }: { params: Promise<{ locale
   if (!user) return null;
 
   return (
-    <TaxonomyManager kind="streams" titleKey="title_streams" fields={[{ key: "name", labelKey: "table_name", required: true }, { key: "slug", labelKey: "table_slug" }]} />
+    <TaxonomyManager kind="streams" titleKey="title_streams" fields={[{ key: "name", labelKey: "table_name", required: true }, { key: "slug", labelKey: "table_slug", required: true }]} />
   );
 }

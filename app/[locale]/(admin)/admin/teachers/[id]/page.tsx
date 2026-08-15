@@ -1,0 +1,6 @@
+import { notFound } from "next/navigation"
+import { setRequestLocale } from "next-intl/server"
+import { TeacherDetail } from "@/features/admin/components/teacher-detail"
+import { getAdminLibrarySettings, getAdminTeacher } from "@/features/admin/queries"
+import { listGrades, listSubjects } from "@/features/course-management/queries"
+export default async function TeacherDetailPage({ params }: { params: Promise<{ locale: string; id: string }> }) { const { locale, id } = await params; setRequestLocale(locale); const teacherId = Number(id); if (!Number.isInteger(teacherId)) notFound(); const teacher = await getAdminTeacher(teacherId); const fallbackSettings = { controls: ["play-large", "play", "rewind", "fast-forward", "progress", "current-time", "mute", "volume", "captions", "settings", "fullscreen"] as const, block_none_referrer: true, enable_content_tagging: false, enable_drm: true }; const [subjects, grades, librarySettings] = await Promise.all([listSubjects(), listGrades(), teacher.has_library ? getAdminLibrarySettings(teacherId).catch(() => ({ ...fallbackSettings, controls: [...fallbackSettings.controls] })) : Promise.resolve(null)]); return <TeacherDetail teacher={teacher} subjects={subjects} grades={grades} initialLibrarySettings={librarySettings} /> }

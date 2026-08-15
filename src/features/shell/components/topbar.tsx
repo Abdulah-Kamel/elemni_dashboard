@@ -9,9 +9,10 @@ import { ThemeToggle } from "@/features/shell/components/theme-toggle";
 
 type TopbarProps = {
   teacherName: string;
+  userRole?: string;
 };
 
-export function Topbar({ teacherName }: TopbarProps) {
+export function Topbar({ teacherName, userRole }: TopbarProps) {
   const t = useTranslations("common");
   const tOverview = useTranslations("overview");
 
@@ -32,10 +33,10 @@ export function Topbar({ teacherName }: TopbarProps) {
       </div>
 
       <div className="ms-auto flex items-center gap-1">
-        <Button size="sm" className="gap-1.5">
+        {userRole !== "ADMIN" && <Button size="sm" className="gap-1.5">
           <Plus className="size-4" aria-hidden="true" />
           <span>{tOverview("create_course")}</span>
-        </Button>
+        </Button>}
 
         <LocaleToggle />
         <ThemeToggle />

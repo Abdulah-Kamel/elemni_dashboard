@@ -12,6 +12,7 @@ import {
   Layers,
   GitBranch,
   Library,
+  ReceiptText,
 } from "lucide-react";
 import { Link, usePathname } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
@@ -28,7 +29,10 @@ const PRIMARY_NAV = [
 ] as const;
 
 const ADMIN_NAV = [
+  { id: "overview", href: "/admin", icon: LayoutGrid },
   { id: "teachers", href: "/admin/teachers", icon: GraduationCap },
+  { id: "students", href: "/admin/students", icon: User },
+  { id: "subscriptions", href: "/admin/subscriptions", icon: ReceiptText },
   { id: "grades", href: "/admin/grades", icon: Layers },
   { id: "streams", href: "/admin/streams", icon: GitBranch },
   { id: "subjects", href: "/admin/subjects", icon: Library },
@@ -75,8 +79,9 @@ export function Sidebar({ teacherName, teacherRole, userRole }: SidebarProps) {
       >
         <ul ref={navRef} className="flex flex-col gap-0.5">
           {navItems.map(({ id, href, icon: Icon }) => {
-            const isActive =
-              pathname === href || pathname.startsWith(`${href}/`);
+            const isActive = href === "/admin"
+              ? pathname === href
+              : pathname === href || pathname.startsWith(`${href}/`);
             return (
               <li key={id}>
                 <Link

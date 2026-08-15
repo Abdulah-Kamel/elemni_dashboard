@@ -1,25 +1,43 @@
-"use client";
+"use client"
 
-import { Search } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react"
+import { useTranslations } from "next-intl"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface StudentFiltersProps {
-  searchTerm: string;
-  onSearchChange: (value: string) => void;
-  statusFilter: string;
-  onStatusChange: (value: string) => void;
+  searchTerm: string
+  onSearchChange: (value: string) => void
+  statusFilter: string
+  onStatusChange: (value: string) => void
+  courseFilter: string
+  onCourseChange: (value: string) => void
+  courses: string[]
 }
 
-const FILTERS = ["all", "active", "blocked", "completed"] as const;
+const FILTERS = ["all", "active", "blocked", "completed"] as const
 
 export function StudentFilters({
   searchTerm,
   onSearchChange,
   statusFilter,
   onStatusChange,
+  courseFilter,
+  onCourseChange,
+  courses,
 }: StudentFiltersProps) {
-  const t = useTranslations("student");
+  const t = useTranslations("student")
+  const courseItems = [
+    { value: "all", label: t("filter_all_courses") },
+    ...courses.map((course) => ({ value: course, label: course })),
+  ]
 
   return (
     <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface-muted p-3 sm:flex-row sm:items-center">
@@ -37,7 +55,7 @@ export function StudentFilters({
       </div>
       <div className="flex gap-1.5" role="group" aria-label={t("filter_all")}>
         {FILTERS.map((filter) => {
-          const isActive = statusFilter === filter;
+          const isActive = statusFilter === filter
           return (
             <button
               key={filter}
@@ -50,9 +68,29 @@ export function StudentFilters({
             >
               {t(`filter_${filter}`)}
             </button>
-          );
+          )
         })}
       </div>
+      {courses.length > 1 ? (
+        <Select
+          value={courseFilter}
+          onValueChange={(value) => onCourseChange(value ?? "all")}
+          items={courseItems}
+        >
+          <SelectTrigger className="w-full bg-surface sm:w-44">
+            <SelectValue placeholder={t("filter_course")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              {courseItems.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      ) : null}
     </div>
-  );
+  )
 }

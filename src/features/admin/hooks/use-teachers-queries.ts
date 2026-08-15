@@ -1,29 +1,28 @@
-"use client";
+"use client"
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { adminKeys } from "@/features/admin/query-keys";
-import { listTeachersAction, createTeacher, deleteTeacher } from "@/features/admin/actions";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { adminKeys } from "@/features/admin/query-keys"
+import {
+  createTeacher,
+  listTeachersAction,
+  updateTeacher,
+} from "@/features/admin/actions"
+import type { PageParams } from "@/features/admin/queries"
 
-export function useTeachersQuery() {
+export function useTeachersQuery(params: PageParams = {}) {
   return useQuery({
-    queryKey: adminKeys.teachers,
-    queryFn: () => listTeachersAction(),
-  });
+    queryKey: adminKeys.teachers(params),
+    queryFn: () => listTeachersAction(params),
+  })
 }
 
 export function useTeacherMutations() {
-  const qc = useQueryClient();
-  const invalidate = () => qc.invalidateQueries({ queryKey: adminKeys.teachers });
-
-  const create = useMutation({
-    mutationFn: (data: unknown) => createTeacher(data),
+  const queryClient = useQueryClient()
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: adminKeys.all })
+  const create = useMutation({ mutationFn: createTeacher, onSuccess: invalidate })
+  const update = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: unknown }) => updateTeacher(id, data),
     onSuccess: invalidate,
-  });
-
-  const remove = useMutation({
-    mutationFn: (id: number) => deleteTeacher(id),
-    onSuccess: invalidate,
-  });
-
-  return { create, remove };
+  })
+  return { create, update }
 }

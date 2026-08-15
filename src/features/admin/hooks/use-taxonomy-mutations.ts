@@ -11,12 +11,12 @@ export function useTaxonomyMutations(kind: TaxonomyKind) {
   const invalidate = () => qc.invalidateQueries({ queryKey: adminKeys.taxonomy(kind) });
 
   const create = useMutation({
-    mutationFn: (data: Record<string, string>) => createTaxonomyItem(kind, data),
+    mutationFn: (data: Record<string, unknown>) => createTaxonomyItem(kind, data),
     onSuccess: invalidate,
   });
 
   const update = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Record<string, string> }) =>
+    mutationFn: ({ id, data }: { id: number; data: Record<string, unknown> }) =>
       updateTaxonomyItem(kind, id, data),
     onSuccess: invalidate,
   });

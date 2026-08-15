@@ -11,6 +11,6 @@ export default async function GradesPage({ params }: { params: Promise<{ locale:
   if (!user) return null;
 
   return (
-    <TaxonomyManager kind="grades" titleKey="title_grades" fields={[{ key: "name", labelKey: "table_name", required: true }, { key: "level", labelKey: "table_level" }]} />
+    <TaxonomyManager kind="grades" titleKey="title_grades" fields={[{ key: "name", labelKey: "table_name", required: true }, { key: "level", labelKey: "table_level", required: true }]} />
   );
 }

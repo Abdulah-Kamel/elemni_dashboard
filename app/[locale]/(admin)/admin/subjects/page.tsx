@@ -11,6 +11,6 @@ export default async function SubjectsPage({ params }: { params: Promise<{ local
   if (!user) return null;
 
   return (
-    <TaxonomyManager kind="subjects" titleKey="title_subjects" fields={[{ key: "name", labelKey: "table_name", required: true }, { key: "slug", labelKey: "table_slug" }]} />
+    <TaxonomyManager kind="subjects" titleKey="title_subjects" fields={[{ key: "name", labelKey: "table_name", required: true }, { key: "slug", labelKey: "table_slug", required: true }]} />
   );
 }

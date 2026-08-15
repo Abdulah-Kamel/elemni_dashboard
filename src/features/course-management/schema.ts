@@ -53,13 +53,6 @@ export const courseFormSchema = z.object({
 })
 export type CourseFormValues = z.infer<typeof courseFormSchema>
 
-export const subjectOutSchema = z.object({
-  id: z.number().int(),
-  name: z.string(),
-  slug: z.string(),
-})
-export type SubjectOut = z.infer<typeof subjectOutSchema>
-
 export const gradeOutSchema = z.object({
   id: z.number().int(),
   name: z.string(),
@@ -73,6 +66,15 @@ export const streamOutSchema = z.object({
   slug: z.string(),
 })
 export type StreamOut = z.infer<typeof streamOutSchema>
+
+export const subjectOutSchema = z.object({
+  id: z.number().int(),
+  name: z.string(),
+  slug: z.string(),
+  grades: z.array(gradeOutSchema).default([]),
+  streams: z.array(streamOutSchema).default([]),
+})
+export type SubjectOut = z.input<typeof subjectOutSchema>
 
 export function formValuesToCourseCreate(
   values: CourseFormValues

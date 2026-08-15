@@ -1,10 +1,11 @@
 import "server-only";
+import { cache } from "react";
 import { userOutSchema, type UserOut } from "@/features/shell/schema";
 import { apiFetch } from "@/lib/api/client";
 import { getSession } from "@/lib/auth/session";
 import { refreshTokens } from "@/lib/api/refresh";
 
-export async function verifySession(): Promise<UserOut | null> {
+export const verifySession = cache(async (): Promise<UserOut | null> => {
   const session = await getSession();
   if (!session?.access_token) return null;
 
@@ -26,6 +27,6 @@ export async function verifySession(): Promise<UserOut | null> {
     }
     return null;
   }
-}
+});
 
 export type { UserOut };

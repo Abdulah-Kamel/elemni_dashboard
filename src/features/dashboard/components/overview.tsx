@@ -1,60 +1,70 @@
-import { getLocale, getTranslations } from "next-intl/server";
-import { Calendar, Plus, Star, Banknote, Users, BookOpen, ArrowUpRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { MiniBarChart, MonthlyEarningsChart } from "@/features/dashboard/components/chart-loader";
+import { getLocale, getTranslations } from "next-intl/server"
+import {
+  Calendar,
+  Plus,
+  Star,
+  Banknote,
+  Users,
+  BookOpen,
+  ArrowUpRight,
+} from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import {
+  MiniBarChart,
+  MonthlyEarningsChart,
+} from "@/features/dashboard/components/chart-loader"
+import { StudentActivityCard } from "@/features/dashboard/components/student-activity-card"
 import type {
   OverviewData,
   OverviewStat,
   StatTrend,
-  TopCourse,
-  StudentActivity,
-  StudentActivityStatus,
   StudentActivityAction,
   StudentActivityTime,
-} from "@/features/dashboard/schema";
+  TopCourse,
+} from "@/features/dashboard/schema"
 
 type OverviewProps = {
-  data: OverviewData;
-};
+  data: OverviewData
+}
 
 const STAT_ICONS = {
   revenue: Banknote,
   students: Users,
   rating: Star,
   courses: BookOpen,
-} as const;
+} as const
 
 const STAT_TINTS = {
   revenue: "bg-primary-tint text-primary",
   students: "bg-primary-tint text-primary",
   rating: "bg-warning-tint text-warning",
   courses: "bg-warning-tint text-warning",
-} as const;
-
-const STUDENT_TINTS: Record<StudentActivity["studentTint"], string> = {
-  violet: "bg-primary-tint text-primary",
-  amber: "bg-warning-tint text-warning",
-  emerald: "bg-success-tint text-success",
-  rose: "bg-error-tint text-error",
-};
-
-const STATUS_TINTS: Record<StudentActivityStatus, string> = {
-  success: "bg-success-tint text-success",
-  pending: "bg-warning-tint text-warning",
-};
+} as const
 
 export async function Overview({ data }: OverviewProps) {
-  const t = await getTranslations("overview");
-  const locale = await getLocale();
+  const t = await getTranslations("overview")
+  const locale = await getLocale()
   const labels: Record<OverviewStat["id"], string> = {
     revenue: t("stats.revenue_label"),
     students: t("stats.students_label"),
     rating: t("stats.rating_label"),
     courses: t("stats.courses_label"),
-  };
+  }
+  const activity = data.activity.map((row) => ({
+    ...row,
+    actionLabel: formatActivityAction(row.action, {
+      completedLesson: (n: number) =>
+        t("activity.actions.completed_lesson", { n }),
+      submittedAssignment: t("activity.actions.submitted_assignment"),
+      enrolled: t("activity.actions.enrolled"),
+    }),
+    timeLabel: formatActivityTime(row.time, {
+      minutes: (n: number) => t("activity.time.minutes_ago", { n }),
+      hours: (n: number) => t("activity.time.hours_ago", { n }),
+      days: (n: number) => t("activity.time.days_ago", { n }),
+    }),
+  }))
 
   return (
     <div className="flex flex-col gap-xl">
@@ -68,16 +78,14 @@ export async function Overview({ data }: OverviewProps) {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="lg"
-          >
-            <Calendar className="size-4 text-on-surface-muted" aria-hidden="true" />
+          <Button variant="outline" size="lg">
+            <Calendar
+              className="size-4 text-on-surface-muted"
+              aria-hidden="true"
+            />
             <span>{t("date_range.last_30_days")}</span>
           </Button>
-          <Button
-            size="lg"
-          >
+          <Button size="lg">
             <Plus className="size-4" aria-hidden="true" />
             <span>{t("create_course")}</span>
           </Button>
@@ -108,14 +116,16 @@ export async function Overview({ data }: OverviewProps) {
           courses={data.topCourses}
           title={t("top_performing.title")}
           viewAllLabel={t("top_performing.view_all")}
-          studentsCountLabel={(count: number) => t("top_performing.students_count", { count })}
+          studentsCountLabel={(count: number) =>
+            t("top_performing.students_count", { count })
+          }
           generateReportLabel={t("top_performing.generate_report")}
           locale={locale}
         />
       </section>
 
       <StudentActivityCard
-        activity={data.activity}
+        activity={activity}
         title={t("activity.title")}
         headers={{
           student: t("activity.headers.student"),
@@ -124,23 +134,23 @@ export async function Overview({ data }: OverviewProps) {
           status: t("activity.headers.status"),
           date: t("activity.headers.date"),
         }}
-        actions={{
-          completed_lesson: (n: number) => t("activity.actions.completed_lesson", { n }),
-          submitted_assignment: t("activity.actions.submitted_assignment"),
-          enrolled: t("activity.actions.enrolled"),
-        }}
         statuses={{
           success: t("activity.statuses.success"),
           pending: t("activity.statuses.pending"),
         }}
-        timeLabel={{
-          minutes: (n: number) => t("activity.time.minutes_ago", { n }),
-          hours: (n: number) => t("activity.time.hours_ago", { n }),
-          days: (n: number) => t("activity.time.days_ago", { n }),
+        filters={{
+          searchPlaceholder: t("activity.search_placeholder"),
+          noResults: t("activity.no_results"),
+          allActions: t("activity.filters.all_actions"),
+          allCourses: t("activity.filters.all_courses"),
+          allStatuses: t("activity.filters.all_statuses"),
+          completedLesson: t("activity.filters.completed_lesson"),
+          submittedAssignment: t("activity.filters.submitted_assignment"),
+          enrolled: t("activity.filters.enrolled"),
         }}
       />
     </div>
-  );
+  )
 }
 
 function StatCard({
@@ -148,15 +158,15 @@ function StatCard({
   label,
   locale,
 }: {
-  stat: OverviewStat;
-  label: string;
-  locale: string;
+  stat: OverviewStat
+  label: string
+  locale: string
 }) {
-  const Icon = STAT_ICONS[stat.id];
-  const tint = STAT_TINTS[stat.id];
+  const Icon = STAT_ICONS[stat.id]
+  const tint = STAT_TINTS[stat.id]
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-md shadow-xs hover:shadow-md transition-shadow">
+    <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-md shadow-xs transition-shadow hover:shadow-md">
       <div className="flex items-center justify-between">
         <div
           aria-hidden="true"
@@ -167,9 +177,7 @@ function StatCard({
         <TrendBadge trend={stat.trend} locale={locale} />
       </div>
       <div>
-        <p className="text-xs font-semibold text-on-surface-muted">
-          {label}
-        </p>
+        <p className="text-xs font-semibold text-on-surface-muted">{label}</p>
         <p className="mt-1 text-3xl font-bold text-primary" dir="ltr">
           {formatStatValue(stat, locale)}
         </p>
@@ -191,7 +199,7 @@ function StatCard({
         />
       </div>
     </div>
-  );
+  )
 }
 
 function TrendBadge({ trend, locale }: { trend: StatTrend; locale: string }) {
@@ -204,7 +212,7 @@ function TrendBadge({ trend, locale }: { trend: StatTrend; locale: string }) {
         <ArrowUpRight className="size-3" aria-hidden="true" />
         <span>{formatPercent(trend.value, locale)}</span>
       </span>
-    );
+    )
   }
   if (trend.kind === "new") {
     return (
@@ -214,13 +222,13 @@ function TrendBadge({ trend, locale }: { trend: StatTrend; locale: string }) {
       >
         <span>{`+${trend.count} New`}</span>
       </span>
-    );
+    )
   }
   return (
     <span className="inline-flex items-center rounded-full bg-surface-strong px-2 py-0.5 text-label-sm text-label-sm--line-height font-semibold text-on-surface-muted">
       Stable
     </span>
-  );
+  )
 }
 
 function PerformanceCard({
@@ -228,22 +236,22 @@ function PerformanceCard({
   title,
   legend,
 }: {
-  months: OverviewData["performance"];
-  title: string;
-  legend: string;
+  months: OverviewData["performance"]
+  title: string
+  legend: string
 }) {
   return (
-    <Card className="flex flex-col gap-md rounded-2xl border-border p-md shadow-xs xl:col-span-2 hover:shadow-md transition-shadow">
+    <Card className="flex flex-col gap-md rounded-2xl border-border p-md shadow-xs transition-shadow hover:shadow-md xl:col-span-2">
       <div className="flex items-center justify-between">
         <h2 className="text-title-lg text-title-lg--line-height font-semibold text-foreground">
           {title}
         </h2>
         <div className="flex items-center gap-2">
-          <div className="flex bg-surface-muted rounded-lg p-0.5 gap-0.5">
-            <button className="px-3 py-1 text-xs font-semibold rounded-md bg-surface shadow-xs text-foreground">
+          <div className="flex gap-0.5 rounded-lg bg-surface-muted p-0.5">
+            <button className="rounded-md bg-surface px-3 py-1 text-xs font-semibold text-foreground shadow-xs">
               Weekly
             </button>
-            <button className="px-3 py-1 text-xs font-semibold rounded-md text-on-surface-muted hover:text-foreground">
+            <button className="rounded-md px-3 py-1 text-xs font-semibold text-on-surface-muted hover:text-foreground">
               Monthly
             </button>
           </div>
@@ -253,7 +261,7 @@ function PerformanceCard({
         <MonthlyEarningsChart months={months} ariaLabel={legend} />
       </div>
     </Card>
-  );
+  )
 }
 
 function TopPerformingCard({
@@ -264,24 +272,20 @@ function TopPerformingCard({
   generateReportLabel,
   locale,
 }: {
-  courses: TopCourse[];
-  title: string;
-  viewAllLabel: string;
-  studentsCountLabel: (count: number) => string;
-  generateReportLabel: string;
-  locale: string;
+  courses: TopCourse[]
+  title: string
+  viewAllLabel: string
+  studentsCountLabel: (count: number) => string
+  generateReportLabel: string
+  locale: string
 }) {
   return (
-    <Card className="flex flex-col gap-md rounded-2xl border-border p-md shadow-xs hover:shadow-md transition-shadow">
+    <Card className="flex flex-col gap-md rounded-2xl border-border p-md shadow-xs transition-shadow hover:shadow-md">
       <div className="flex items-center justify-between">
         <h2 className="text-title-lg text-title-lg--line-height font-semibold text-foreground">
           {title}
         </h2>
-        <Button
-          variant="link"
-        >
-          {viewAllLabel}
-        </Button>
+        <Button variant="link">{viewAllLabel}</Button>
       </div>
 
       <ul className="flex flex-col gap-3">
@@ -304,16 +308,25 @@ function TopPerformingCard({
                 <span>{studentsCountLabel(course.students)}</span>
                 <span aria-hidden="true">•</span>
                 <span className="inline-flex items-center gap-0.5">
-                  <Star className="size-3 fill-warning stroke-warning" aria-hidden="true" />
+                  <Star
+                    className="size-3 fill-warning stroke-warning"
+                    aria-hidden="true"
+                  />
                   <span dir="ltr">{course.rating.toFixed(1)}</span>
                 </span>
               </p>
             </div>
             <div className="text-end">
-              <p className="text-body-md text-body-md--line-height font-semibold text-foreground" dir="ltr">
+              <p
+                className="text-body-md text-body-md--line-height font-semibold text-foreground"
+                dir="ltr"
+              >
                 {formatCurrency(course.revenue, locale)}
               </p>
-              <p className="mt-0.5 text-label-sm text-label-sm--line-height text-success" dir="ltr">
+              <p
+                className="mt-0.5 text-label-sm text-label-sm--line-height text-success"
+                dir="ltr"
+              >
                 +12%
               </p>
             </div>
@@ -321,119 +334,63 @@ function TopPerformingCard({
         ))}
       </ul>
 
-      <Button
-        variant="outline"
-        size="lg"
-        className="mt-2 w-full"
-      >
+      <Button variant="outline" size="lg" className="mt-2 w-full">
         {generateReportLabel}
       </Button>
     </Card>
-  );
+  )
 }
 
-function StudentActivityCard({
-  activity,
-  title,
-  headers,
-  actions,
-  statuses,
-  timeLabel,
-}: {
-  activity: StudentActivity[];
-  title: string;
-  headers: { student: string; action: string; course: string; status: string; date: string };
-  actions: {
-    completed_lesson: (n: number) => string;
-    submitted_assignment: string;
-    enrolled: string;
-  };
-  statuses: { success: string; pending: string };
-  timeLabel: {
-    minutes: (n: number) => string;
-    hours: (n: number) => string;
-    days: (n: number) => string;
-  };
-}) {
-  return (
-    <Card className="flex flex-col rounded-2xl border-border shadow-xs overflow-hidden">
-      <div className="px-md pt-md pb-3 border-b border-border">
-        <h2 className="text-title-lg text-title-lg--line-height font-semibold text-foreground">
-          {title}
-        </h2>
-      </div>
-      <Table>
-        <TableHeader>
-          <TableRow className="grid grid-cols-[1.4fr_1.4fr_1.6fr_0.8fr_0.8fr] gap-md bg-surface-muted px-md py-2.5 text-label-sm text-label-sm--line-height font-semibold text-on-surface-muted">
-            <TableHead>{headers.student}</TableHead>
-            <TableHead>{headers.action}</TableHead>
-            <TableHead>{headers.course}</TableHead>
-            <TableHead>{headers.status}</TableHead>
-            <TableHead className="text-end">{headers.date}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {activity.map((row) => (
-            <TableRow
-              key={row.id}
-              className="grid grid-cols-[1.4fr_1.4fr_1.6fr_0.8fr_0.8fr] items-center gap-md border-b border-border px-md py-3 last:border-b-0"
-            >
-              <TableCell className="flex items-center gap-2.5">
-                <Avatar className={`size-8 shrink-0 ${STUDENT_TINTS[row.studentTint]}`}>
-                  <AvatarFallback className="text-label-sm font-semibold">
-                    {row.studentInitials}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="truncate text-body-md text-body-md--line-height font-medium text-foreground">
-                  {row.studentName}
-                </span>
-              </TableCell>
-              <TableCell className="truncate text-body-md text-body-md--line-height text-on-surface-muted">
-                {formatAction(row.action, actions)}
-              </TableCell>
-              <TableCell className="truncate text-body-md text-body-md--line-height text-foreground">
-                {row.course}
-              </TableCell>
-              <TableCell>
-                <span
-                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-label-sm text-label-sm--line-height font-semibold ${STATUS_TINTS[row.status]}`}
-                >
-                  {row.status === "success" ? statuses.success : statuses.pending}
-                </span>
-              </TableCell>
-              <TableCell className="text-end text-label-sm text-label-sm--line-height text-on-surface-muted" dir="ltr">
-                {formatTime(row.time, timeLabel)}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </Card>
-  );
-}
-
-function formatAction(
+function formatActivityAction(
   action: StudentActivityAction,
-  labels: { completed_lesson: (n: number) => string; submitted_assignment: string; enrolled: string },
-): string {
-  if (action.kind === "completed_lesson") return labels.completed_lesson(action.n);
-  if (action.kind === "submitted_assignment") return labels.submitted_assignment;
-  return labels.enrolled;
+  labels: {
+    completedLesson: (n: number) => string
+    submittedAssignment: string
+    enrolled: string
+  }
+) {
+  if (action.kind === "completed_lesson") {
+    return labels.completedLesson(action.n)
+  }
+  if (action.kind === "submitted_assignment") {
+    return labels.submittedAssignment
+  }
+  return labels.enrolled
+}
+
+function formatActivityTime(
+  time: StudentActivityTime,
+  labels: {
+    minutes: (n: number) => string
+    hours: (n: number) => string
+    days: (n: number) => string
+  }
+) {
+  if (time.unit === "minutes") {
+    return labels.minutes(time.n)
+  }
+  if (time.unit === "hours") {
+    return labels.hours(time.n)
+  }
+  return labels.days(time.n)
 }
 
 function formatStatValue(stat: OverviewStat, locale: string): string {
-  const grouping = new Intl.NumberFormat(locale, { useGrouping: true, maximumFractionDigits: 0 });
+  const grouping = new Intl.NumberFormat(locale, {
+    useGrouping: true,
+    maximumFractionDigits: 0,
+  })
   if (stat.id === "revenue") {
     return new Intl.NumberFormat(locale, {
       style: "currency",
       currency: "USD",
       maximumFractionDigits: 0,
-    }).format(stat.value);
+    }).format(stat.value)
   }
   if (stat.id === "rating") {
-    return `${stat.value.toFixed(2)} / 5.0`;
+    return `${stat.value.toFixed(2)} / 5.0`
   }
-  return grouping.format(stat.value);
+  return grouping.format(stat.value)
 }
 
 function formatCurrency(value: number, locale: string): string {
@@ -441,7 +398,7 @@ function formatCurrency(value: number, locale: string): string {
     style: "currency",
     currency: "USD",
     maximumFractionDigits: 0,
-  }).format(value);
+  }).format(value)
 }
 
 function formatPercent(value: number, locale: string): string {
@@ -449,14 +406,5 @@ function formatPercent(value: number, locale: string): string {
     style: "percent",
     maximumFractionDigits: 1,
     minimumFractionDigits: 1,
-  }).format(value / 100);
-}
-
-function formatTime(
-  time: StudentActivityTime,
-  labels: { minutes: (n: number) => string; hours: (n: number) => string; days: (n: number) => string },
-): string {
-  if (time.unit === "minutes") return labels.minutes(time.n);
-  if (time.unit === "hours") return labels.hours(time.n);
-  return labels.days(time.n);
+  }).format(value / 100)
 }

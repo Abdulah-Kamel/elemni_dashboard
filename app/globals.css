@@ -308,6 +308,17 @@
   to { opacity: 1; }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .animate-slide-up,
+  .animate-fade-in {
+    animation: none;
+  }
+
+  [class*="animate-stagger-"] {
+    animation-delay: 0ms;
+  }
+}
+
 @layer base {
   button:not(:disabled):active {
     transform: scale(0.97);
