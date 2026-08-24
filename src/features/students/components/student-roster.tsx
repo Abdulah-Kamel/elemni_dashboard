@@ -1,142 +1,128 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useMemo, useState } from "react"
+import type { CourseOut } from "@/features/shell/schema"
 import { StudentStatsBar } from "@/features/students/components/student-stats-bar"
 import { StudentFilters } from "@/features/students/components/student-filters"
-import { StudentTable } from "@/features/students/components/student-table"
-import type { Student } from "@/features/students/components/student-table"
+import {
+  StudentTable,
+  type StudentSubscriptionRow,
+} from "@/features/students/components/student-table"
 import { StudentPagination } from "@/features/students/components/student-pagination"
-import { GrantAccessModal } from "@/features/students/components/grant-access-modal"
+import type { TeacherSubscription } from "@/features/students/schema"
 
-const ITEMS_PER_PAGE = 5
+const ITEMS_PER_PAGE = 10
 
-const MOCK_STUDENTS: Student[] = [
-  {
-    id: 1,
-    name: "Layla Hassan",
-    initials: "LH",
-    course: "Algebra I",
-    enrollmentDate: "Jan 15, 2026",
-    progress: 75,
-    status: "active",
-  },
-  {
-    id: 2,
-    name: "Omar Farouk",
-    initials: "OF",
-    course: "Algebra I",
-    enrollmentDate: "Feb 1, 2026",
-    progress: 45,
-    status: "active",
-  },
-  {
-    id: 3,
-    name: "Nadia Youssef",
-    initials: "NY",
-    course: "Geometry",
-    enrollmentDate: "Jan 20, 2026",
-    progress: 90,
-    status: "completed",
-  },
-  {
-    id: 4,
-    name: "Khaled Ibrahim",
-    initials: "KI",
-    course: "Algebra I",
-    enrollmentDate: "Mar 5, 2026",
-    progress: 20,
-    status: "blocked",
-  },
-  {
-    id: 5,
-    name: "Mariam Adel",
-    initials: "MA",
-    course: "Geometry",
-    enrollmentDate: "Feb 12, 2026",
-    progress: 60,
-    status: "active",
-  },
-  {
-    id: 6,
-    name: "Youssef Amin",
-    initials: "YA",
-    course: "Algebra I",
-    enrollmentDate: "Jan 8, 2026",
-    progress: 85,
-    status: "active",
-  },
-  {
-    id: 7,
-    name: "Salma Nabil",
-    initials: "SN",
-    course: "Geometry",
-    enrollmentDate: "Apr 1, 2026",
-    progress: 10,
-    status: "blocked",
-  },
-  {
-    id: 8,
-    name: "Ali Mostafa",
-    initials: "AM",
-    course: "Algebra I",
-    enrollmentDate: "Mar 20, 2026",
-    progress: 35,
-    status: "active",
-  },
-  {
-    id: 9,
-    name: "Hana Tamer",
-    initials: "HT",
-    course: "Geometry",
-    enrollmentDate: "Feb 28, 2026",
-    progress: 100,
-    status: "completed",
-  },
-  {
-    id: 10,
-    name: "Tarek Samir",
-    initials: "TS",
-    course: "Algebra I",
-    enrollmentDate: "Jan 5, 2026",
-    progress: 55,
-    status: "active",
-  },
-]
+type Props = {
+  subscriptions: TeacherSubscription[]
+  courses: CourseOut[]
+}
 
-export function StudentRoster() {
-  const [students, setStudents] = useState(MOCK_STUDENTS)
+function getInitials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return "ST"
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return `${parts[0][0] ?? ""}${parts[1][0] ?? ""}`.toUpperCase()
+}
+
+export function StudentRoster({ subscriptions, courses }: Props) {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [courseFilter, setCourseFilter] = useState("all")
+  const [gradeFilter, setGradeFilter] = useState("all")
+  const [streamFilter, setStreamFilter] = useState("all")
   const [currentPage, setCurrentPage] = useState(1)
-  const [grantStudent, setGrantStudent] = useState<Student | null>(null)
-  const courseOptions = useMemo(
-    () => [...new Set(students.map((student) => student.course))].sort(),
-    [students]
+
+  const rows = useMemo<StudentSubscriptionRow[]>(
+    () =>
+      [...subscriptions]
+        .sort(
+          (left, right) =>
+            new Date(right.purchased_at).getTime() -
+            new Date(left.purchased_at).getTime()
+        )
+        .map((subscription) => ({
+          enrollmentId: subscription.enrollment_id,
+          studentId: subscription.student_id,
+          name: subscription.student_name,
+          initials: getInitials(subscription.student_name),
+          email: subscription.student_email,
+          phone:
+            subscription.whatsapp_number ??
+            subscription.student_phone ??
+            subscription.parent_phone ??
+            null,
+          courseId: subscription.course.id,
+          course: subscription.course.title,
+          purchasedAt: subscription.purchased_at,
+          expiresAt: subscription.expires_at,
+          totalPaid: subscription.total_paid,
+          currency: subscription.currency || "EGP",
+          status: subscription.payment_status.toLowerCase(),
+          grade: subscription.grade_name ?? null,
+          stream: subscription.stream_name ?? null,
+        })),
+    [subscriptions]
+  )
+
+  const courseOptions = useMemo(() => {
+    const linkedCourses = rows.map((row) => row.course)
+    const allCourses = new Set([
+      ...courses.map((course) => course.title),
+      ...linkedCourses,
+    ])
+    return [...allCourses].sort()
+  }, [courses, rows])
+
+  const gradeOptions = useMemo(
+    () =>
+      [
+        ...new Set(rows.map((row) => row.grade).filter(Boolean) as string[]),
+      ].sort(),
+    [rows]
+  )
+
+  const streamOptions = useMemo(
+    () =>
+      [
+        ...new Set(rows.map((row) => row.stream).filter(Boolean) as string[]),
+      ].sort(),
+    [rows]
+  )
+
+  const statusOptions = useMemo(
+    () => [...new Set(rows.map((row) => row.status))].sort(),
+    [rows]
   )
 
   const filteredStudents = useMemo(() => {
-    let result = students
+    const term = searchTerm.trim().toLowerCase()
 
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase()
-      result = result.filter(
-        (s) =>
-          s.name.toLowerCase().includes(term) ||
-          s.course.toLowerCase().includes(term)
+    return rows.filter((row) => {
+      const matchesSearch =
+        !term ||
+        row.name.toLowerCase().includes(term) ||
+        row.email.toLowerCase().includes(term) ||
+        row.course.toLowerCase().includes(term) ||
+        row.phone?.toLowerCase().includes(term)
+
+      const matchesStatus =
+        statusFilter === "all" || row.status === statusFilter
+      const matchesCourse =
+        courseFilter === "all" || row.course === courseFilter
+      const matchesGrade = gradeFilter === "all" || row.grade === gradeFilter
+      const matchesStream =
+        streamFilter === "all" || row.stream === streamFilter
+
+      return (
+        matchesSearch &&
+        matchesStatus &&
+        matchesCourse &&
+        matchesGrade &&
+        matchesStream
       )
-    }
-
-    if (statusFilter !== "all") {
-      result = result.filter((s) => s.status === statusFilter)
-    }
-
-    if (courseFilter !== "all") {
-      result = result.filter((s) => s.course === courseFilter)
-    }
-
-    return result
-  }, [students, searchTerm, statusFilter, courseFilter])
+    })
+  }, [courseFilter, gradeFilter, rows, searchTerm, statusFilter, streamFilter])
 
   const totalPages = Math.max(
     1,
@@ -147,88 +133,70 @@ export function StudentRoster() {
     currentPage * ITEMS_PER_PAGE
   )
 
-  const stats = useMemo(
-    () => ({
-      total: students.length,
-      active: students.filter((s) => s.status === "active").length,
-      pending: students.filter((s) => s.status === "blocked").length,
-    }),
-    [students]
-  )
+  const stats = useMemo(() => {
+    const uniqueStudents = new Set(rows.map((row) => row.studentId)).size
+    const completed = rows.filter((row) => row.status === "completed").length
+    const pending = rows.filter((row) => row.status === "pending").length
 
-  function handleToggleBlock(id: number) {
-    setStudents((prev) =>
-      prev.map((s) =>
-        s.id === id
-          ? { ...s, status: s.status === "blocked" ? "active" : "blocked" }
-          : s
-      )
-    )
-  }
+    return {
+      totalStudents: uniqueStudents,
+      completedSubscriptions: completed,
+      pendingSubscriptions: pending,
+    }
+  }, [rows])
 
-  function handleOpenGrant(student: Student) {
-    setGrantStudent(student)
-  }
-
-  function handleCloseGrant() {
-    setGrantStudent(null)
-  }
-
-  function handleConfirmGrant(accessType: string) {
-    console.log("Grant access:", grantStudent?.name, accessType)
-    setGrantStudent(null)
-  }
-
-  function handleSearchChange(value: string) {
-    setSearchTerm(value)
-    setCurrentPage(1)
-  }
-
-  function handleStatusChange(value: string) {
-    setStatusFilter(value)
-    setCurrentPage(1)
-  }
-
-  function handleCourseChange(value: string) {
-    setCourseFilter(value)
+  function resetPagination() {
     setCurrentPage(1)
   }
 
   return (
     <div className="flex flex-col gap-xl">
       <StudentStatsBar
-        totalStudents={stats.total}
-        activeStudents={stats.active}
-        pendingAccess={stats.pending}
+        totalStudents={stats.totalStudents}
+        completedSubscriptions={stats.completedSubscriptions}
+        pendingSubscriptions={stats.pendingSubscriptions}
       />
       <div className="flex flex-col gap-md">
         <StudentFilters
           searchTerm={searchTerm}
-          onSearchChange={handleSearchChange}
+          onSearchChange={(value) => {
+            setSearchTerm(value)
+            resetPagination()
+          }}
           statusFilter={statusFilter}
-          onStatusChange={handleStatusChange}
+          onStatusChange={(value) => {
+            setStatusFilter(value)
+            resetPagination()
+          }}
+          statusOptions={statusOptions}
           courseFilter={courseFilter}
-          onCourseChange={handleCourseChange}
+          onCourseChange={(value) => {
+            setCourseFilter(value)
+            resetPagination()
+          }}
           courses={courseOptions}
+          gradeFilter={gradeFilter}
+          onGradeChange={(value) => {
+            setGradeFilter(value)
+            resetPagination()
+          }}
+          grades={gradeOptions}
+          streamFilter={streamFilter}
+          onStreamChange={(value) => {
+            setStreamFilter(value)
+            resetPagination()
+          }}
+          streams={streamOptions}
         />
-        <StudentTable
-          students={paginatedStudents}
-          onToggleBlock={handleToggleBlock}
-          onOpenGrant={handleOpenGrant}
-        />
+        <StudentTable students={paginatedStudents} />
         <StudentPagination
           currentPage={currentPage}
           totalPages={totalPages}
           totalCount={filteredStudents.length}
-          filteredCount={ITEMS_PER_PAGE}
+          pageSize={ITEMS_PER_PAGE}
           onPageChange={setCurrentPage}
         />
       </div>
-      <GrantAccessModal
-        student={grantStudent}
-        onClose={handleCloseGrant}
-        onConfirm={handleConfirmGrant}
-      />
     </div>
   )
 }

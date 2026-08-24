@@ -7,7 +7,7 @@ interface StudentPaginationProps {
   currentPage: number
   totalPages: number
   totalCount: number
-  filteredCount: number
+  pageSize: number
   onPageChange: (page: number) => void
 }
 
@@ -15,7 +15,7 @@ export function StudentPagination({
   currentPage,
   totalPages,
   totalCount,
-  filteredCount,
+  pageSize,
   onPageChange,
 }: StudentPaginationProps) {
   const t = useTranslations("student")
@@ -25,7 +25,7 @@ export function StudentPagination({
       currentPage={currentPage}
       totalPages={totalPages}
       totalItems={totalCount}
-      pageSize={filteredCount}
+      pageSize={pageSize}
       onPageChange={onPageChange}
       labels={{
         previous: t("prev_page"),

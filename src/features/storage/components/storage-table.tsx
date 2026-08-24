@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useMemo } from "react"
-import { Search, BookOpen } from "lucide-react"
+import { useMemo, useState } from "react"
+import { BookOpen, Search } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { DashboardPagination } from "@/components/dashboard-pagination"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -20,108 +21,118 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import type { CourseUsageRow } from "@/features/storage/types"
 
-interface CourseStorageRow {
-  id: number
-  name: string
-  videos: number
-  storageSize: string
-  bandwidth: string
-  status: "published" | "draft"
-}
-
-const MOCK_COURSES: CourseStorageRow[] = [
-  {
-    id: 1,
-    name: "Algebra I",
-    videos: 24,
-    storageSize: "156.2 GB",
-    bandwidth: "2.1 TB",
-    status: "published",
-  },
-  {
-    id: 2,
-    name: "Geometry",
-    videos: 18,
-    storageSize: "98.5 GB",
-    bandwidth: "1.4 TB",
-    status: "published",
-  },
-  {
-    id: 3,
-    name: "Calculus",
-    videos: 30,
-    storageSize: "210.8 GB",
-    bandwidth: "3.2 TB",
-    status: "draft",
-  },
-  {
-    id: 4,
-    name: "Trigonometry",
-    videos: 12,
-    storageSize: "67.3 GB",
-    bandwidth: "0.9 TB",
-    status: "published",
-  },
-  {
-    id: 5,
-    name: "Statistics",
-    videos: 20,
-    storageSize: "110.1 GB",
-    bandwidth: "1.8 TB",
-    status: "draft",
-  },
-]
+const ITEMS_PER_PAGE = 10
 
 const STATUS_STYLES: Record<string, string> = {
   published: "bg-success-tint text-success",
   draft: "bg-surface-strong text-on-surface-muted",
 }
 
-export function StorageTable() {
+export function StorageTable({ rows }: { rows: CourseUsageRow[] }) {
   const t = useTranslations("storage")
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<
-    "all" | CourseStorageRow["status"]
+    "all" | CourseUsageRow["status"]
   >("all")
+  const [subjectFilter, setSubjectFilter] = useState("all")
+  const [gradeFilter, setGradeFilter] = useState("all")
+  const [streamFilter, setStreamFilter] = useState("all")
+  const [currentPage, setCurrentPage] = useState(1)
   const statusItems = [
     { value: "all", label: t("all_statuses") },
     { value: "published", label: t("published") },
     { value: "draft", label: t("draft") },
   ]
+  const subjectItems = [
+    { value: "all", label: t("all_subjects") },
+    ...uniqueValues(rows.map((row) => row.subject)).map((subject) => ({
+      value: subject,
+      label: subject,
+    })),
+  ]
+  const gradeItems = [
+    { value: "all", label: t("all_grades") },
+    ...uniqueValues(rows.map((row) => row.grade)).map((grade) => ({
+      value: grade,
+      label: grade,
+    })),
+  ]
+  const streamItems = [
+    { value: "all", label: t("all_streams") },
+    ...uniqueValues(rows.map((row) => row.stream)).map((stream) => ({
+      value: stream,
+      label: stream,
+    })),
+  ]
 
   const filtered = useMemo(() => {
-    return MOCK_COURSES.filter((course) => {
+    const normalizedTerm = searchTerm.trim().toLowerCase()
+
+    return rows.filter((course) => {
       const matchesSearch =
-        !searchTerm ||
-        course.name.toLowerCase().includes(searchTerm.toLowerCase())
+        !normalizedTerm ||
+        course.title.toLowerCase().includes(normalizedTerm) ||
+        course.subject?.toLowerCase().includes(normalizedTerm) ||
+        course.grade?.toLowerCase().includes(normalizedTerm) ||
+        course.stream?.toLowerCase().includes(normalizedTerm)
       const matchesStatus =
         statusFilter === "all" || course.status === statusFilter
-      return matchesSearch && matchesStatus
+      const matchesSubject =
+        subjectFilter === "all" || course.subject === subjectFilter
+      const matchesGrade = gradeFilter === "all" || course.grade === gradeFilter
+      const matchesStream =
+        streamFilter === "all" || course.stream === streamFilter
+
+      return (
+        matchesSearch &&
+        matchesStatus &&
+        matchesSubject &&
+        matchesGrade &&
+        matchesStream
+      )
     })
-  }, [searchTerm, statusFilter])
+  }, [gradeFilter, rows, searchTerm, statusFilter, streamFilter, subjectFilter])
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE))
+  const paginatedRows = filtered.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  )
+
+  function updateAndReset(filterAction: () => void) {
+    filterAction()
+    setCurrentPage(1)
+  }
 
   return (
     <div className="rounded-2xl border border-border bg-surface shadow-xs">
-      <div className="flex flex-col gap-3 border-b border-border px-4 py-3 sm:flex-row">
+      <div className="grid gap-3 border-b border-border px-4 py-3 xl:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))]">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-on-surface-muted" />
           <Input
             placeholder={t("search_courses")}
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) =>
+              updateAndReset(() => {
+                setSearchTerm(e.target.value)
+              })
+            }
             className="border-border bg-surface ps-9"
           />
         </div>
         <Select
           value={statusFilter}
           onValueChange={(value) =>
-            setStatusFilter(value as "all" | CourseStorageRow["status"])
+            updateAndReset(() => {
+              setStatusFilter(value as "all" | CourseUsageRow["status"])
+            })
           }
           items={statusItems}
         >
-          <SelectTrigger className="w-full sm:w-44">
-            <SelectValue placeholder={t("all_statuses")} />
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder={t("filter_status")} />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
@@ -133,63 +144,184 @@ export function StorageTable() {
             </SelectGroup>
           </SelectContent>
         </Select>
+
+        <Select
+          value={subjectFilter}
+          onValueChange={(value) =>
+            updateAndReset(() => {
+              setSubjectFilter(value ?? "all")
+            })
+          }
+          items={subjectItems}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder={t("filter_subject")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              {subjectItems.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={gradeFilter}
+          onValueChange={(value) =>
+            updateAndReset(() => {
+              setGradeFilter(value ?? "all")
+            })
+          }
+          items={gradeItems}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder={t("filter_grade")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              {gradeItems.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={streamFilter}
+          onValueChange={(value) =>
+            updateAndReset(() => {
+              setStreamFilter(value ?? "all")
+            })
+          }
+          items={streamItems}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder={t("filter_stream")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              {streamItems.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
       </div>
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader className="bg-surface-muted text-xs font-bold text-on-surface-muted">
+      <Table>
+        <TableHeader className="bg-surface-muted text-xs font-bold text-on-surface-muted">
+          <TableRow>
+            <TableHead className="px-4 py-3">{t("course_name")}</TableHead>
+            <TableHead className="px-4 py-3">{t("subject")}</TableHead>
+            <TableHead className="px-4 py-3">{t("grade")}</TableHead>
+            <TableHead className="px-4 py-3">{t("stream")}</TableHead>
+            <TableHead className="px-4 py-3">{t("lessons")}</TableHead>
+            <TableHead className="px-4 py-3">{t("items")}</TableHead>
+            <TableHead className="px-4 py-3">{t("content_mix")}</TableHead>
+            <TableHead className="px-4 py-3">{t("subscriptions")}</TableHead>
+            <TableHead className="px-4 py-3">{t("status")}</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {paginatedRows.length === 0 ? (
             <TableRow>
-              <TableHead className="px-4 py-3">{t("course_name")}</TableHead>
-              <TableHead className="px-4 py-3">{t("videos")}</TableHead>
-              <TableHead className="px-4 py-3">{t("storage")}</TableHead>
-              <TableHead className="px-4 py-3">{t("bandwidth")}</TableHead>
-              <TableHead className="px-4 py-3">{t("status")}</TableHead>
+              <TableCell
+                colSpan={9}
+                className="px-4 py-8 text-center text-xs text-on-surface-muted"
+              >
+                {t("no_results")}
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={5}
-                  className="px-4 py-8 text-center text-xs text-on-surface-muted"
-                >
-                  {t("no_results")}
+          ) : (
+            paginatedRows.map((course) => (
+              <TableRow key={course.id}>
+                <TableCell className="px-4 py-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex size-8 items-center justify-center rounded-lg bg-primary-tint text-primary">
+                      <BookOpen className="size-4" />
+                    </div>
+                    <span className="text-sm font-medium text-foreground">
+                      {course.title}
+                    </span>
+                  </div>
+                </TableCell>
+                <TableCell className="px-4 py-3 text-sm text-on-surface-muted">
+                  {course.subject ?? t("not_available")}
+                </TableCell>
+                <TableCell className="px-4 py-3 text-sm text-on-surface-muted">
+                  {course.grade ?? t("not_available")}
+                </TableCell>
+                <TableCell className="px-4 py-3 text-sm text-on-surface-muted">
+                  {course.stream ?? t("not_available")}
+                </TableCell>
+                <TableCell className="px-4 py-3 text-sm text-on-surface-muted">
+                  {course.lessonCount}
+                </TableCell>
+                <TableCell className="px-4 py-3 text-sm text-on-surface-muted">
+                  {course.itemCount}
+                </TableCell>
+                <TableCell className="px-4 py-3">
+                  <div className="flex flex-wrap gap-1.5 text-xs">
+                    <ContentBadge
+                      label={t("videos")}
+                      value={course.videoCount}
+                    />
+                    <ContentBadge
+                      label={t("documents")}
+                      value={course.documentCount}
+                    />
+                    <ContentBadge label={t("exams")} value={course.examCount} />
+                  </div>
+                </TableCell>
+                <TableCell className="px-4 py-3 text-sm text-on-surface-muted">
+                  {course.subscriptionCount}
+                </TableCell>
+                <TableCell className="px-4 py-3">
+                  <span
+                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_STYLES[course.status]}`}
+                  >
+                    {t(course.status)}
+                  </span>
                 </TableCell>
               </TableRow>
-            ) : (
-              filtered.map((course) => (
-                <TableRow key={course.id}>
-                  <TableCell className="px-4 py-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="flex size-8 items-center justify-center rounded-lg bg-primary-tint text-primary">
-                        <BookOpen className="size-4" />
-                      </div>
-                      <span className="text-sm font-medium text-foreground">
-                        {course.name}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-sm text-on-surface-muted">
-                    {course.videos}
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-sm text-on-surface-muted">
-                    {course.storageSize}
-                  </TableCell>
-                  <TableCell className="px-4 py-3 text-sm text-on-surface-muted">
-                    {course.bandwidth}
-                  </TableCell>
-                  <TableCell className="px-4 py-3">
-                    <span
-                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_STYLES[course.status]}`}
-                    >
-                      {t(course.status)}
-                    </span>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+            ))
+          )}
+        </TableBody>
+      </Table>
+
+      <div className="border-t border-border px-4 py-3">
+        <DashboardPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filtered.length}
+          pageSize={ITEMS_PER_PAGE}
+          onPageChange={setCurrentPage}
+          labels={{
+            previous: t("prev_page"),
+            next: t("next_page"),
+            page: (page, pages) => t("pagination", { page, pages }),
+            summary: (from, to, total) => t("showing", { from, to, total }),
+          }}
+        />
       </div>
     </div>
   )
+}
+
+function ContentBadge({ label, value }: { label: string; value: number }) {
+  return (
+    <span className="inline-flex items-center rounded-full bg-surface-muted px-2 py-1 text-on-surface-muted">
+      {label}: {value}
+    </span>
+  )
+}
+
+function uniqueValues(values: Array<string | null>) {
+  return [...new Set(values.filter(Boolean) as string[])].sort()
 }

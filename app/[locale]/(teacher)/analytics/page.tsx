@@ -1,26 +1,33 @@
-import { setRequestLocale } from "next-intl/server";
-import {Placeholder} from "@/features/shell/components/placeholder";
-import {verifySession} from "@/lib/auth/dal";
+import { setRequestLocale } from "next-intl/server"
+import { redirect } from "next/navigation"
 
-export const dynamic = "force-dynamic";
+function buildRedirectSearch(
+  searchParams: Record<string, string | string[] | undefined>
+) {
+  const query = new URLSearchParams()
+
+  for (const key of ["start", "end"]) {
+    const value = searchParams[key]
+    const candidate = Array.isArray(value) ? value[0] : value
+    if (candidate) {
+      query.set(key, candidate)
+    }
+  }
+
+  const search = query.toString()
+  return search ? `?${search}` : ""
+}
 
 export default async function AnalyticsPage({
   params,
+  searchParams,
 }: {
-  params: Promise<{ locale: string }>;
+  params: Promise<{ locale: string }>
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-  const { locale } = await params;
-  setRequestLocale(locale);
+  const { locale } = await params
+  setRequestLocale(locale)
 
-  const user = await verifySession();
-
-  if (!user) {
-    return <Placeholder state="error" error={{ type: "Unauthorized", status: 401, message: "No session" }} />;
-  }
-
-  return (
-    <Placeholder state="empty">
-      <span className="text-sm text-muted-foreground">{user.name}</span>
-    </Placeholder>
-  );
+  const query = await searchParams
+  redirect(`/${locale}/dashboard${buildRedirectSearch(query)}`)
 }
