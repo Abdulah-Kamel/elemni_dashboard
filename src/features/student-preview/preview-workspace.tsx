@@ -14,6 +14,11 @@ const LABELS: Record<string, { edit: string; preview: string }> = {
   en: { edit: "Edit", preview: "Preview" },
 };
 
+const DEVICE_LABELS: Record<string, { full: string; tablet: string; mobile: string }> = {
+  ar: { full: "كامل", tablet: "لوحي", mobile: "جوال" },
+  en: { full: "Full", tablet: "Tablet", mobile: "Mobile" },
+};
+
 interface PreviewWorkspaceProps {
   editor: React.ReactNode;
   preview: React.ReactNode;
@@ -37,6 +42,7 @@ export function PreviewWorkspace({
 }: PreviewWorkspaceProps) {
   const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit");
   const labels = LABELS[locale] ?? LABELS.en;
+  const deviceLabels = DEVICE_LABELS[locale] ?? DEVICE_LABELS.en;
 
   return (
     <div
@@ -92,6 +98,24 @@ export function PreviewWorkspace({
           style={{ maxWidth: DEVICE_WIDTHS[deviceWidth] }}
           data-testid="preview-pane"
         >
+          <div className="flex items-center gap-1 border-b border-[#E2E0EF] px-4 py-2" role="radiogroup">
+            {(Object.keys(DEVICE_WIDTHS) as PreviewDeviceWidth[]).map((width) => (
+              <button
+                key={width}
+                type="button"
+                role="radio"
+                aria-checked={deviceWidth === width}
+                onClick={() => onDeviceWidthChange?.(width)}
+                className={`rounded-lg px-3 py-1.5 text-xs font-bold ${
+                  deviceWidth === width
+                    ? "bg-[#0284C7]/10 text-[#0369A1]"
+                    : "text-[#777587] hover:bg-[#F0F9FF]"
+                }`}
+              >
+                {deviceLabels[width]}
+              </button>
+            ))}
+          </div>
           {preview}
         </div>
       </div>

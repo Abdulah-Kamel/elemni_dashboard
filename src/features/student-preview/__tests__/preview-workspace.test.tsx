@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { PreviewWorkspace } from "../preview-workspace";
 import type { PreviewLayoutMode, PreviewDeviceWidth } from "../types";
@@ -80,5 +80,37 @@ describe("PreviewWorkspace", () => {
       <PreviewWorkspace editor={<EditorSlot />} preview={<PreviewSlot />} locale="en" />
     );
     expect(screen.getByRole("tab", { name: /Edit/ })).toBeDefined();
+  });
+
+  it("renders device width controls", () => {
+    render(
+      <PreviewWorkspace editor={<EditorSlot />} preview={<PreviewSlot />} locale="ar" />
+    );
+    expect(screen.getByRole("radio", { name: /كامل|Full/ })).toBeDefined();
+    expect(screen.getByRole("radio", { name: /لوحي|Tablet/ })).toBeDefined();
+    expect(screen.getByRole("radio", { name: /جوال|Mobile/ })).toBeDefined();
+  });
+
+  it("defaults to full device width", () => {
+    const { container } = render(
+      <PreviewWorkspace editor={<EditorSlot />} preview={<PreviewSlot />} locale="ar" />
+    );
+    const fullRadio = screen.getByRole("radio", { name: /كامل|Full/ });
+    expect(fullRadio.getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("changes device width on radio click", () => {
+    const onDeviceWidthChange = vi.fn();
+    render(
+      <PreviewWorkspace
+        editor={<EditorSlot />}
+        preview={<PreviewSlot />}
+        locale="ar"
+        onDeviceWidthChange={onDeviceWidthChange}
+      />
+    );
+    const tabletRadio = screen.getByRole("radio", { name: /لوحي|Tablet/ });
+    fireEvent.click(tabletRadio);
+    expect(onDeviceWidthChange).toHaveBeenCalledWith("tablet");
   });
 });
