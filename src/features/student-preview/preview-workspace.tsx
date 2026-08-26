@@ -24,6 +24,11 @@ const FULL_PREVIEW_LABELS: Record<string, string> = {
   en: "Full Preview",
 };
 
+const LAYOUT_LABELS: Record<string, { split: string; "editor-focus": string; "preview-focus": string }> = {
+  ar: { split: "مقسم", "editor-focus": "المحرر", "preview-focus": "المعاينة" },
+  en: { split: "Split", "editor-focus": "Editor", "preview-focus": "Preview" },
+};
+
 interface PreviewWorkspaceProps {
   editor: React.ReactNode;
   preview: React.ReactNode;
@@ -49,6 +54,7 @@ export function PreviewWorkspace({
   const labels = LABELS[locale] ?? LABELS.en;
   const deviceLabels = DEVICE_LABELS[locale] ?? DEVICE_LABELS.en;
   const fullPreviewLabel = FULL_PREVIEW_LABELS[locale] ?? FULL_PREVIEW_LABELS.en;
+  const layoutLabels = LAYOUT_LABELS[locale] ?? LAYOUT_LABELS.en;
 
   return (
     <div
@@ -84,6 +90,26 @@ export function PreviewWorkspace({
         >
           {labels.preview}
         </button>
+      </div>
+
+      {/* Layout mode toggle (desktop only) */}
+      <div className="hidden items-center gap-1 lg:flex" role="radiogroup">
+        {(Object.keys(LAYOUT_LABELS[locale] ?? LAYOUT_LABELS.en) as PreviewLayoutMode[]).map((mode) => (
+          <button
+            key={mode}
+            type="button"
+            role="radio"
+            aria-checked={layoutMode === mode}
+            onClick={() => onLayoutModeChange?.(mode)}
+            className={`rounded-lg px-3 py-1.5 text-xs font-bold ${
+              layoutMode === mode
+                ? "bg-[#0284C7]/10 text-[#0369A1]"
+                : "text-[#777587] hover:bg-[#F0F9FF]"
+            }`}
+          >
+            {layoutLabels[mode]}
+          </button>
+        ))}
       </div>
 
       {/* Desktop split */}

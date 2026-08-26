@@ -134,4 +134,36 @@ describe("PreviewWorkspace", () => {
     fireEvent.click(screen.getByRole("button", { name: /معاينة كاملة|Full Preview/ }));
     expect(onFullPreview).toHaveBeenCalled();
   });
+
+  it("renders layout mode toggle", () => {
+    render(
+      <PreviewWorkspace editor={<EditorSlot />} preview={<PreviewSlot />} locale="ar" />
+    );
+    expect(screen.getByRole("radio", { name: /مقسم|Split/ })).toBeDefined();
+    expect(screen.getByRole("radio", { name: /المحرر|Editor/ })).toBeDefined();
+    expect(screen.getByRole("radio", { name: /المعاينة|Preview/ })).toBeDefined();
+  });
+
+  it("defaults to split layout", () => {
+    render(
+      <PreviewWorkspace editor={<EditorSlot />} preview={<PreviewSlot />} locale="ar" />
+    );
+    const splitRadio = screen.getByRole("radio", { name: /مقسم|Split/ });
+    expect(splitRadio.getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("changes layout mode on radio click", () => {
+    const onLayoutModeChange = vi.fn();
+    render(
+      <PreviewWorkspace
+        editor={<EditorSlot />}
+        preview={<PreviewSlot />}
+        locale="ar"
+        onLayoutModeChange={onLayoutModeChange}
+      />
+    );
+    const editorFocus = screen.getByRole("radio", { name: /المحرر|Editor/ });
+    fireEvent.click(editorFocus);
+    expect(onLayoutModeChange).toHaveBeenCalledWith("editor-focus");
+  });
 });
