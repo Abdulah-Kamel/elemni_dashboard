@@ -122,11 +122,11 @@ export function PreviewWorkspace({
               : "lg:grid-cols-[2fr_3fr]"
         }`}
       >
-        <div className="overflow-y-auto" data-testid="editor-pane">
+        <div className="sticky top-0 max-h-screen overflow-y-auto" data-testid="editor-pane">
           {editor}
         </div>
         <div
-          className="overflow-y-auto border-r border-[#E2E0EF]"
+          className="overflow-y-auto border-s border-[#E2E0EF]"
           style={{ maxWidth: DEVICE_WIDTHS[deviceWidth] }}
           data-testid="preview-pane"
         >
