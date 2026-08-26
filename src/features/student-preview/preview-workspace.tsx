@@ -19,6 +19,11 @@ const DEVICE_LABELS: Record<string, { full: string; tablet: string; mobile: stri
   en: { full: "Full", tablet: "Tablet", mobile: "Mobile" },
 };
 
+const FULL_PREVIEW_LABELS: Record<string, string> = {
+  ar: "معاينة كاملة",
+  en: "Full Preview",
+};
+
 interface PreviewWorkspaceProps {
   editor: React.ReactNode;
   preview: React.ReactNode;
@@ -43,6 +48,7 @@ export function PreviewWorkspace({
   const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit");
   const labels = LABELS[locale] ?? LABELS.en;
   const deviceLabels = DEVICE_LABELS[locale] ?? DEVICE_LABELS.en;
+  const fullPreviewLabel = FULL_PREVIEW_LABELS[locale] ?? FULL_PREVIEW_LABELS.en;
 
   return (
     <div
@@ -115,6 +121,13 @@ export function PreviewWorkspace({
                 {deviceLabels[width]}
               </button>
             ))}
+            <button
+              type="button"
+              onClick={onFullPreview}
+              className="ms-auto rounded-lg bg-[#0284C7] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#0369A1]"
+            >
+              {fullPreviewLabel}
+            </button>
           </div>
           {preview}
         </div>

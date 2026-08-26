@@ -113,4 +113,25 @@ describe("PreviewWorkspace", () => {
     fireEvent.click(tabletRadio);
     expect(onDeviceWidthChange).toHaveBeenCalledWith("tablet");
   });
+
+  it("renders full-preview button", () => {
+    render(
+      <PreviewWorkspace editor={<EditorSlot />} preview={<PreviewSlot />} locale="ar" />
+    );
+    expect(screen.getByRole("button", { name: /معاينة كاملة|Full Preview/ })).toBeDefined();
+  });
+
+  it("full-preview button calls onFullPreview", () => {
+    const onFullPreview = vi.fn();
+    render(
+      <PreviewWorkspace
+        editor={<EditorSlot />}
+        preview={<PreviewSlot />}
+        locale="ar"
+        onFullPreview={onFullPreview}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: /معاينة كاملة|Full Preview/ }));
+    expect(onFullPreview).toHaveBeenCalled();
+  });
 });
