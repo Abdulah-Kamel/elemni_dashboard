@@ -60,3 +60,7 @@ export type StudentCoursePreviewModel = {
 };
 
 export type PreviewInteractionMode = 'local-only';
+
+export type PreviewLayoutMode = "split" | "editor-focus" | "preview-focus";
+
+export type PreviewDeviceWidth = "full" | "tablet" | "mobile";
