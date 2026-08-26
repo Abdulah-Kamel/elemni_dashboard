@@ -1,0 +1,53 @@
+/*
+ * Student Preview — Scoped Light Theme Tokens
+ *
+ * These overrides ensure the student preview renders with the student
+ * frontend's light-theme palette regardless of the dashboard's dark mode
+ * or brand token state. Scoped under .student-preview to prevent leakage.
+ *
+ * Source: elemni_front_end portal-shell.tsx, course-detail.tsx,
+ * teacher-profile-view.tsx, and student globals.css.
+ */
+
+.student-preview {
+  /* Page / background */
+  --page: #FCFCFE;
+  --surface: #FFFFFF;
+  --surface-raised: #FFFFFF;
+  --surface-muted: #F0F9FF;
+  --surface-subtle: #E0F2FE;
+  --surface-strong: #FAF9FD;
+  --surface-sunken: #FAF9FD;
+
+  /* Text */
+  --on-surface: #1B1B24;
+  --on-surface-strong: #292733;
+  --on-surface-body: #464555;
+  --on-surface-muted: #777587;
+  --on-surface-subtle: #A6A3B5;
+  --on-primary: #FFFFFF;
+  --on-primary-tint: #0369A1;
+
+  /* Brand primary — student sky blue */
+  --brand-indigo: #0284C7;
+  --brand-indigo-deep: #0369A1;
+  --brand-indigo-tint: #E0F2FE;
+  --brand-indigo-border: #BAE6FD;
+  --brand-indigo-icon: #C7C4D8;
+  --brand-indigo-near-black: #11111A;
+
+  /* Accent */
+  --brand-amber: #F97316;
+  --brand-amber-tint: #FFF7ED;
+
+  /* Status */
+  --brand-emerald: #22C55E;
+  --brand-emerald-tint: #D1FAE5;
+  --brand-rose: #EF4444;
+  --brand-rose-tint: #FEE2E2;
+
+  /* Borders */
+  --border: #E2E0EF;
+  --border-strong: #DDD9E8;
+  --border-subtle: #E8E5F0;
+}
