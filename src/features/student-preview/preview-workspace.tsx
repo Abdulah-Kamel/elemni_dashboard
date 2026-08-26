@@ -119,7 +119,7 @@ export function PreviewWorkspace({
             ? "lg:grid-cols-[3fr_2fr]"
             : layoutMode === "editor-focus"
               ? "lg:grid-cols-[2fr_3fr]"
-              : "lg:grid-cols-[3fr_2fr]"
+              : "lg:grid-cols-[2fr_3fr]"
         }`}
       >
         <div className="overflow-y-auto" data-testid="editor-pane">
