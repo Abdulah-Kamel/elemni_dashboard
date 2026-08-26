@@ -61,6 +61,10 @@ export type StudentCoursePreviewModel = {
 
 export type PreviewInteractionMode = 'local-only';
 
-export type PreviewLayoutMode = "split" | "editor-focus" | "preview-focus";
+/**
+ * Desktop space presets. `split` is the default (preview 60% / editor 40%),
+ * `even` is the optional 50/50.
+ */
+export type PreviewLayoutMode = "split" | "even" | "editor-focus" | "preview-focus";
 
 export type PreviewDeviceWidth = "full" | "tablet" | "mobile";

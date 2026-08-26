@@ -1,33 +1,102 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useId, useRef, useState } from "react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import type { PreviewLayoutMode, PreviewDeviceWidth } from "./types";
 
+/**
+ * Preview viewport widths. `full` lets the preview fill whatever the pane
+ * gives it; the other two emulate a tablet and a phone.
+ */
 const DEVICE_WIDTHS: Record<PreviewDeviceWidth, string> = {
   full: "100%",
   tablet: "52rem",
   mobile: "23rem",
 };
 
-const LABELS: Record<string, { edit: string; preview: string }> = {
-  ar: { edit: "تعديل", preview: "معاينة" },
-  en: { edit: "Edit", preview: "Preview" },
+const DEVICE_ORDER: readonly PreviewDeviceWidth[] = ["full", "tablet", "mobile"];
+
+const LAYOUT_ORDER: readonly PreviewLayoutMode[] = [
+  "split",
+  "even",
+  "preview-focus",
+  "editor-focus",
+];
+
+/**
+ * Column ratios for the desktop grid. Column 1 is *always* the preview and
+ * column 2 is *always* the editor — the grid is forced to LTR so these map to
+ * physical left/right regardless of the document direction.
+ */
+const LAYOUT_COLUMNS: Record<PreviewLayoutMode, string> = {
+  split: "lg:grid-cols-[3fr_2fr]", // default: preview 60% / editor 40%
+  even: "lg:grid-cols-[1fr_1fr]",
+  "preview-focus": "lg:grid-cols-[3fr_1fr]",
+  "editor-focus": "lg:grid-cols-[1fr_3fr]",
 };
 
-const DEVICE_LABELS: Record<string, { full: string; tablet: string; mobile: string }> = {
-  ar: { full: "كامل", tablet: "لوحي", mobile: "جوال" },
-  en: { full: "Full", tablet: "Tablet", mobile: "Mobile" },
+const TAB_ORDER = ["edit", "preview"] as const;
+
+type PreviewTab = (typeof TAB_ORDER)[number];
+
+type WorkspaceCopy = {
+  tabsLabel: string;
+  tabs: Record<PreviewTab, string>;
+  deviceGroupLabel: string;
+  devices: Record<PreviewDeviceWidth, string>;
+  layoutGroupLabel: string;
+  layouts: Record<PreviewLayoutMode, string>;
+  fullPreview: string;
 };
 
-const FULL_PREVIEW_LABELS: Record<string, string> = {
-  ar: "معاينة كاملة",
-  en: "Full Preview",
+const COPY: Record<"ar" | "en", WorkspaceCopy> = {
+  ar: {
+    tabsLabel: "طريقة العرض",
+    tabs: { edit: "تعديل", preview: "معاينة" },
+    deviceGroupLabel: "عرض الجهاز",
+    devices: { full: "كامل", tablet: "لوحي", mobile: "جوال" },
+    layoutGroupLabel: "توزيع المساحة",
+    layouts: {
+      split: "مقسم",
+      even: "متساوٍ",
+      "preview-focus": "المعاينة",
+      "editor-focus": "المحرر",
+    },
+    fullPreview: "معاينة كاملة",
+  },
+  en: {
+    tabsLabel: "View mode",
+    tabs: { edit: "Edit", preview: "Preview" },
+    deviceGroupLabel: "Device width",
+    devices: { full: "Full", tablet: "Tablet", mobile: "Mobile" },
+    layoutGroupLabel: "Space allocation",
+    layouts: {
+      split: "Split",
+      even: "Even",
+      "preview-focus": "Preview",
+      "editor-focus": "Editor",
+    },
+    fullPreview: "Full Preview",
+  },
 };
 
-const LAYOUT_LABELS: Record<string, { split: string; "editor-focus": string; "preview-focus": string }> = {
-  ar: { split: "مقسم", "editor-focus": "المحرر", "preview-focus": "المعاينة" },
-  en: { split: "Split", "editor-focus": "Editor", "preview-focus": "Preview" },
-};
+function resolveLocale(locale: string): "ar" | "en" {
+  return locale.toLowerCase().startsWith("ar") ? "ar" : "en";
+}
+
+/** Local copy function — the workspace chrome is not part of the preview. */
+function workspaceCopy(locale: string): WorkspaceCopy {
+  return COPY[resolveLocale(locale)];
+}
+
+const segmentClass = (active: boolean) =>
+  cn(
+    "rounded-lg px-3 py-1.5 text-xs font-bold transition-colors",
+    active
+      ? "bg-primary/10 text-primary-deep"
+      : "text-muted-foreground hover:bg-muted"
+  );
 
 interface PreviewWorkspaceProps {
   editor: React.ReactNode;
@@ -37,6 +106,7 @@ interface PreviewWorkspaceProps {
   deviceWidth?: PreviewDeviceWidth;
   onLayoutModeChange?: (mode: PreviewLayoutMode) => void;
   onDeviceWidthChange?: (width: PreviewDeviceWidth) => void;
+  /** Fired when the full-preview dialog is opened. The dialog itself is owned here. */
   onFullPreview?: () => void;
 }
 
@@ -50,11 +120,59 @@ export function PreviewWorkspace({
   onDeviceWidthChange,
   onFullPreview,
 }: PreviewWorkspaceProps) {
-  const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit");
-  const labels = LABELS[locale] ?? LABELS.en;
-  const deviceLabels = DEVICE_LABELS[locale] ?? DEVICE_LABELS.en;
-  const fullPreviewLabel = FULL_PREVIEW_LABELS[locale] ?? FULL_PREVIEW_LABELS.en;
-  const layoutLabels = LAYOUT_LABELS[locale] ?? LAYOUT_LABELS.en;
+  const [activeTab, setActiveTab] = useState<PreviewTab>("edit");
+  const [fullPreviewOpen, setFullPreviewOpen] = useState(false);
+  const tabRefs = useRef<Partial<Record<PreviewTab, HTMLButtonElement | null>>>({});
+
+  const copy = workspaceCopy(locale);
+  const dir = resolveLocale(locale) === "ar" ? "rtl" : "ltr";
+  const baseId = useId();
+  const tabId = (tab: PreviewTab) => `${baseId}-tab-${tab}`;
+  const panelId = (tab: PreviewTab) => `${baseId}-panel-${tab}`;
+
+  const selectTab = useCallback((tab: PreviewTab) => {
+    setActiveTab(tab);
+    tabRefs.current[tab]?.focus();
+  }, []);
+
+  const onTabKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+      // Arrow keys follow the reading direction, so they mirror under RTL.
+      const forward = dir === "rtl" ? "ArrowLeft" : "ArrowRight";
+      const backward = dir === "rtl" ? "ArrowRight" : "ArrowLeft";
+
+      let next: number | null = null;
+      if (event.key === forward) next = (index + 1) % TAB_ORDER.length;
+      else if (event.key === backward) next = (index - 1 + TAB_ORDER.length) % TAB_ORDER.length;
+      else if (event.key === "Home") next = 0;
+      else if (event.key === "End") next = TAB_ORDER.length - 1;
+
+      if (next === null) return;
+      event.preventDefault();
+      selectTab(TAB_ORDER[next]);
+    },
+    [dir, selectTab]
+  );
+
+  const openFullPreview = () => {
+    setFullPreviewOpen(true);
+    onFullPreview?.();
+  };
+
+  /**
+   * The rendered preview and its emulated viewport. Rendered in exactly one
+   * place at a time so the preview subtree is never mounted twice: inside the
+   * pane normally, inside the dialog while full preview is open.
+   */
+  const previewFrame = (
+    <div
+      data-testid="preview-frame"
+      className="mx-auto w-full"
+      style={{ maxWidth: DEVICE_WIDTHS[deviceWidth] }}
+    >
+      {preview}
+    </div>
+  );
 
   return (
     <div
@@ -62,111 +180,139 @@ export function PreviewWorkspace({
       data-layout={layoutMode}
       data-device-width={deviceWidth}
     >
-      {/* Mobile tabs */}
-      <div className="flex gap-2 border-b border-[#E2E0EF] lg:hidden" role="tablist">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === "edit"}
-          onClick={() => setActiveTab("edit")}
-          className={`shrink-0 border-b-2 px-4 py-3 text-sm font-black ${
-            activeTab === "edit"
-              ? "border-[#0284C7] text-[#0369A1]"
-              : "border-transparent text-[#A6A3B5]"
-          }`}
-        >
-          {labels.edit}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === "preview"}
-          onClick={() => setActiveTab("preview")}
-          className={`shrink-0 border-b-2 px-4 py-3 text-sm font-black ${
-            activeTab === "preview"
-              ? "border-[#0284C7] text-[#0369A1]"
-              : "border-transparent text-[#A6A3B5]"
-          }`}
-        >
-          {labels.preview}
-        </button>
+      {/* Compact (<lg) tabs */}
+      <div
+        className="flex gap-2 border-b border-border lg:hidden"
+        role="tablist"
+        aria-label={copy.tabsLabel}
+      >
+        {TAB_ORDER.map((tab, index) => (
+          <button
+            key={tab}
+            type="button"
+            role="tab"
+            id={tabId(tab)}
+            ref={(node) => {
+              tabRefs.current[tab] = node;
+            }}
+            aria-selected={activeTab === tab}
+            aria-controls={panelId(tab)}
+            tabIndex={activeTab === tab ? 0 : -1}
+            onClick={() => setActiveTab(tab)}
+            onKeyDown={(event) => onTabKeyDown(event, index)}
+            className={cn(
+              "shrink-0 border-b-2 px-4 py-3 text-sm font-black transition-colors",
+              activeTab === tab
+                ? "border-primary text-primary-deep"
+                : "border-transparent text-on-surface-subtle"
+            )}
+          >
+            {copy.tabs[tab]}
+          </button>
+        ))}
       </div>
 
-      {/* Layout mode toggle (desktop only) */}
-      <div className="hidden items-center gap-1 lg:flex" role="radiogroup">
-        {(Object.keys(LAYOUT_LABELS[locale] ?? LAYOUT_LABELS.en) as PreviewLayoutMode[]).map((mode) => (
+      {/* Layout preset toggle (desktop only) */}
+      <div
+        className="hidden items-center gap-1 lg:flex"
+        role="radiogroup"
+        aria-label={copy.layoutGroupLabel}
+      >
+        {LAYOUT_ORDER.map((mode) => (
           <button
             key={mode}
             type="button"
             role="radio"
             aria-checked={layoutMode === mode}
             onClick={() => onLayoutModeChange?.(mode)}
-            className={`rounded-lg px-3 py-1.5 text-xs font-bold ${
-              layoutMode === mode
-                ? "bg-[#0284C7]/10 text-[#0369A1]"
-                : "text-[#777587] hover:bg-[#F0F9FF]"
-            }`}
+            className={segmentClass(layoutMode === mode)}
           >
-            {layoutLabels[mode]}
+            {copy.layouts[mode]}
           </button>
         ))}
       </div>
 
-      {/* Desktop split */}
+      {/*
+       * Forced LTR so grid column 1 is physically left in both directions.
+       * Each pane restores the document direction for its own content, and
+       * both panes declare an explicit column — never RTL auto-placement.
+       */}
       <div
-        className={`hidden lg:grid ${
-          layoutMode === "split"
-            ? "lg:grid-cols-[3fr_2fr]"
-            : layoutMode === "editor-focus"
-              ? "lg:grid-cols-[3fr_2fr]"
-              : "lg:grid-cols-[2fr_3fr]"
-        }`}
+        data-testid="workspace-grid"
+        dir="ltr"
+        className={cn("grid", LAYOUT_COLUMNS[layoutMode])}
       >
-        <div className="sticky top-0 max-h-screen overflow-y-auto" data-testid="editor-pane">
-          {editor}
-        </div>
-        <div
-          className="overflow-y-auto border-s border-[#E2E0EF]"
-          style={{ maxWidth: DEVICE_WIDTHS[deviceWidth] }}
+        <section
           data-testid="preview-pane"
+          role="tabpanel"
+          id={panelId("preview")}
+          aria-labelledby={tabId("preview")}
+          dir={dir}
+          className={cn(
+            "min-w-0 lg:col-start-1 lg:row-start-1 lg:block",
+            activeTab === "preview" ? "block" : "hidden"
+          )}
         >
-          <div className="flex items-center gap-1 border-b border-[#E2E0EF] px-4 py-2" role="radiogroup">
-            {(Object.keys(DEVICE_WIDTHS) as PreviewDeviceWidth[]).map((width) => (
-              <button
-                key={width}
-                type="button"
-                role="radio"
-                aria-checked={deviceWidth === width}
-                onClick={() => onDeviceWidthChange?.(width)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-bold ${
-                  deviceWidth === width
-                    ? "bg-[#0284C7]/10 text-[#0369A1]"
-                    : "text-[#777587] hover:bg-[#F0F9FF]"
-                }`}
-              >
-                {deviceLabels[width]}
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={onFullPreview}
-              className="ms-auto rounded-lg bg-[#0284C7] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#0369A1]"
+          {/* Panes stay in the grid's LTR frame so logical borders land on the
+              intended physical edge; direction is restored for their content. */}
+          <div data-testid="preview-content">
+            <div
+              className="flex items-center gap-1 border-b border-border px-4 py-2"
+              role="radiogroup"
+              aria-label={copy.deviceGroupLabel}
             >
-              {fullPreviewLabel}
-            </button>
+              {DEVICE_ORDER.map((width) => (
+                <button
+                  key={width}
+                  type="button"
+                  role="radio"
+                  aria-checked={deviceWidth === width}
+                  onClick={() => onDeviceWidthChange?.(width)}
+                  className={segmentClass(deviceWidth === width)}
+                >
+                  {copy.devices[width]}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={openFullPreview}
+                className="ms-auto rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground transition-colors hover:bg-primary-deep"
+              >
+                {copy.fullPreview}
+              </button>
+            </div>
+            {/* The preview page grows with its content; the document scrolls. */}
+            {fullPreviewOpen ? null : previewFrame}
           </div>
-          {preview}
-        </div>
+        </section>
+
+        <section
+          data-testid="editor-pane"
+          role="tabpanel"
+          id={panelId("edit")}
+          aria-labelledby={tabId("edit")}
+          dir={dir}
+          className={cn(
+            "min-w-0 border-border lg:col-start-2 lg:row-start-1 lg:block lg:border-s",
+            "lg:sticky lg:top-0 lg:max-h-screen lg:overflow-y-auto",
+            activeTab === "edit" ? "block" : "hidden"
+          )}
+        >
+          <div data-testid="editor-content">
+            {editor}
+          </div>
+        </section>
       </div>
 
-      {/* Mobile content */}
-      <div className="lg:hidden">
-        {activeTab === "edit" ? (
-          <div data-testid="editor-pane">{editor}</div>
-        ) : (
-          <div data-testid="preview-pane">{preview}</div>
-        )}
-      </div>
+      <Dialog open={fullPreviewOpen} onOpenChange={setFullPreviewOpen}>
+        <DialogContent
+          dir={dir}
+          className="h-[90dvh] max-h-[90dvh] w-[95vw] max-w-[95vw] sm:max-w-[95vw]"
+        >
+          <DialogTitle>{copy.fullPreview}</DialogTitle>
+          {fullPreviewOpen ? previewFrame : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
