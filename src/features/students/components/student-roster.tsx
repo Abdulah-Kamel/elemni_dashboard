@@ -151,12 +151,14 @@ export function StudentRoster({ subscriptions, courses }: Props) {
 
   return (
     <div className="flex flex-col gap-xl">
-      <StudentStatsBar
-        totalStudents={stats.totalStudents}
-        completedSubscriptions={stats.completedSubscriptions}
-        pendingSubscriptions={stats.pendingSubscriptions}
-      />
-      <div className="flex flex-col gap-md">
+      <div className="animate-slide-up">
+        <StudentStatsBar
+          totalStudents={stats.totalStudents}
+          completedSubscriptions={stats.completedSubscriptions}
+          pendingSubscriptions={stats.pendingSubscriptions}
+        />
+      </div>
+      <div className="flex animate-slide-up animate-stagger-1 flex-col gap-md">
         <StudentFilters
           searchTerm={searchTerm}
           onSearchChange={(value) => {

@@ -37,12 +37,14 @@ export function StudentStatsBar({
     },
   ]
 
+  const stagger = ["animate-stagger-1", "animate-stagger-2", "animate-stagger-3"]
+
   return (
     <div className="grid grid-cols-1 gap-md sm:grid-cols-3">
-      {cards.map(({ label, value, icon: Icon, iconClassName }) => (
+      {cards.map(({ label, value, icon: Icon, iconClassName }, index) => (
         <div
           key={label}
-          className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5 shadow-xs"
+          className={`card-hover animate-slide-up ${stagger[index]} flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5 shadow-xs`}
         >
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold text-on-surface-muted">

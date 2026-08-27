@@ -1,6 +1,7 @@
 "use client"
 
 import { useLocale, useTranslations } from "next-intl"
+import { useAutoAnimate } from "@formkit/auto-animate/react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   Table,
@@ -52,6 +53,8 @@ export function StudentTable({ students }: StudentTableProps) {
     maximumFractionDigits: 2,
   })
 
+  const [tableBodyRef] = useAutoAnimate({ duration: 180 })
+
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-xs">
       <Table>
@@ -65,7 +68,7 @@ export function StudentTable({ students }: StudentTableProps) {
             <TableHead className="px-4 py-3">{t("status")}</TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody>
+        <TableBody ref={tableBodyRef}>
           {students.length === 0 ? (
             <TableRow>
               <TableCell
