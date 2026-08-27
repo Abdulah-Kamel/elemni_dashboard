@@ -21,8 +21,8 @@
  * directly. They reference these tokens via Tailwind utilities.
  */
 @theme inline {
-    --font-sans: var(--font-app, "Cairo"), system-ui, -apple-system, "Segoe UI", sans-serif;
-    --font-heading: var(--font-app, "Cairo"), system-ui, sans-serif;
+    --font-sans: var(--font-app, "Scheherazade New"), system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-heading: var(--font-app, "Scheherazade New"), system-ui, sans-serif;
 
     /* Brand ----------------------------------------------------------- */
     --color-brand-indigo: var(--brand-indigo);
