@@ -9,7 +9,7 @@ interface PlayerPreviewProps {
 
 export function PlayerPreview({ watermarkEnabled, primaryColor }: PlayerPreviewProps) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-xs">
+    <div className="card-hover overflow-hidden rounded-2xl border border-border bg-surface shadow-xs">
       <div className="p-4">
         <h3 className="text-title-md font-semibold text-foreground">Preview</h3>
       </div>

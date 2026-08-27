@@ -17,7 +17,7 @@ export function BrandingCard({ primaryColor, onColorChange }: BrandingCardProps)
   };
 
   return (
-    <div className="rounded-2xl border border-border bg-surface p-6 shadow-xs">
+    <div className="card-hover rounded-2xl border border-border bg-surface p-6 shadow-xs">
       <div className="mb-4 flex items-center gap-2">
         <Palette className="size-5 text-primary" />
         <h2 className="text-title-lg font-semibold text-foreground">Branding</h2>

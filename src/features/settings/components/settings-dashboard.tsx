@@ -36,7 +36,7 @@ export function SettingsDashboard() {
 
   return (
     <div className="flex flex-col gap-xl">
-      <header className="flex items-center justify-between">
+      <header className="flex animate-slide-up items-center justify-between">
         <div className="flex items-center gap-2">
           <Settings className="size-6 text-primary" />
           <h1 className="text-headline-md font-semibold text-foreground">{t("title")}</h1>
@@ -46,7 +46,7 @@ export function SettingsDashboard() {
         </Button>
       </header>
 
-      <div className="grid grid-cols-1 gap-lg lg:grid-cols-12">
+      <div className="grid animate-slide-up animate-stagger-1 grid-cols-1 gap-lg lg:grid-cols-12">
         <div className="flex flex-col gap-lg lg:col-span-7">
           <SecurityCard
             watermarkEnabled={watermarkEnabled}
