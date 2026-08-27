@@ -1,6 +1,12 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { verifySession } from "@/lib/auth/dal";
-import { getCourse } from "@/features/course-management/queries";
+import {
+  getCourse,
+  listSubjects,
+  listGrades,
+  listStreams,
+} from "@/features/course-management/queries";
+import { getTeacherProfile } from "@/features/profile/queries";
 import { listChapters } from "@/features/course-management/chapters-queries";
 import { listLessons } from "@/features/course-management/lessons-queries";
 import { ChapterList } from "@/features/course-management/components/chapter-list";
@@ -63,6 +69,13 @@ async function CourseEditor({
       </div>
     );
   }
+
+  const [subjects, grades, streams, teacherProfile] = await Promise.all([
+    listSubjects().catch(() => []),
+    listGrades().catch(() => []),
+    listStreams().catch(() => []),
+    getTeacherProfile().catch(() => null),
+  ]);
 
   let curriculum: React.ReactNode;
   if (course.use_chapters) {
@@ -210,10 +223,12 @@ async function CourseEditor({
             } satisfies CourseFormValues,
             coverObjectUrl: null,
             publicCoverUrl: course.img ?? null,
-            teacher: null,
-            subjects: [],
-            grades: [],
-            streams: [],
+            teacher: teacherProfile
+              ? { name: teacherProfile.name, avatarUrl: teacherProfile.img }
+              : null,
+            subjects,
+            grades,
+            streams,
             sections: [],
           })}
           locale={locale}
