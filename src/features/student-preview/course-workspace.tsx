@@ -13,8 +13,8 @@ interface CourseWorkspaceProps {
 }
 
 const COPY = {
-  ar: { edit: "تعديل الكورس", guest: "زائر", subscribed: "مشترك", title: "العنوان", description: "الوصف", price: "السعر", viewerLabel: "عرض الكورس" },
-  en: { edit: "Edit Course", guest: "Guest", subscribed: "Subscribed", title: "Title", description: "Description", price: "Price", viewerLabel: "Viewer" },
+  ar: { edit: "تعديل الكورس", guest: "زائر", subscribed: "مشترك", title: "العنوان", description: "الوصف", price: "السعر", viewerLabel: "عرض الكورس", subject: "المادة", grade: "المرحلة", stream: "الشعبة" },
+  en: { edit: "Edit Course", guest: "Guest", subscribed: "Subscribed", title: "Title", description: "Description", price: "Price", viewerLabel: "Viewer", subject: "Subject", grade: "Grade", stream: "Stream" },
 };
 
 export function CourseWorkspace({
@@ -76,6 +76,33 @@ export function CourseWorkspace({
           value={price}
           onChange={(e) => setPrice(e.target.value)}
           className="w-full rounded-lg border border-border px-3 py-2"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium">{copy.subject}</label>
+        <input
+          type="text"
+          value={model.subject ?? ""}
+          readOnly
+          className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-muted-foreground"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium">{copy.grade}</label>
+        <input
+          type="text"
+          value={model.grade ?? ""}
+          readOnly
+          className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-muted-foreground"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium">{copy.stream}</label>
+        <input
+          type="text"
+          value={model.stream ?? ""}
+          readOnly
+          className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-muted-foreground"
         />
       </div>
       <div>
