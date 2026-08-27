@@ -155,7 +155,7 @@ export function StudentTeacherProfilePreview({
             </div>
             <div className="bg-[var(--page)] p-4">
               <MapPin className="mb-3 size-5 text-[var(--brand-amber)]" />
-              <strong className="block text-sm font-black leading-6">{model.location ?? "أونلاين"}</strong>
+              <strong className="block text-sm font-black leading-6 truncate">{model.location ?? "أونلاين"}</strong>
               <span className="text-xs text-[var(--on-surface-muted)]">مكان التدريس</span>
             </div>
           </div>
