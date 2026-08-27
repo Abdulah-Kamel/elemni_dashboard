@@ -88,7 +88,7 @@ export function Sidebar({ teacherName, teacherRole, userRole }: SidebarProps) {
                   href={href as never}
                   aria-current={isActive ? "page" : undefined}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg px-sm py-2 text-body-md text-body-md--line-height font-medium transition-colors",
+                    "flex items-center gap-3 rounded-lg px-sm py-2 text-body-md text-body-md--line-height font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
                     isActive
                       ? "bg-primary-tint text-primary border-s-4 border-primary font-semibold"
                       : "text-on-surface-muted hover:bg-surface-strong hover:text-foreground",
