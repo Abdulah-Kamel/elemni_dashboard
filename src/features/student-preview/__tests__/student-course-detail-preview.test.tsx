@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { StudentCourseDetailPreview } from "../student-course-detail-preview";
 import type { StudentCoursePreviewModel } from "../types";
@@ -270,6 +270,21 @@ describe("StudentCourseDetailPreview", () => {
       <StudentCourseDetailPreview model={baseModel} locale="ar" viewer="subscribed" interactionMode="local-only" />
     );
     expect(screen.getByText("العودة إلى دوراتي")).toBeDefined();
+  });
+
+  it("does not call onCurriculumCommitted (preview is read-only)", () => {
+    const onCommitted = vi.fn();
+    render(
+      <StudentCourseDetailPreview
+        model={baseModel}
+        locale="ar"
+        viewer="guest"
+        interactionMode="local-only"
+        onCurriculumCommitted={onCommitted}
+      />
+    );
+    // Preview is local-only, callback is never triggered by the renderer
+    expect(onCommitted).not.toHaveBeenCalled();
   });
 
   it("guest viewer back link shows 'العودة'", () => {

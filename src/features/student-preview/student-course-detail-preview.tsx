@@ -39,6 +39,7 @@ interface StudentCourseDetailPreviewProps {
   locale: string;
   viewer: "guest" | "subscribed";
   interactionMode: PreviewInteractionMode;
+  onCurriculumCommitted?: () => void;
 }
 
 export function StudentCourseDetailPreview({
@@ -46,6 +47,7 @@ export function StudentCourseDetailPreview({
   locale,
   viewer,
   interactionMode,
+  onCurriculumCommitted,
 }: StudentCourseDetailPreviewProps) {
   const sections = model.sections;
   const sectionsWithLessons = useMemo(() => sections.filter((s) => s.lessons.length), [sections]);
