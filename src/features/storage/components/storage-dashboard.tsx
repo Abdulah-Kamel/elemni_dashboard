@@ -73,7 +73,7 @@ export function StorageDashboard({ data }: { data: UsageDashboardData }) {
 
   return (
     <div className="flex flex-col gap-xl">
-      <header>
+      <header className="animate-slide-up">
         <h1 className="text-headline-md font-semibold text-foreground">
           {t("title")}
         </h1>
@@ -82,11 +82,11 @@ export function StorageDashboard({ data }: { data: UsageDashboardData }) {
         </p>
       </header>
 
-      <section className="grid gap-md sm:grid-cols-2 xl:grid-cols-5">
+      <section className="grid animate-slide-up animate-stagger-1 gap-md sm:grid-cols-2 xl:grid-cols-5">
         {statCards.map(({ label, value, icon: Icon }) => (
           <Card
             key={label}
-            className="rounded-2xl border border-border p-5 shadow-xs"
+            className="card-hover rounded-2xl border border-border p-5 shadow-xs"
           >
             <div className="mb-4 flex size-10 items-center justify-center rounded-xl bg-primary-tint text-primary">
               <Icon className="size-5" />
@@ -101,8 +101,8 @@ export function StorageDashboard({ data }: { data: UsageDashboardData }) {
         ))}
       </section>
 
-      <section className="grid gap-md lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-        <Card className="rounded-2xl border border-border p-5 shadow-xs">
+      <section className="grid animate-slide-up animate-stagger-2 gap-md lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+        <Card className="card-hover rounded-2xl border border-border p-5 shadow-xs">
           <div className="mb-5 flex items-start justify-between gap-4">
             <div>
               <h2 className="text-title-lg font-semibold text-foreground">
@@ -143,7 +143,7 @@ export function StorageDashboard({ data }: { data: UsageDashboardData }) {
           </div>
         </Card>
 
-        <Card className="rounded-2xl border border-border p-5 shadow-xs">
+        <Card className="card-hover rounded-2xl border border-border p-5 shadow-xs">
           <h2 className="text-title-lg font-semibold text-foreground">
             {t("largest_course_title")}
           </h2>
@@ -202,7 +202,7 @@ export function StorageDashboard({ data }: { data: UsageDashboardData }) {
 
 function MetricTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-border bg-surface-muted p-4">
+    <div className="card-hover rounded-2xl border border-border bg-surface-muted p-4">
       <p className="text-xs font-semibold text-on-surface-muted">{label}</p>
       <p className="mt-1 text-lg font-semibold text-foreground">{value}</p>
     </div>
