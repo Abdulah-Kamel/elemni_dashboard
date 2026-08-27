@@ -3,7 +3,7 @@
 import { useCallback, useId, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import type { PreviewLayoutMode, PreviewDeviceWidth } from "./types";
+import type { PreviewDeviceWidth } from "./types";
 
 /**
  * Preview viewport widths. `full` lets the preview fill whatever the pane
@@ -17,25 +17,6 @@ const DEVICE_WIDTHS: Record<PreviewDeviceWidth, string> = {
 
 const DEVICE_ORDER: readonly PreviewDeviceWidth[] = ["full", "tablet", "mobile"];
 
-const LAYOUT_ORDER: readonly PreviewLayoutMode[] = [
-  "split",
-  "even",
-  "preview-focus",
-  "editor-focus",
-];
-
-/**
- * Column ratios for the desktop grid. Column 1 is *always* the preview and
- * column 2 is *always* the editor — the grid is forced to LTR so these map to
- * physical left/right regardless of the document direction.
- */
-const LAYOUT_COLUMNS: Record<PreviewLayoutMode, string> = {
-  split: "lg:grid-cols-[3fr_2fr]", // default: preview 60% / editor 40%
-  even: "lg:grid-cols-[1fr_1fr]",
-  "preview-focus": "lg:grid-cols-[3fr_1fr]",
-  "editor-focus": "lg:grid-cols-[1fr_3fr]",
-};
-
 const TAB_ORDER = ["edit", "preview"] as const;
 
 type PreviewTab = (typeof TAB_ORDER)[number];
@@ -45,8 +26,6 @@ type WorkspaceCopy = {
   tabs: Record<PreviewTab, string>;
   deviceGroupLabel: string;
   devices: Record<PreviewDeviceWidth, string>;
-  layoutGroupLabel: string;
-  layouts: Record<PreviewLayoutMode, string>;
   fullPreview: string;
 };
 
@@ -56,13 +35,6 @@ const COPY: Record<"ar" | "en", WorkspaceCopy> = {
     tabs: { edit: "تعديل", preview: "معاينة" },
     deviceGroupLabel: "عرض الجهاز",
     devices: { full: "كامل", tablet: "لوحي", mobile: "جوال" },
-    layoutGroupLabel: "توزيع المساحة",
-    layouts: {
-      split: "مقسم",
-      even: "متساوٍ",
-      "preview-focus": "المعاينة",
-      "editor-focus": "المحرر",
-    },
     fullPreview: "معاينة",
   },
   en: {
@@ -70,13 +42,6 @@ const COPY: Record<"ar" | "en", WorkspaceCopy> = {
     tabs: { edit: "Edit", preview: "Preview" },
     deviceGroupLabel: "Device width",
     devices: { full: "Full", tablet: "Tablet", mobile: "Mobile" },
-    layoutGroupLabel: "Space allocation",
-    layouts: {
-      split: "Split",
-      even: "Even",
-      "preview-focus": "Preview",
-      "editor-focus": "Editor",
-    },
     fullPreview: "Preview",
   },
 };
@@ -102,9 +67,7 @@ interface PreviewWorkspaceProps {
   editor: React.ReactNode;
   preview: React.ReactNode;
   locale: string;
-  layoutMode?: PreviewLayoutMode;
   deviceWidth?: PreviewDeviceWidth;
-  onLayoutModeChange?: (mode: PreviewLayoutMode) => void;
   onDeviceWidthChange?: (width: PreviewDeviceWidth) => void;
   /** Fired when the full-preview dialog is opened. The dialog itself is owned here. */
   onFullPreview?: () => void;
@@ -114,9 +77,7 @@ export function PreviewWorkspace({
   editor,
   preview,
   locale,
-  layoutMode = "split",
   deviceWidth = "full",
-  onLayoutModeChange,
   onDeviceWidthChange,
   onFullPreview,
 }: PreviewWorkspaceProps) {
@@ -177,7 +138,6 @@ export function PreviewWorkspace({
   return (
     <div
       className="student-preview-workspace"
-      data-layout={layoutMode}
       data-device-width={deviceWidth}
     >
       {/* Compact (<lg) tabs */}
@@ -220,7 +180,7 @@ export function PreviewWorkspace({
       <div
         data-testid="workspace-grid"
         dir="ltr"
-        className={cn("grid grid-cols-1", LAYOUT_COLUMNS[layoutMode])}
+        className={cn("grid grid-cols-1 lg:grid-cols-[3fr_2fr]")}
       >
         <section
           data-testid="preview-pane"

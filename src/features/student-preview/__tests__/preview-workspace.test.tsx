@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import { PreviewWorkspace } from "../preview-workspace";
-import type { PreviewLayoutMode, PreviewDeviceWidth } from "../types";
+import type { PreviewDeviceWidth } from "../types";
 
 const componentSource = readFileSync(
   join(__dirname, "..", "preview-workspace.tsx"),
@@ -11,16 +11,6 @@ const componentSource = readFileSync(
 );
 
 describe("PreviewWorkspace types", () => {
-  it("PreviewLayoutMode covers split, even, editor-focus and preview-focus", () => {
-    const modes: PreviewLayoutMode[] = [
-      "split",
-      "even",
-      "editor-focus",
-      "preview-focus",
-    ];
-    expect(new Set(modes).size).toBe(4);
-  });
-
   it("PreviewDeviceWidth covers full, tablet and mobile", () => {
     const widths: PreviewDeviceWidth[] = ["full", "tablet", "mobile"];
     expect(new Set(widths).size).toBe(3);
@@ -73,10 +63,9 @@ describe("PreviewWorkspace", () => {
     expect(container.querySelector(".student-preview-workspace")).not.toBeNull();
   });
 
-  it("defaults to split layout mode", () => {
+  it("uses split layout (3fr/2fr) on desktop", () => {
     const { container } = renderWorkspace();
-    const workspace = container.querySelector(".student-preview-workspace");
-    expect(workspace?.getAttribute("data-layout")).toBe("split");
+    expect(grid(container)?.className).toContain("lg:grid-cols-[3fr_2fr]");
   });
 
   describe("physical placement (direction independent)", () => {
@@ -108,39 +97,6 @@ describe("PreviewWorkspace", () => {
       const { container } = renderWorkspace({ locale: "en" });
       expect(previewPane(container)?.getAttribute("dir")).toBe("ltr");
       expect(editorPane(container)?.getAttribute("dir")).toBe("ltr");
-    });
-  });
-
-  describe("layout ratios", () => {
-    it("split gives the preview 60% of the physical width (3fr of 5fr)", () => {
-      const { container } = renderWorkspace({ layoutMode: "split" });
-      expect(grid(container)?.className).toContain("lg:grid-cols-[3fr_2fr]");
-    });
-
-    it("even is a true 50/50", () => {
-      const { container } = renderWorkspace({ layoutMode: "even" });
-      expect(grid(container)?.className).toContain("lg:grid-cols-[1fr_1fr]");
-    });
-
-    it("preview-focus gives the preview more than split does", () => {
-      const { container } = renderWorkspace({ layoutMode: "preview-focus" });
-      expect(grid(container)?.className).toContain("lg:grid-cols-[3fr_1fr]");
-    });
-
-    it("editor-focus gives the editor more than split does", () => {
-      const { container } = renderWorkspace({ layoutMode: "editor-focus" });
-      expect(grid(container)?.className).toContain("lg:grid-cols-[1fr_3fr]");
-    });
-
-    it("every layout mode produces a distinct ratio", () => {
-      const modes: PreviewLayoutMode[] = ["split", "even", "editor-focus", "preview-focus"];
-      const ratios = modes.map((layoutMode) => {
-        const { container, unmount } = renderWorkspace({ layoutMode });
-        const match = grid(container)?.className.match(/lg:grid-cols-\[[^\]]+\]/);
-        unmount();
-        return match?.[0];
-      });
-      expect(new Set(ratios).size).toBe(modes.length);
     });
   });
 
@@ -305,67 +261,36 @@ describe("PreviewWorkspace", () => {
     });
   });
 
-  describe("layout mode toggle", () => {
-    it("renders one radio per layout mode", () => {
-      renderWorkspace();
-      expect(screen.getByRole("radio", { name: "مقسم" })).toBeDefined();
-      expect(screen.getByRole("radio", { name: "متساوٍ" })).toBeDefined();
-      expect(screen.getByRole("radio", { name: "المحرر" })).toBeDefined();
-      expect(screen.getByRole("radio", { name: "المعاينة" })).toBeDefined();
-    });
-
-    it("defaults to split", () => {
-      renderWorkspace();
-      expect(screen.getByRole("radio", { name: "مقسم" }).getAttribute("aria-checked")).toBe(
-        "true"
-      );
-    });
-
-    it("changes layout mode on radio click", () => {
-      const onLayoutModeChange = vi.fn();
-      renderWorkspace({ onLayoutModeChange });
-      fireEvent.click(screen.getByRole("radio", { name: "المحرر" }));
-      expect(onLayoutModeChange).toHaveBeenCalledWith("editor-focus");
-    });
-
-    it("emits even for the 50/50 preset", () => {
-      const onLayoutModeChange = vi.fn();
-      renderWorkspace({ onLayoutModeChange });
-      fireEvent.click(screen.getByRole("radio", { name: "متساوٍ" }));
-      expect(onLayoutModeChange).toHaveBeenCalledWith("even");
-    });
-  });
-
   describe("full preview", () => {
     it("renders a full-preview button", () => {
       renderWorkspace();
-      expect(screen.getByRole("button", { name: "معاينة كاملة" })).toBeDefined();
+      expect(screen.getByRole("button", { name: "معاينة" })).toBeDefined();
     });
 
     it("calls onFullPreview", () => {
       const onFullPreview = vi.fn();
       renderWorkspace({ onFullPreview });
-      fireEvent.click(screen.getByRole("button", { name: "معاينة كاملة" }));
+      fireEvent.click(screen.getByRole("button", { name: "معاينة" }));
       expect(onFullPreview).toHaveBeenCalled();
     });
 
     it("opens a dialog containing the rendered preview", () => {
       renderWorkspace();
       expect(screen.queryByRole("dialog")).toBeNull();
-      fireEvent.click(screen.getByRole("button", { name: "معاينة كاملة" }));
+      fireEvent.click(screen.getByRole("button", { name: "معاينة" }));
       const dialog = screen.getByRole("dialog");
       expect(within(dialog).getByTestId("preview")).toBeDefined();
     });
 
     it("still mounts the preview exactly once while the dialog is open", () => {
       renderWorkspace();
-      fireEvent.click(screen.getByRole("button", { name: "معاينة كاملة" }));
+      fireEvent.click(screen.getByRole("button", { name: "معاينة" }));
       expect(screen.getAllByTestId("preview")).toHaveLength(1);
     });
 
     it("reuses the current device viewport inside the dialog", () => {
       renderWorkspace({ deviceWidth: "tablet" });
-      fireEvent.click(screen.getByRole("button", { name: "معاينة كاملة" }));
+      fireEvent.click(screen.getByRole("button", { name: "معاينة" }));
       const dialog = screen.getByRole("dialog");
       const frame = within(dialog).getByTestId("preview-frame");
       expect(frame.style.maxWidth).toBe("52rem");
@@ -373,8 +298,8 @@ describe("PreviewWorkspace", () => {
 
     it("gives the dialog an accessible name", () => {
       renderWorkspace();
-      fireEvent.click(screen.getByRole("button", { name: "معاينة كاملة" }));
-      expect(screen.getByRole("dialog", { name: "معاينة كاملة" })).toBeDefined();
+      fireEvent.click(screen.getByRole("button", { name: "معاينة" }));
+      expect(screen.getByRole("dialog", { name: "معاينة" })).toBeDefined();
     });
   });
 
