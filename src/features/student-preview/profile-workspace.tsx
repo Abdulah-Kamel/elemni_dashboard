@@ -68,35 +68,39 @@ export function ProfileWorkspace({
     <div className="space-y-4 p-4">
       <h2 className="text-lg font-bold">{copy.edit}</h2>
       <div>
-        <label className="block text-sm font-medium">الاسم</label>
+        <label htmlFor="profile-name" className="block text-sm font-medium">الاسم</label>
         <input
+          id="profile-name"
           type="text"
           value={name}
           onChange={(e) => { setName(e.target.value); markDirty(); }}
-          className="w-full rounded-lg border border-border px-3 py-2"
+          className="w-full rounded-lg border border-border px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
         />
       </div>
       <div>
-        <label className="block text-sm font-medium">النبذة</label>
+        <label htmlFor="profile-bio" className="block text-sm font-medium">النبذة</label>
         <textarea
+          id="profile-bio"
           value={bio}
           onChange={(e) => { setBio(e.target.value); markDirty(); }}
-          className="w-full rounded-lg border border-border px-3 py-2"
+          className="w-full rounded-lg border border-border px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
           rows={3}
         />
       </div>
       <div>
-        <label className="block text-sm font-medium">الموقع</label>
+        <label htmlFor="profile-location" className="block text-sm font-medium">الموقع</label>
         <input
+          id="profile-location"
           type="text"
           value={location_}
           onChange={(e) => { setLocation(e.target.value); markDirty(); }}
-          className="w-full rounded-lg border border-border px-3 py-2"
+          className="w-full rounded-lg border border-border px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
         />
       </div>
       <div>
-        <label className="block text-sm font-medium">الصورة</label>
+        <label htmlFor="profile-avatar" className="block text-sm font-medium">الصورة</label>
         <input
+          id="profile-avatar"
           type="file"
           accept="image/*"
           onChange={(e) => handleAvatarChange(e.target.files?.[0] ?? null)}
@@ -106,7 +110,7 @@ export function ProfileWorkspace({
       <button
         type="button"
         disabled={!dirty}
-        className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-50"
+        className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
       >
         {copy.save}
       </button>
