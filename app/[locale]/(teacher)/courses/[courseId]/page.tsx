@@ -21,6 +21,9 @@ import {
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import type { LessonOut } from "@/features/course-management/lessons-schema";
+import { CourseWorkspace } from "@/features/student-preview/course-workspace";
+import { buildCoursePreviewModel } from "@/features/student-preview/build-course-preview-model";
+import type { CourseFormValues } from "@/features/course-management/schema";
 
 export const dynamic = "force-dynamic";
 
@@ -191,6 +194,32 @@ async function CourseEditor({
           </span>
         </nav>
       </header>
+
+      <section className="rounded-2xl border border-border bg-card p-4 shadow-xs sm:p-6">
+        <CourseWorkspace
+          model={buildCoursePreviewModel({
+            courseId: course.id,
+            values: {
+              title: course.title,
+              description: course.description,
+              price: course.price,
+              subjectId: course.subject_id ?? 0,
+              gradeId: course.grade_id,
+              streamId: course.stream_id,
+              useChapters: course.use_chapters,
+            } satisfies CourseFormValues,
+            coverObjectUrl: null,
+            publicCoverUrl: course.img ?? null,
+            teacher: null,
+            subjects: [],
+            grades: [],
+            streams: [],
+            sections: [],
+          })}
+          locale={locale}
+          viewer="guest"
+        />
+      </section>
 
       <section className="rounded-2xl border border-border bg-card p-4 shadow-xs sm:p-6">
         <div className="mb-5 flex items-start justify-between gap-4">

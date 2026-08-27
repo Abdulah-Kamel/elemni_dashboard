@@ -2,7 +2,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { verifySession } from "@/lib/auth/dal";
 import { listCourses } from "@/features/course-management/queries";
-import { TeacherProfilePreview } from "@/features/profile/components/teacher-profile-preview";
+import { ProfileWorkspace } from "@/features/student-preview/profile-workspace";
 import {
   getPublicTeacherProfile,
   getTeacherProfile,
@@ -68,7 +68,7 @@ export default async function ProfilePage({
       : null;
 
   return (
-    <TeacherProfilePreview
+    <ProfileWorkspace
       profile={profileResult.value}
       courses={coursesResult.value.filter((course) => course.is_published)}
       publicImageUrl={publicImageUrl}
