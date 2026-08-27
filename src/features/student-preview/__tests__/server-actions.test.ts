@@ -24,7 +24,7 @@ describe("loadCoursePreviewCurriculum", () => {
       { id: 20, course_id: 42, chapter_id: 10, title: "Lesson 1", description: "Desc", order: 1 },
     ]);
     vi.mocked(listItems).mockResolvedValue([
-      { id: 30, lesson_id: 20, title: "Item 1", bunny_stream_id: "vid123", document_path: null, exam_id: null, order: 1 },
+      { id: 30, lesson_id: 20, title: "Item 1", bunny_stream_id: "vid123", bunny_stream_status: null, document_path: null, exam_id: null, order: 1 },
     ]);
   });
 
@@ -47,7 +47,7 @@ describe("loadCoursePreviewCurriculum", () => {
 
   it("strips protected URLs from items", async () => {
     vi.mocked(listItems).mockResolvedValue([
-      { id: 30, lesson_id: 20, title: "Item 1", bunny_stream_id: "vid123", document_path: "/secret/doc.pdf", exam_id: null, order: 1 },
+      { id: 30, lesson_id: 20, title: "Item 1", bunny_stream_id: "vid123", bunny_stream_status: null, document_path: "/secret/doc.pdf", exam_id: null, order: 1 },
     ]);
     const result = await loadCoursePreviewCurriculum(42);
     expect(result.success).toBe(true);
