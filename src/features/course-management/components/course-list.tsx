@@ -15,6 +15,8 @@ type StatusFilter = "all" | "published" | "draft"
 
 const FILTERS: StatusFilter[] = ["all", "published", "draft"]
 
+const STAGGER = ["animate-stagger-1", "animate-stagger-2", "animate-stagger-3", "animate-stagger-4", "animate-stagger-5", "animate-stagger-6"]
+
 export function CourseList({
   courses,
   teacherProfileId,
@@ -76,7 +78,7 @@ export function CourseList({
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex animate-slide-up flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative w-full sm:max-w-md">
           <Search
             className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-on-surface-muted"
@@ -121,8 +123,8 @@ export function CourseList({
           </p>
         </div>
       ) : (
-        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {filteredCourses.map((course) => (
+        <div className="grid animate-slide-up gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          {filteredCourses.map((course, index) => (
             <CourseCard
               key={course.id}
               course={course}
@@ -130,6 +132,7 @@ export function CourseList({
               locale={locale}
               gradeName={gradeNames[course.grade_id]}
               streamName={streamNames[course.stream_id]}
+              className={`animate-slide-up ${STAGGER[index % STAGGER.length]}`}
             />
           ))}
         </div>
