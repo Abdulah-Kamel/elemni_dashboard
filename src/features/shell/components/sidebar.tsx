@@ -77,23 +77,33 @@ export function Sidebar({ teacherName, teacherRole, userRole }: SidebarProps) {
       )}
       aria-label={tCommon("sidebar_label")}
     >
-      <div className={cn("flex items-center gap-2.5 px-lg py-md", collapsed && "justify-center px-0")}>
-        <div
-          aria-hidden="true"
-          className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-tint text-primary"
-        >
-          <GraduationCap className="size-5" />
-        </div>
-        {!collapsed && (
-          <div className="min-w-0">
-            <p className="truncate text-title-md text-title-md--line-height font-semibold text-primary">
-              {tCommon("brand")}
-            </p>
-            <p className="truncate text-label-sm text-label-sm--line-height text-on-surface-muted">
-              {tCommon("brand_subtitle")}
-            </p>
+      <div className={cn("flex flex-col items-center gap-2 px-lg py-md", collapsed && "px-0")}>
+        <div className="flex items-center gap-2.5">
+          <div
+            aria-hidden="true"
+            className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-tint text-primary"
+          >
+            <GraduationCap className="size-5" />
           </div>
-        )}
+          {!collapsed && (
+            <div className="min-w-0">
+              <p className="truncate text-title-md text-title-md--line-height font-semibold text-primary">
+                {tCommon("brand")}
+              </p>
+              <p className="truncate text-label-sm text-label-sm--line-height text-on-surface-muted">
+                {tCommon("brand_subtitle")}
+              </p>
+            </div>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={toggleCollapsed}
+          className="rounded-md p-1.5 text-on-surface-muted hover:bg-surface-strong hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          title={collapsed ? tCommon("expand") : tCommon("collapse")}
+        >
+          {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
+        </button>
       </div>
 
       <nav
@@ -132,19 +142,6 @@ export function Sidebar({ teacherName, teacherRole, userRole }: SidebarProps) {
       </nav>
 
       <div className="flex flex-col gap-1 px-sm pb-sm">
-        <button
-          type="button"
-          onClick={toggleCollapsed}
-          className={cn(
-            "flex items-center gap-3 rounded-lg px-sm py-2 text-body-md text-body-md--line-height font-medium text-on-surface-muted hover:bg-surface-strong hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-            collapsed && "justify-center px-0"
-          )}
-          title={collapsed ? tCommon("expand") : tCommon("collapse")}
-        >
-          {collapsed ? <PanelLeftOpen className="size-5 shrink-0" /> : <PanelLeftClose className="size-5 shrink-0" />}
-          {!collapsed && <span className="truncate">{tCommon("collapse")}</span>}
-        </button>
-
         <LogoutButton
           variant="sidebar"
           showIcon
@@ -160,7 +157,7 @@ export function Sidebar({ teacherName, teacherRole, userRole }: SidebarProps) {
               </AvatarFallback>
             </Avatar>
             {!collapsed && (
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 overflow-hidden">
                 <p className="truncate text-body-md text-body-md--line-height font-medium text-foreground">
                   {teacherName}
                 </p>
