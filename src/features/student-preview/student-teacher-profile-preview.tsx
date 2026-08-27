@@ -114,8 +114,8 @@ export function StudentTeacherProfilePreview({
                 ))}
               </div>
 
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight">{displayName}</h1>
-              <p className="text-slate-300 text-sm sm:text-base font-semibold max-w-2xl">{displayTitle}</p>
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight line-clamp-1">{displayName}</h1>
+              <p className="text-slate-300 text-sm sm:text-base font-semibold max-w-2xl line-clamp-1">{displayTitle}</p>
 
               <div className="pt-2 flex flex-wrap items-center justify-center md:justify-start gap-3 text-xs sm:text-sm font-bold text-slate-200">
                 <div className="bg-white/10 border border-white/15 px-3.5 py-1.5 rounded-xl backdrop-blur-md flex items-center gap-2">
@@ -138,7 +138,7 @@ export function StudentTeacherProfilePreview({
           <div>
             <p className="mb-2 text-xs font-extrabold text-[var(--brand-indigo)]">عن المدرس</p>
             <h2 className="text-2xl font-black text-[var(--on-surface)]">خبرة تساعدك تفهم، مش تحفظ</h2>
-            <p className="mt-3 max-w-3xl text-sm font-medium leading-7 text-[var(--on-surface-muted)]">{displayBio}</p>
+            <p className="mt-3 max-w-3xl text-sm font-medium leading-7 text-[var(--on-surface-muted)] line-clamp-4">{displayBio}</p>
             <div className="mt-5 flex flex-wrap gap-2">
               {model.subjects.map((sub) => (
                 <span key={sub} className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-800">

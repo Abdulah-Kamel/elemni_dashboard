@@ -102,7 +102,7 @@ export function StudentCourseDetailPreview({
                 {model.subject && <span className="rounded-full bg-[#0284C7]/5 px-3 py-1 text-xs font-bold text-[#0369A1]">{model.subject}</span>}
                 {(model.grade || model.stream) && <span className="rounded-full bg-[#F0F9FF] px-3 py-1 text-xs font-bold text-[#464555]">{[model.grade, model.stream].filter(Boolean).join(" - ")}</span>}
               </div>
-              <h1 className="text-3xl font-black leading-tight text-[#1B1B24] sm:text-4xl">{model.title}</h1>
+              <h1 className="text-3xl font-black leading-tight text-[#1B1B24] sm:text-4xl line-clamp-2">{model.title}</h1>
               {model.teacher && (
                 <div className="mt-5 flex w-fit items-center gap-3 rounded-lg">
                   {model.teacher.avatarUrl ? (
@@ -115,7 +115,7 @@ export function StudentCourseDetailPreview({
                   <span><strong className="block text-sm font-black">{model.teacher.name}</strong><span className="text-xs text-[#777587]">مدرس {model.subject || "الكورس"}</span></span>
                 </div>
               )}
-              <p className="mt-5 max-w-3xl text-sm leading-7 text-[#464555] sm:text-base">{model.description || "تابع محتوى الكورس ودروس المدرس من مكان واحد."}</p>
+              <p className="mt-5 max-w-3xl text-sm leading-7 text-[#464555] sm:text-base line-clamp-3">{model.description || "تابع محتوى الكورس ودروس المدرس من مكان واحد."}</p>
             </div>
 
             <div className="w-full lg:w-auto">
