@@ -12,7 +12,9 @@
     "view_analytics": "عرض التحليلات",
     "settings": "الإعدادات",
     "inbox": "الرسائل",
-    "coming_soon": "قريباً"
+    "coming_soon": "قريباً",
+    "collapse": "طي القائمة",
+    "expand": "توسيع القائمة"
   },
   "sidebar": {
     "overview": "نظرة عامة",

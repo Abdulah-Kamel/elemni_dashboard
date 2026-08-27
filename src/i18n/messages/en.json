@@ -12,7 +12,9 @@
     "view_analytics": "View Analytics",
     "settings": "Settings",
     "inbox": "Inbox",
-    "coming_soon": "Coming soon"
+    "coming_soon": "Coming soon",
+    "collapse": "Collapse sidebar",
+    "expand": "Expand sidebar"
   },
   "sidebar": {
     "overview": "Overview",

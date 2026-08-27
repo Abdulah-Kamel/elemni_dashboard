@@ -11,6 +11,7 @@ type LogoutButtonProps = {
   className?: string;
   labelClassName?: string;
   showIcon?: boolean;
+  collapsed?: boolean;
   variant?: "menu" | "sidebar";
   onDone?: () => void;
 };
@@ -19,6 +20,7 @@ export function LogoutButton({
   className,
   labelClassName,
   showIcon = true,
+  collapsed = false,
   variant = "menu",
   onDone,
 }: LogoutButtonProps) {
@@ -60,11 +62,13 @@ export function LogoutButton({
         onClick={handleSignOut}
         disabled={isSigningOut}
         aria-label={t("sign_out")}
+        title={collapsed ? t("sign_out") : undefined}
         className={cn(
           "gap-3",
           variant === "sidebar" &&
             "rounded-lg px-sm py-2 text-body-md text-body-md--line-height font-medium text-error hover:bg-error-tint",
           variant === "menu" && "w-full justify-start px-md py-3 text-body-md text-error hover:bg-error-tint",
+          collapsed && "justify-center px-0",
           className,
         )}
       >
@@ -77,7 +81,7 @@ export function LogoutButton({
             aria-hidden="true"
           />
         )}
-        <span className={labelClassName}>{t("sign_out")}</span>
+        {!collapsed && <span className={labelClassName}>{t("sign_out")}</span>}
       </Button>
       {error && (
         <p className="mt-1 text-label-sm text-label-sm--line-height text-error" role="alert">
