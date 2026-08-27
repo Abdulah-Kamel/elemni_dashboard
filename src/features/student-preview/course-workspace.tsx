@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import type { StudentCoursePreviewModel, StudentPreviewSection } from "./types";
+import type { StudentCoursePreviewModel, StudentPreviewSection, PreviewDeviceWidth } from "./types";
 import { PreviewWorkspace } from "./preview-workspace";
 import { StudentCourseDetailPreview } from "./student-course-detail-preview";
 
@@ -31,6 +31,7 @@ export function CourseWorkspace({
   const [price, setPrice] = useState(model.price);
   const [viewer, setViewer] = useState<"guest" | "subscribed">(initialViewer);
   const [sections, setSections] = useState<StudentPreviewSection[]>(initialSections ?? model.sections);
+  const [deviceWidth, setDeviceWidth] = useState<PreviewDeviceWidth>("full");
 
   const previewModel: StudentCoursePreviewModel = {
     ...model,
@@ -144,6 +145,8 @@ export function CourseWorkspace({
         />
       }
       locale={locale}
+      deviceWidth={deviceWidth}
+      onDeviceWidthChange={setDeviceWidth}
     />
   );
 }

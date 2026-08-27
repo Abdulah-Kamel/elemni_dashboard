@@ -34,7 +34,7 @@ const COPY: Record<"ar" | "en", WorkspaceCopy> = {
     tabsLabel: "طريقة العرض",
     tabs: { edit: "تعديل", preview: "معاينة" },
     deviceGroupLabel: "عرض الجهاز",
-    devices: { full: "كامل", tablet: "لوحي", mobile: "جوال" },
+    devices: { full: "كامل", tablet: "تابلت", mobile: "موبايل" },
     fullPreview: "معاينة",
   },
   en: {

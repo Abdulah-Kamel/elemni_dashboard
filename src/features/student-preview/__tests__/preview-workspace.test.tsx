@@ -204,8 +204,8 @@ describe("PreviewWorkspace", () => {
     it("renders full, tablet and mobile radios", () => {
       renderWorkspace();
       expect(screen.getByRole("radio", { name: "كامل" })).toBeDefined();
-      expect(screen.getByRole("radio", { name: "لوحي" })).toBeDefined();
-      expect(screen.getByRole("radio", { name: "جوال" })).toBeDefined();
+      expect(screen.getByRole("radio", { name: "تابلت" })).toBeDefined();
+      expect(screen.getByRole("radio", { name: "موبايل" })).toBeDefined();
     });
 
     it("labels the device radiogroup", () => {
@@ -226,7 +226,7 @@ describe("PreviewWorkspace", () => {
     it("changes device width on radio click", () => {
       const onDeviceWidthChange = vi.fn();
       renderWorkspace({ onDeviceWidthChange });
-      fireEvent.click(screen.getByRole("radio", { name: "لوحي" }));
+      fireEvent.click(screen.getByRole("radio", { name: "تابلت" }));
       expect(onDeviceWidthChange).toHaveBeenCalledWith("tablet");
     });
 

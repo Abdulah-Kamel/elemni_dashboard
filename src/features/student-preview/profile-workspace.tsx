@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import type { TeacherProfile } from "@/features/profile/schema";
 import type { CourseOut } from "@/features/shell/schema";
+import type { PreviewDeviceWidth } from "./types";
 import { uploadToPresignedUrl } from "@/lib/upload";
 import { requestProfileImageUpload, updateTeacherProfile } from "@/features/profile/actions";
 import { buildTeacherPreviewModel } from "./build-teacher-preview-model";
@@ -44,6 +45,7 @@ export function ProfileWorkspace({
   const [avatarUrl, setAvatarUrl] = useState<string | null>(publicImageUrl);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deviceWidth, setDeviceWidth] = useState<PreviewDeviceWidth>("full");
   const objectUrlsRef = useRef<string[]>([]);
 
   const markDirty = useCallback(() => setDirty(true), []);
@@ -207,6 +209,8 @@ export function ProfileWorkspace({
       editor={editor}
       preview={<StudentTeacherProfilePreview model={previewModel} locale={locale} interactionMode="local-only" />}
       locale={locale}
+      deviceWidth={deviceWidth}
+      onDeviceWidthChange={setDeviceWidth}
     />
   );
 }
