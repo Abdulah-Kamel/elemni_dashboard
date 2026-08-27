@@ -52,7 +52,7 @@ export async function TeacherProfilePreview({
 
   return (
     <div className="space-y-xl">
-      <header className="flex flex-col gap-md rounded-2xl border border-primary/20 bg-primary-tint/50 p-lg sm:flex-row sm:items-center sm:justify-between">
+      <header className="flex animate-slide-up flex-col gap-md rounded-2xl border border-primary/20 bg-primary-tint/50 p-lg sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <Eye className="size-5" aria-hidden="true" />
@@ -76,7 +76,7 @@ export async function TeacherProfilePreview({
         </div>
       </header>
 
-      <section className="overflow-hidden rounded-2xl border border-border bg-surface shadow-xs">
+      <section className="animate-slide-up animate-stagger-1 overflow-hidden rounded-2xl border border-border bg-surface shadow-xs">
         <div className="flex flex-col gap-xl p-xl md:flex-row md:items-center">
           <Avatar className="size-32 rounded-2xl border border-primary/15 bg-primary-tint text-primary shadow-xs after:rounded-2xl">
             {publicImageUrl && (
@@ -123,13 +123,13 @@ export async function TeacherProfilePreview({
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-4xl gap-md sm:grid-cols-3" aria-label={t("public_stats")}>
+      <section className="animate-slide-up animate-stagger-2 mx-auto grid max-w-4xl gap-md sm:grid-cols-3" aria-label={t("public_stats")}>
         <PreviewStat icon={BookOpen} value={courses.length} label={t("stats_published_courses")} />
         <PreviewStat icon={GraduationCap} value={profile.grades.length} label={t("stats_grade_levels")} />
         <PreviewStat icon={Layers3} value={profile.subjects.length} label={t("stats_subjects")} />
       </section>
 
-      <section className="space-y-md">
+      <section className="animate-slide-up animate-stagger-3 space-y-md">
         <div className="flex items-end justify-between gap-md">
           <div>
             <h2 className="text-headline-sm font-bold text-foreground">{t("published_courses_title")}</h2>
@@ -150,7 +150,7 @@ export async function TeacherProfilePreview({
             </Button>
           </div>
         ) : (
-          <div className="grid gap-md md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid animate-slide-up gap-md md:grid-cols-2 xl:grid-cols-3">
             {courses.map((course) => (
               <PreviewCourseCard
                 key={course.id}
@@ -179,7 +179,7 @@ function PreviewStat({
   label: string;
 }) {
   return (
-    <article className="rounded-2xl border border-border bg-surface p-lg text-center shadow-xs">
+    <article className="card-hover rounded-2xl border border-border bg-surface p-lg text-center shadow-xs">
       <div className="mx-auto flex size-10 items-center justify-center rounded-xl bg-primary-tint text-primary">
         <Icon className="size-5" aria-hidden="true" />
       </div>
@@ -202,7 +202,7 @@ async function PreviewCourseCard({
   const Arrow = locale === "ar" ? ArrowLeft : ArrowRight;
 
   return (
-    <article className="flex min-h-80 flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-xs transition-all hover:-translate-y-0.5 hover:border-border-strong hover:shadow-md">
+    <article className="card-hover flex min-h-80 flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-xs transition-all hover:-translate-y-0.5 hover:border-border-strong hover:shadow-md">
       <div className="relative flex h-36 items-center justify-center overflow-hidden bg-gradient-to-br from-primary-tint via-surface-muted to-primary/15">
         <div className="absolute -start-8 -top-10 size-32 rounded-full border-[18px] border-primary/10" />
         <div className="absolute -bottom-14 -end-8 size-40 rounded-full border-[22px] border-primary/10" />
