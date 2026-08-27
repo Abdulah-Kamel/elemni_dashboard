@@ -1,8 +1,25 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { ProfileWorkspace } from "../profile-workspace";
 import type { TeacherProfile } from "@/features/profile/schema";
 import type { CourseOut } from "@/features/shell/schema";
+
+vi.mock("@/i18n/routing", () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
+
+vi.mock("sonner", () => ({
+  toast: { success: vi.fn(), error: vi.fn() },
+}));
+
+vi.mock("@/features/profile/actions", () => ({
+  requestProfileImageUpload: vi.fn(),
+  updateTeacherProfile: vi.fn(),
+}));
+
+vi.mock("@/lib/upload", () => ({
+  uploadToPresignedUrl: vi.fn(),
+}));
 
 const mockProfile: TeacherProfile = {
   id: 1,
