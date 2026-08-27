@@ -72,7 +72,7 @@ export function Sidebar({ teacherName, teacherRole, userRole }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "hidden h-full shrink-0 flex-col border-e border-border bg-surface md:flex transition-all duration-200",
+        "hidden h-full shrink-0 flex-col overflow-hidden border-e border-border bg-surface md:flex transition-all duration-200",
         collapsed ? "w-[68px]" : "w-sidebar"
       )}
       aria-label={tCommon("sidebar_label")}
