@@ -15,8 +15,8 @@ interface ProfileWorkspaceProps {
 }
 
 const COPY = {
-  ar: { edit: "تعديل الملف", save: "حفظ" },
-  en: { edit: "Edit Profile", save: "Save" },
+  ar: { edit: "تعديل الملف", save: "حفظ", name: "الاسم", bio: "النبذة", location: "الموقع", image: "الصورة", remove: "إزالة" },
+  en: { edit: "Edit Profile", save: "Save", name: "Name", bio: "Bio", location: "Location", image: "Profile Image", remove: "Remove" },
 };
 
 export function ProfileWorkspace({
@@ -68,7 +68,7 @@ export function ProfileWorkspace({
     <div className="space-y-4 p-4">
       <h2 className="text-lg font-bold">{copy.edit}</h2>
       <div>
-        <label htmlFor="profile-name" className="block text-sm font-medium">الاسم</label>
+        <label htmlFor="profile-name" className="block text-sm font-medium">{copy.name}</label>
         <input
           id="profile-name"
           type="text"
@@ -78,7 +78,7 @@ export function ProfileWorkspace({
         />
       </div>
       <div>
-        <label htmlFor="profile-bio" className="block text-sm font-medium">النبذة</label>
+        <label htmlFor="profile-bio" className="block text-sm font-medium">{copy.bio}</label>
         <textarea
           id="profile-bio"
           value={bio}
@@ -88,7 +88,7 @@ export function ProfileWorkspace({
         />
       </div>
       <div>
-        <label htmlFor="profile-location" className="block text-sm font-medium">الموقع</label>
+        <label htmlFor="profile-location" className="block text-sm font-medium">{copy.location}</label>
         <input
           id="profile-location"
           type="text"
@@ -98,13 +98,29 @@ export function ProfileWorkspace({
         />
       </div>
       <div>
-        <label htmlFor="profile-avatar" className="block text-sm font-medium">الصورة</label>
+        <label htmlFor="profile-avatar" className="block text-sm font-medium">{copy.image}</label>
+        {avatarUrl && (
+          <div className="mt-2 flex items-center gap-3">
+            <img
+              src={avatarUrl}
+              alt={name || "Avatar"}
+              className="h-16 w-16 rounded-full object-cover"
+            />
+            <button
+              type="button"
+              onClick={() => handleAvatarChange(null)}
+              className="text-sm text-destructive hover:underline"
+            >
+              {copy.remove}
+            </button>
+          </div>
+        )}
         <input
           id="profile-avatar"
           type="file"
           accept="image/*"
           onChange={(e) => handleAvatarChange(e.target.files?.[0] ?? null)}
-          className="w-full"
+          className="mt-2 w-full"
         />
       </div>
       <button
