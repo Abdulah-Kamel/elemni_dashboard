@@ -127,12 +127,12 @@ export async function TeacherAnalyticsView({
             className="rounded-2xl border border-border p-md shadow-xs"
           >
             <div className="mb-4 flex size-10 items-center justify-center rounded-xl bg-primary-tint text-primary">
-              <Icon className="size-5" />
+              <Icon className="size-5" aria-hidden="true" />
             </div>
             <p className="text-sm font-semibold text-on-surface-muted">
               {label}
             </p>
-            <p className="mt-1 text-2xl font-bold text-primary" dir="ltr">
+            <p className="mt-1 text-2xl font-bold text-primary tabular-nums" dir="ltr">
               {value}
             </p>
           </Card>
@@ -165,21 +165,21 @@ export async function TeacherAnalyticsView({
                   <TableCell>
                     <Link
                       href={`/courses/${course.id}`}
-                      className="flex items-center gap-3 font-medium text-foreground transition-colors hover:text-primary"
+                      className="flex items-center gap-3 font-medium text-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                     >
                       <div className="flex size-9 items-center justify-center rounded-xl bg-primary-tint text-primary">
-                        <Users className="size-4" />
+                        <Users className="size-4" aria-hidden="true" />
                       </div>
                       <span>{course.title}</span>
                     </Link>
                   </TableCell>
-                  <TableCell dir="ltr">
+                  <TableCell dir="ltr" className="tabular-nums">
                     {formatMoney(course.price, locale, currency)}
                   </TableCell>
-                  <TableCell dir="ltr">
+                  <TableCell dir="ltr" className="tabular-nums">
                     {formatMoney(course.earning_amount, locale, currency)}
                   </TableCell>
-                  <TableCell dir="ltr">
+                  <TableCell dir="ltr" className="tabular-nums">
                     {formatCount(course.student_subscription_count, locale)}
                   </TableCell>
                 </TableRow>
