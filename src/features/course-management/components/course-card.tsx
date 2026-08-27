@@ -122,7 +122,7 @@ export function CourseCard({
             href={`/${locale}/courses/${course.id}`}
             className={cn(
               buttonVariants({ variant: "outline", size: "default" }),
-              "flex-1 bg-surface font-semibold text-primary"
+              "flex-1 bg-surface font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             )}
           >
             {t("manage")}
