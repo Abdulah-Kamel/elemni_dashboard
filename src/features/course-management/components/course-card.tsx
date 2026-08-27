@@ -28,12 +28,14 @@ export function CourseCard({
   locale,
   gradeName,
   streamName,
+  className,
 }: {
   course: CourseOut
   teacherProfileId: number
   locale: string
   gradeName?: string
   streamName?: string
+  className?: string
 }) {
   const t = useTranslations("courses")
   const [imageFailed, setImageFailed] = useState(false)
@@ -42,7 +44,7 @@ export function CourseCard({
   return (
     <article
       data-slot="card"
-      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-surface transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md"
+      className={`group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-surface transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md ${className ?? ""}`}
     >
       <Link
         href={`/${locale}/courses/${course.id}`}
@@ -122,7 +124,7 @@ export function CourseCard({
             href={`/${locale}/courses/${course.id}`}
             className={cn(
               buttonVariants({ variant: "outline", size: "default" }),
-              "flex-1 bg-surface font-semibold text-primary"
+              "flex-1 bg-surface font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             )}
           >
             {t("manage")}
