@@ -338,8 +338,9 @@ export function LessonList({
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium">{t("title_label")}</label>
+              <label htmlFor="lesson-title" className="text-sm font-medium">{t("title_label")}</label>
               <Input
+                id="lesson-title"
                 value={createTitle}
                 onChange={(e) => setCreateTitle(e.target.value)}
                 placeholder={t("create_title_placeholder")}
