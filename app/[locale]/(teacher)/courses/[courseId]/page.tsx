@@ -128,7 +128,7 @@ async function CourseEditor({
       <header className="space-y-5">
         <Link
           href={`/${locale}/courses`}
-          className="inline-flex items-center text-sm text-muted-foreground transition-colors hover:text-foreground"
+          className="animate-slide-up inline-flex items-center text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           {locale === "ar" ? (
             <ArrowRight className="me-2 size-4" />
@@ -138,7 +138,7 @@ async function CourseEditor({
           {t("title")}
         </Link>
 
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+        <div className="flex animate-slide-up animate-stagger-1 flex-col justify-between gap-4 sm:flex-row sm:items-start">
           <div className="min-w-0 space-y-2">
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
@@ -192,7 +192,7 @@ async function CourseEditor({
         </nav>
       </header>
 
-      <section className="rounded-2xl border border-border bg-card p-4 shadow-xs sm:p-6">
+      <section className="animate-slide-up animate-stagger-2 rounded-2xl border border-border bg-card p-4 shadow-xs sm:p-6">
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
             <h2 className="text-lg font-bold">
