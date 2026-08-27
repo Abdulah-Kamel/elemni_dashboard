@@ -66,7 +66,7 @@ function SortableItemCard({
     <div ref={setNodeRef} style={style}>
       <div className="flex items-center gap-2 px-2">
         <button
-          className="cursor-grab active:cursor-grabbing touch-none"
+          className="cursor-grab active:cursor-grabbing touch-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           {...attributes}
           {...listeners}
           aria-label={t("drag_handle_label")}
@@ -248,6 +248,7 @@ export function ItemList({
               value={createTitle}
               onChange={(e) => setCreateTitle(e.target.value)}
               placeholder={t("create_placeholder")}
+              aria-label={t("create_placeholder")}
               disabled={submitting}
               autoFocus
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleCreate(); } }}
@@ -311,6 +312,7 @@ export function ItemList({
             value={createTitle}
             onChange={(e) => setCreateTitle(e.target.value)}
             placeholder={t("create_placeholder")}
+            aria-label={t("create_placeholder")}
             disabled={submitting}
             autoFocus
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleCreate(); } }}
