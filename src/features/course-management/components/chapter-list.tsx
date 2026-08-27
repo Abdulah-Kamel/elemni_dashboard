@@ -259,7 +259,7 @@ export function ChapterList({
             {activeChapter ? (
               <div className="flex min-h-16 items-center gap-3 rounded-xl border bg-card px-4 opacity-95 shadow-lg">
                 <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <BookOpen className="size-4" />
+                  <BookOpen className="size-4" aria-hidden="true" />
                 </span>
                 <div>
                   <p className="text-xs text-muted-foreground">
@@ -282,7 +282,7 @@ export function ChapterList({
           setCreateOpen(true);
         }}
       >
-        <Plus className="me-2 size-4" />
+        <Plus className="me-2 size-4" aria-hidden="true" />
         {t("create")}
       </Button>
 
@@ -303,6 +303,7 @@ export function ChapterList({
             placeholder={t("create_placeholder")}
             disabled={submitting}
             autoFocus
+            aria-label={t("chapter_title")}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
@@ -313,10 +314,10 @@ export function ChapterList({
           {error && <p className="text-sm text-destructive">{error}</p>}
           <DialogFooter>
             <DialogClose render={<Button variant="outline" disabled={submitting}>{t("cancel")}</Button>} />
-            <Button onClick={handleCreate} disabled={submitting || !createTitle.trim()}>
+            <Button onClick={handleCreate} disabled={submitting || !createTitle.trim()} className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
               {submitting ? (
                 <>
-                  <Loader2 className="me-2 size-4 animate-spin" />
+                  <Loader2 className="me-2 size-4 animate-spin" aria-hidden="true" />
                   {t("saving")}
                 </>
               ) : (

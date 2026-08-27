@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { useTranslations } from "next-intl"
 import {
   Dialog,
@@ -60,6 +60,20 @@ export function EditCourseDialog({
   const [subjects, setSubjects] = useState<SubjectOut[]>([])
   const [grades, setGrades] = useState<GradeOut[]>([])
   const [streams, setStreams] = useState<StreamOut[]>([])
+
+  const isDirty =
+    initialValues !== null &&
+    formValues !== null &&
+    JSON.stringify(formValues) !== JSON.stringify(initialValues)
+
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
 
   const loadData = useCallback(async () => {
     setState("loading")
