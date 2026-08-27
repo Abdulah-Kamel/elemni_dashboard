@@ -35,6 +35,7 @@ describe("loadCoursePreviewCurriculum", () => {
       expect(result.data[0].title).toBe("Chapter 1");
       expect(result.data[0].lessons[0].title).toBe("Lesson 1");
     }
+    expect(listItems).toHaveBeenCalledWith(42, 20);
   });
 
   it("returns error when session is null", async () => {
