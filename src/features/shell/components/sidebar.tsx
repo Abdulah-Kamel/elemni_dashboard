@@ -141,7 +141,7 @@ export function Sidebar({ teacherName, teacherRole, userRole }: SidebarProps) {
         </ul>
       </nav>
 
-      <div className="flex flex-col gap-1 px-sm pb-sm">
+      <div className="flex flex-col gap-1 overflow-hidden px-sm pb-sm">
         <LogoutButton
           variant="sidebar"
           showIcon
@@ -150,14 +150,14 @@ export function Sidebar({ teacherName, teacherRole, userRole }: SidebarProps) {
         />
 
         {teacherName && (
-          <div className={cn("mt-2 flex items-center gap-2.5 rounded-lg px-2 py-2", collapsed && "justify-center px-0")}>
+          <div className={cn("mt-2 flex items-center gap-2.5 overflow-hidden rounded-lg px-2 py-2", collapsed && "justify-center px-0")}>
             <Avatar className="size-8 shrink-0 bg-primary-tint text-primary">
               <AvatarFallback className="text-label-sm font-semibold">
                 {initials(teacherName)}
               </AvatarFallback>
             </Avatar>
             {!collapsed && (
-              <div className="min-w-0 flex-1 overflow-hidden">
+              <div className="min-w-0 flex-1">
                 <p className="truncate text-body-md text-body-md--line-height font-medium text-foreground">
                   {teacherName}
                 </p>
