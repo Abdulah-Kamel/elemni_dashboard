@@ -63,7 +63,7 @@ const COPY: Record<"ar" | "en", WorkspaceCopy> = {
       "preview-focus": "المعاينة",
       "editor-focus": "المحرر",
     },
-    fullPreview: "معاينة كاملة",
+    fullPreview: "معاينة",
   },
   en: {
     tabsLabel: "View mode",
@@ -77,7 +77,7 @@ const COPY: Record<"ar" | "en", WorkspaceCopy> = {
       "preview-focus": "Preview",
       "editor-focus": "Editor",
     },
-    fullPreview: "Full Preview",
+    fullPreview: "Preview",
   },
 };
 
@@ -208,26 +208,6 @@ export function PreviewWorkspace({
             )}
           >
             {copy.tabs[tab]}
-          </button>
-        ))}
-      </div>
-
-      {/* Layout preset toggle (desktop only) */}
-      <div
-        className="hidden items-center gap-1 lg:flex"
-        role="radiogroup"
-        aria-label={copy.layoutGroupLabel}
-      >
-        {LAYOUT_ORDER.map((mode) => (
-          <button
-            key={mode}
-            type="button"
-            role="radio"
-            aria-checked={layoutMode === mode}
-            onClick={() => onLayoutModeChange?.(mode)}
-            className={segmentClass(layoutMode === mode)}
-          >
-            {copy.layouts[mode]}
           </button>
         ))}
       </div>
