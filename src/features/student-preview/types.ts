@@ -68,3 +68,7 @@ export type PreviewInteractionMode = 'local-only';
 export type PreviewLayoutMode = "split" | "even" | "editor-focus" | "preview-focus";
 
 export type PreviewDeviceWidth = "full" | "tablet" | "mobile";
+
+export type PreviewActionResult<T> =
+  | { success: true; data: T }
+  | { success: false; error: { type: string; message: string } };
