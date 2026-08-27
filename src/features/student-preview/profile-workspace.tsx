@@ -61,7 +61,7 @@ export function ProfileWorkspace({
     profile: { ...profile, name, description: bio, location: location_ },
     courses,
     avatarObjectUrl: avatarUrl,
-    publicAvatarUrl: null,
+    publicAvatarUrl: publicImageUrl,
   });
 
   const editor = (
