@@ -76,9 +76,11 @@ export async function TeacherAnalyticsView({
     },
   ]
 
+  const stagger = ["animate-stagger-1", "animate-stagger-2", "animate-stagger-3", "animate-stagger-4", "animate-stagger-5"]
+
   return (
     <div className="flex flex-col gap-xl">
-      <header className="flex flex-col gap-2">
+      <header className="flex animate-slide-up flex-col gap-2">
         <h1 className="text-headline-md font-semibold text-foreground">
           {title ?? t("title")}
         </h1>
@@ -87,7 +89,7 @@ export async function TeacherAnalyticsView({
         </p>
       </header>
 
-      <Card className="rounded-2xl border border-border p-md shadow-xs">
+      <Card className="animate-slide-up animate-stagger-1 rounded-2xl border border-border p-md shadow-xs">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div className="space-y-1">
             <p className="text-sm font-semibold text-on-surface-muted">
@@ -121,10 +123,10 @@ export async function TeacherAnalyticsView({
       </Card>
 
       <section className="grid gap-md sm:grid-cols-2 xl:grid-cols-5">
-        {stats.map(({ label, value, icon: Icon }) => (
+        {stats.map(({ label, value, icon: Icon }, index) => (
           <Card
             key={label}
-            className="rounded-2xl border border-border p-md shadow-xs"
+            className={`card-hover animate-slide-up ${stagger[index]} rounded-2xl border border-border p-md shadow-xs`}
           >
             <div className="mb-4 flex size-10 items-center justify-center rounded-xl bg-primary-tint text-primary">
               <Icon className="size-5" />
@@ -139,7 +141,7 @@ export async function TeacherAnalyticsView({
         ))}
       </section>
 
-      <Card className="rounded-2xl border border-border shadow-xs">
+      <Card className="animate-slide-up animate-stagger-6 rounded-2xl border border-border shadow-xs">
         <div className="border-b border-border px-md pt-md pb-3">
           <h2 className="text-title-lg font-semibold text-foreground">
             {t("top_courses.title")}
