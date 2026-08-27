@@ -1,6 +1,7 @@
 "use client";
 
 import { Shield, Languages } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 
@@ -15,16 +16,19 @@ function Toggle({
   checked,
   onChange,
   id,
+  "aria-label": ariaLabel,
 }: {
   checked: boolean;
   onChange: (v: boolean) => void;
   id?: string;
+  "aria-label"?: string;
 }) {
   return (
     <button
       id={id}
       role="switch"
       aria-checked={checked}
+      aria-label={ariaLabel}
       onClick={() => onChange(!checked)}
       className={cn(
         "relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
@@ -47,6 +51,7 @@ export function SecurityCard({
   whitelistedDomains,
   onChange,
 }: SecurityCardProps) {
+  const t = useTranslations("settings");
   return (
     <div className="rounded-2xl border border-border bg-surface p-6 shadow-xs">
       <div className="mb-4 flex items-center gap-2">
@@ -60,9 +65,10 @@ export function SecurityCard({
             <p className="text-body-md font-medium text-foreground">Dynamic Watermark</p>
             <p className="text-label-sm text-on-surface-muted">Shows student info on video</p>
           </div>
-          <Toggle
+           <Toggle
             checked={watermarkEnabled}
             onChange={(v) => onChange("watermarkEnabled", v)}
+            aria-label={t("watermark")}
           />
         </div>
 
@@ -71,9 +77,10 @@ export function SecurityCard({
             <p className="text-body-md font-medium text-foreground">Allow PDF Downloads</p>
             <p className="text-label-sm text-on-surface-muted">Students can download PDF materials</p>
           </div>
-          <Toggle
+           <Toggle
             checked={allowPdfDownload}
             onChange={(v) => onChange("allowPdfDownload", v)}
+            aria-label={t("pdf_download")}
           />
         </div>
 
