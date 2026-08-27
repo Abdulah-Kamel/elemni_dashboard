@@ -119,7 +119,7 @@ export function StudentCourseDetailPreview({
             </div>
 
             <div className="w-full lg:w-auto">
-              <div className="mb-5 grid grid-cols-3 gap-5 text-center text-xs font-bold text-[#464555] sm:flex sm:justify-end">
+              <div className="mb-5 grid grid-cols-3 gap-3 text-center text-xs font-bold text-[#464555] sm:grid-cols-none sm:flex sm:justify-end sm:gap-5">
                 <span className="grid justify-items-center gap-1"><PlayCircle className="size-5 text-[#0284C7]" />{totalLessons} درس</span>
                 <span className="grid justify-items-center gap-1"><Clock3 className="size-5 text-[#0284C7]" />{formatDuration(totalDuration)}</span>
                 <span className="grid justify-items-center gap-1"><ClipboardList className="size-5 text-[#0284C7]" />{totalExams} اختبار</span>
