@@ -46,7 +46,8 @@
     "page_lessons": "الدروس",
     "page_students": "الطلاب",
     "page_analytics": "التحليلات",
-    "page_billing": "الفوترة"
+    "page_billing": "الفوترة",
+    "no_new_notifications": "لا توجد إشعارات جديدة"
   },
   "placeholder": {
     "loading": "جارٍ التحميل...",

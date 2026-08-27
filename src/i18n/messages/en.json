@@ -46,7 +46,8 @@
     "page_lessons": "Lessons",
     "page_students": "Students",
     "page_analytics": "Analytics",
-    "page_billing": "Billing"
+    "page_billing": "Billing",
+    "no_new_notifications": "No new notifications"
   },
   "placeholder": {
     "loading": "Loading...",

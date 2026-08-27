@@ -27,15 +27,26 @@ export function NotificationDropdown() {
 
       {open && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute start-0 mt-2 w-80 rounded-2xl border border-border bg-surface p-4 shadow-xl z-50">
+          <div
+            className="fixed inset-0 z-40"
+            role="presentation"
+            onClick={() => setOpen(false)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setOpen(false);
+            }}
+          />
+          <div
+            role="menu"
+            aria-label={tTop("notifications")}
+            className="absolute start-0 mt-2 w-80 rounded-2xl border border-border bg-surface p-4 shadow-xl z-50"
+          >
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <span className="text-sm font-semibold text-foreground">
                 {tTop("notifications")}
               </span>
             </div>
             <p className="text-xs text-on-surface-muted text-center py-6">
-              No new notifications
+              {tTop("no_new_notifications")}
             </p>
           </div>
         </>
