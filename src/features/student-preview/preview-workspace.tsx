@@ -240,7 +240,7 @@ export function PreviewWorkspace({
       <div
         data-testid="workspace-grid"
         dir="ltr"
-        className={cn("grid", LAYOUT_COLUMNS[layoutMode])}
+        className={cn("grid grid-cols-1", LAYOUT_COLUMNS[layoutMode])}
       >
         <section
           data-testid="preview-pane"
