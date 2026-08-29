@@ -1,9 +1,9 @@
-"use client";
+"use client"
 
-import { useCallback, useId, useRef, useState } from "react";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
-import type { PreviewDeviceWidth } from "./types";
+import { useCallback, useId, useRef, useState } from "react"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { cn } from "@/lib/utils"
+import type { PreviewDeviceWidth } from "./types"
 
 /**
  * Preview viewport widths. `full` lets the preview fill whatever the pane
@@ -13,21 +13,21 @@ const DEVICE_WIDTHS: Record<PreviewDeviceWidth, string> = {
   full: "100%",
   tablet: "52rem",
   mobile: "23rem",
-};
+}
 
-const DEVICE_ORDER: readonly PreviewDeviceWidth[] = ["full", "tablet", "mobile"];
+const DEVICE_ORDER: readonly PreviewDeviceWidth[] = ["full", "tablet", "mobile"]
 
-const TAB_ORDER = ["edit", "preview"] as const;
+const TAB_ORDER = ["edit", "preview"] as const
 
-type PreviewTab = (typeof TAB_ORDER)[number];
+type PreviewTab = (typeof TAB_ORDER)[number]
 
 type WorkspaceCopy = {
-  tabsLabel: string;
-  tabs: Record<PreviewTab, string>;
-  deviceGroupLabel: string;
-  devices: Record<PreviewDeviceWidth, string>;
-  fullPreview: string;
-};
+  tabsLabel: string
+  tabs: Record<PreviewTab, string>
+  deviceGroupLabel: string
+  devices: Record<PreviewDeviceWidth, string>
+  fullPreview: string
+}
 
 const COPY: Record<"ar" | "en", WorkspaceCopy> = {
   ar: {
@@ -44,15 +44,15 @@ const COPY: Record<"ar" | "en", WorkspaceCopy> = {
     devices: { full: "Full", tablet: "Tablet", mobile: "Mobile" },
     fullPreview: "Preview",
   },
-};
+}
 
 function resolveLocale(locale: string): "ar" | "en" {
-  return locale.toLowerCase().startsWith("ar") ? "ar" : "en";
+  return locale.toLowerCase().startsWith("ar") ? "ar" : "en"
 }
 
 /** Local copy function — the workspace chrome is not part of the preview. */
 function workspaceCopy(locale: string): WorkspaceCopy {
-  return COPY[resolveLocale(locale)];
+  return COPY[resolveLocale(locale)]
 }
 
 const segmentClass = (active: boolean) =>
@@ -61,16 +61,16 @@ const segmentClass = (active: boolean) =>
     active
       ? "bg-primary/10 text-primary-deep"
       : "text-muted-foreground hover:bg-muted"
-  );
+  )
 
 interface PreviewWorkspaceProps {
-  editor: React.ReactNode;
-  preview: React.ReactNode;
-  locale: string;
-  deviceWidth?: PreviewDeviceWidth;
-  onDeviceWidthChange?: (width: PreviewDeviceWidth) => void;
+  editor: React.ReactNode
+  preview: React.ReactNode
+  locale: string
+  deviceWidth?: PreviewDeviceWidth
+  onDeviceWidthChange?: (width: PreviewDeviceWidth) => void
   /** Fired when the full-preview dialog is opened. The dialog itself is owned here. */
-  onFullPreview?: () => void;
+  onFullPreview?: () => void
 }
 
 export function PreviewWorkspace({
@@ -81,44 +81,67 @@ export function PreviewWorkspace({
   onDeviceWidthChange,
   onFullPreview,
 }: PreviewWorkspaceProps) {
-  const [activeTab, setActiveTab] = useState<PreviewTab>("edit");
-  const [fullPreviewOpen, setFullPreviewOpen] = useState(false);
-  const tabRefs = useRef<Partial<Record<PreviewTab, HTMLButtonElement | null>>>({});
+  const [activeTab, setActiveTab] = useState<PreviewTab>("edit")
+  const [fullPreviewOpen, setFullPreviewOpen] = useState(false)
+  const tabRefs = useRef<Partial<Record<PreviewTab, HTMLButtonElement | null>>>(
+    {}
+  )
 
-  const copy = workspaceCopy(locale);
-  const dir = resolveLocale(locale) === "ar" ? "rtl" : "ltr";
-  const baseId = useId();
-  const tabId = (tab: PreviewTab) => `${baseId}-tab-${tab}`;
-  const panelId = (tab: PreviewTab) => `${baseId}-panel-${tab}`;
+  const copy = workspaceCopy(locale)
+  const dir = resolveLocale(locale) === "ar" ? "rtl" : "ltr"
+  const baseId = useId()
+  const tabId = (tab: PreviewTab) => `${baseId}-tab-${tab}`
+  const panelId = (tab: PreviewTab) => `${baseId}-panel-${tab}`
 
   const selectTab = useCallback((tab: PreviewTab) => {
-    setActiveTab(tab);
-    tabRefs.current[tab]?.focus();
-  }, []);
+    setActiveTab(tab)
+    tabRefs.current[tab]?.focus()
+  }, [])
 
   const onTabKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
       // Arrow keys follow the reading direction, so they mirror under RTL.
-      const forward = dir === "rtl" ? "ArrowLeft" : "ArrowRight";
-      const backward = dir === "rtl" ? "ArrowRight" : "ArrowLeft";
+      const forward = dir === "rtl" ? "ArrowLeft" : "ArrowRight"
+      const backward = dir === "rtl" ? "ArrowRight" : "ArrowLeft"
 
-      let next: number | null = null;
-      if (event.key === forward) next = (index + 1) % TAB_ORDER.length;
-      else if (event.key === backward) next = (index - 1 + TAB_ORDER.length) % TAB_ORDER.length;
-      else if (event.key === "Home") next = 0;
-      else if (event.key === "End") next = TAB_ORDER.length - 1;
+      let next: number | null = null
+      if (event.key === forward) next = (index + 1) % TAB_ORDER.length
+      else if (event.key === backward)
+        next = (index - 1 + TAB_ORDER.length) % TAB_ORDER.length
+      else if (event.key === "Home") next = 0
+      else if (event.key === "End") next = TAB_ORDER.length - 1
 
-      if (next === null) return;
-      event.preventDefault();
-      selectTab(TAB_ORDER[next]);
+      if (next === null) return
+      event.preventDefault()
+      selectTab(TAB_ORDER[next])
     },
     [dir, selectTab]
-  );
+  )
 
   const openFullPreview = () => {
-    setFullPreviewOpen(true);
-    onFullPreview?.();
-  };
+    setFullPreviewOpen(true)
+    onFullPreview?.()
+  }
+
+  const onDeviceKeyDown = (
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    index: number
+  ) => {
+    let next: number | null = null
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+      next = (index + 1) % DEVICE_ORDER.length
+    } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+      next = (index - 1 + DEVICE_ORDER.length) % DEVICE_ORDER.length
+    } else if (event.key === "Home") {
+      next = 0
+    } else if (event.key === "End") {
+      next = DEVICE_ORDER.length - 1
+    }
+
+    if (next === null) return
+    event.preventDefault()
+    onDeviceWidthChange?.(DEVICE_ORDER[next])
+  }
 
   /**
    * The rendered preview and its emulated viewport. Rendered in exactly one
@@ -133,13 +156,10 @@ export function PreviewWorkspace({
     >
       {preview}
     </div>
-  );
+  )
 
   return (
-    <div
-      className="student-preview-workspace"
-      data-device-width={deviceWidth}
-    >
+    <div className="student-preview-workspace" data-device-width={deviceWidth}>
       {/* Compact (<lg) tabs */}
       <div
         className="flex gap-2 border-b border-border lg:hidden"
@@ -153,7 +173,7 @@ export function PreviewWorkspace({
             role="tab"
             id={tabId(tab)}
             ref={(node) => {
-              tabRefs.current[tab] = node;
+              tabRefs.current[tab] = node
             }}
             aria-selected={activeTab === tab}
             aria-controls={panelId(tab)}
@@ -180,7 +200,7 @@ export function PreviewWorkspace({
       <div
         data-testid="workspace-grid"
         dir="ltr"
-        className={cn("grid grid-cols-1 lg:grid-cols-[3fr_2fr]")}
+        className={cn("grid grid-cols-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]")}
       >
         <section
           data-testid="preview-pane"
@@ -201,13 +221,15 @@ export function PreviewWorkspace({
               role="radiogroup"
               aria-label={copy.deviceGroupLabel}
             >
-              {DEVICE_ORDER.map((width) => (
+              {DEVICE_ORDER.map((width, index) => (
                 <button
                   key={width}
                   type="button"
                   role="radio"
                   aria-checked={deviceWidth === width}
+                  tabIndex={deviceWidth === width ? 0 : -1}
                   onClick={() => onDeviceWidthChange?.(width)}
+                  onKeyDown={(event) => onDeviceKeyDown(event, index)}
                   className={segmentClass(deviceWidth === width)}
                 >
                   {copy.devices[width]}
@@ -238,21 +260,24 @@ export function PreviewWorkspace({
             activeTab === "edit" ? "block" : "hidden"
           )}
         >
-          <div data-testid="editor-content">
-            {editor}
-          </div>
+          <div data-testid="editor-content">{editor}</div>
         </section>
       </div>
 
       <Dialog open={fullPreviewOpen} onOpenChange={setFullPreviewOpen}>
         <DialogContent
           dir={dir}
-          className="h-[90dvh] max-h-[90dvh] w-[95vw] max-w-[95vw] sm:max-w-[95vw]"
+          className="flex h-[90dvh] max-h-[90dvh] w-[95vw] max-w-[95vw] flex-col overflow-hidden sm:max-w-[95vw]"
         >
-          <DialogTitle>{copy.fullPreview}</DialogTitle>
-          {fullPreviewOpen ? previewFrame : null}
+          <DialogTitle className="shrink-0">{copy.fullPreview}</DialogTitle>
+          <div
+            data-testid="full-preview-scroll"
+            className="min-h-0 flex-1 overflow-y-auto"
+          >
+            {fullPreviewOpen ? previewFrame : null}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
-  );
+  )
 }

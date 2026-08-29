@@ -1,8 +1,11 @@
-"use client";
+"use client"
 /* eslint-disable @next/next/no-img-element -- preview renderers use native <img> for object URLs per spec */
 
-import { useState } from "react";
-import type { StudentTeacherPreviewModel, PreviewInteractionMode } from "./types";
+import { useState } from "react"
+import type {
+  StudentTeacherPreviewModel,
+  PreviewInteractionMode,
+} from "./types"
 import {
   ArrowRight,
   BookOpen,
@@ -16,114 +19,128 @@ import {
   PlayCircle,
   FileText,
   ClipboardList,
-} from "lucide-react";
-import profileBackground from "@/assets/student-preview/profile-background.webp";
-import lessonCalculus from "@/assets/student-preview/lesson-calculus.webp";
-import lessonMechanics from "@/assets/student-preview/lesson-mechanics.webp";
-import lessonStudySkills from "@/assets/student-preview/lesson-study-skills.webp";
-import lessonArabic from "@/assets/student-preview/lesson-arabic.webp";
+} from "lucide-react"
+import profileBackground from "@/assets/student-preview/profile-background.webp"
+import lessonCalculus from "@/assets/student-preview/lesson-calculus.webp"
+import lessonMechanics from "@/assets/student-preview/lesson-mechanics.webp"
+import lessonStudySkills from "@/assets/student-preview/lesson-study-skills.webp"
+import lessonArabic from "@/assets/student-preview/lesson-arabic.webp"
 
 const courseThumbnails = [
   lessonCalculus,
   lessonMechanics,
   lessonStudySkills,
   lessonArabic,
-];
+]
 
 interface StudentTeacherProfilePreviewProps {
-  model: StudentTeacherPreviewModel;
-  locale: string;
-  interactionMode: PreviewInteractionMode;
+  model: StudentTeacherPreviewModel
+  locale: string
+  interactionMode: PreviewInteractionMode
 }
 
 export function StudentTeacherProfilePreview({
   model,
-  locale,
-  interactionMode,
 }: StudentTeacherProfilePreviewProps) {
-  const [expandedCourses, setExpandedCourses] = useState<Record<string | number, boolean>>({});
+  const [expandedCourses, setExpandedCourses] = useState<
+    Record<string | number, boolean>
+  >({})
 
-  const displayName = model.name || "اسم المدرس";
-  const displayBio = model.bio || "نبذة عن المدرس";
-  const displayTitle = model.title || "مدرس";
+  const displayName = model.name || "اسم المدرس"
+  const displayBio = model.bio || "نبذة عن المدرس"
+  const displayTitle = model.title || "مدرس"
 
   const toggleExpand = (courseId: string | number) => {
-    setExpandedCourses((prev) => ({ ...prev, [courseId]: !prev[courseId] }));
-  };
+    setExpandedCourses((prev) => ({ ...prev, [courseId]: !prev[courseId] }))
+  }
 
   return (
-    <div dir="rtl" className="student-preview bg-[var(--page)] text-[var(--on-surface)] pb-16">
+    <div
+      dir="rtl"
+      className="student-preview bg-[var(--page)] pb-16 text-[var(--on-surface)]"
+    >
       {/* Hero banner */}
       <div className="relative overflow-hidden bg-slate-950 pt-24 text-white shadow-xl">
         <img
           src={profileBackground.src}
           alt=""
-          className="absolute inset-0 h-full w-full object-cover object-center opacity-25 mix-blend-overlay pointer-events-none"
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center opacity-25 mix-blend-overlay"
         />
-        <div className="absolute inset-0 bg-slate-950/80 pointer-events-none" />
+        <div className="pointer-events-none absolute inset-0 bg-slate-950/80" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 relative z-10 flex items-center justify-between">
-          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white font-extrabold text-xs sm:text-sm backdrop-blur-md">
-            <ArrowRight className="w-4 h-4" />
+        <div className="relative z-10 mx-auto flex max-w-7xl items-center justify-between px-4 pt-6 sm:px-6 lg:px-8">
+          <span className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-xs font-extrabold text-white backdrop-blur-md sm:text-sm">
+            <ArrowRight className="h-4 w-4" />
             <span>كل المدرسين</span>
           </span>
 
           <button
             disabled
             aria-disabled="true"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-sky-500/20 border border-sky-400/30 text-sky-200 font-extrabold text-xs sm:text-sm backdrop-blur-md cursor-not-allowed opacity-60"
+            className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl border border-sky-400/30 bg-sky-500/20 px-4 py-2 text-xs font-extrabold text-sky-200 opacity-60 backdrop-blur-md sm:text-sm"
           >
-            <Share2 className="w-4 h-4" />
+            <Share2 className="h-4 w-4" />
             <span>مشاركة</span>
           </button>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-16 sm:pb-20 relative z-10">
-          <div className="flex flex-col md:flex-row items-center md:items-end gap-6 sm:gap-8 text-center md:text-start">
+        <div className="relative z-10 mx-auto max-w-7xl px-4 pt-10 pb-16 sm:px-6 sm:pb-20 lg:px-8">
+          <div className="flex flex-col items-center gap-6 text-center sm:gap-8 md:flex-row md:items-end md:text-start">
             <div className="relative shrink-0">
-              <div className="w-44 h-52 sm:w-56 sm:h-64 md:w-64 md:h-72 rounded-3xl p-1.5 bg-gradient-to-tr from-amber-400/80 via-sky-400/80 to-[var(--brand-indigo)]/80 shadow-2xl">
-                <div className="w-full h-full rounded-[20px] overflow-hidden bg-slate-900 border border-white/10 relative">
+              <div className="h-52 w-44 rounded-3xl bg-gradient-to-tr from-amber-400/80 via-sky-400/80 to-[var(--brand-indigo)]/80 p-1.5 shadow-2xl sm:h-64 sm:w-56 md:h-72 md:w-64">
+                <div className="relative h-full w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
                   {model.avatarUrl ? (
                     <img
                       src={model.avatarUrl}
                       alt={displayName}
-                      className="w-full h-full object-cover object-center"
+                      className="h-full w-full object-cover object-center"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-[var(--brand-indigo-tint)] text-2xl font-black text-[var(--brand-indigo-deep)]">
+                    <div className="flex h-full w-full items-center justify-center bg-[var(--brand-indigo-tint)] text-2xl font-black text-[var(--brand-indigo-deep)]">
                       {displayName.charAt(0)}
                     </div>
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent opacity-60" />
-                  <div className="absolute bottom-3 end-3 bg-emerald-500 border-2 border-slate-900 px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-white stroke-[3]" />
-                    <span className="text-[11px] font-black text-white">معلم موثوق</span>
+                  <div className="absolute end-3 bottom-3 flex items-center gap-1.5 rounded-full border-2 border-slate-900 bg-emerald-500 px-2.5 py-1 shadow-lg">
+                    <CheckCircle2 className="h-4 w-4 stroke-[3] text-white" />
+                    <span className="text-xs font-black text-white">
+                      معلم موثوق
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="space-y-3 flex-1">
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
-                <span className="bg-amber-400 text-slate-950 font-black text-xs px-3 py-1 rounded-full flex items-center gap-1 shadow-md">
-                  <Sparkles className="w-3.5 h-3.5" />
+            <div className="flex-1 space-y-3">
+              <div className="flex flex-wrap items-center justify-center gap-2 md:justify-start">
+                <span className="flex items-center gap-1 rounded-full bg-amber-400 px-3 py-1 text-xs font-black text-amber-950 shadow-md">
+                  <Sparkles className="h-3.5 w-3.5" />
                   <span>معلم معتمد</span>
                 </span>
                 {model.subjects.map((sub, idx) => (
-                  <span key={idx} className="bg-sky-500/20 border border-sky-400/40 text-sky-200 font-extrabold text-xs px-3 py-1 rounded-full backdrop-blur-md">{sub}</span>
+                  <span
+                    key={idx}
+                    className="rounded-full border border-sky-400/40 bg-sky-500/20 px-3 py-1 text-xs font-extrabold text-sky-200 backdrop-blur-md"
+                  >
+                    {sub}
+                  </span>
                 ))}
               </div>
 
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight line-clamp-1">{displayName}</h1>
-              <p className="text-slate-300 text-sm sm:text-base font-semibold max-w-2xl line-clamp-1">{displayTitle}</p>
+              <h1 className="line-clamp-1 text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">
+                {displayName}
+              </h1>
+              <p className="line-clamp-1 max-w-2xl text-sm font-semibold text-slate-300 sm:text-base">
+                {displayTitle}
+              </p>
 
-              <div className="pt-2 flex flex-wrap items-center justify-center md:justify-start gap-3 text-xs sm:text-sm font-bold text-slate-200">
-                <div className="bg-white/10 border border-white/15 px-3.5 py-1.5 rounded-xl backdrop-blur-md flex items-center gap-2">
-                  <Award className="w-4 h-4 text-sky-400" />
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-2 text-xs font-bold text-slate-200 sm:text-sm md:justify-start">
+                <div className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3.5 py-1.5 backdrop-blur-md">
+                  <Award className="h-4 w-4 text-sky-400" />
                   <span>{model.experienceYears} سنة خبرة</span>
                 </div>
-                <div className="bg-white/10 border border-white/15 px-3.5 py-1.5 rounded-xl backdrop-blur-md flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-emerald-400" />
+                <div className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3.5 py-1.5 backdrop-blur-md">
+                  <BookOpen className="h-4 w-4 text-emerald-400" />
                   <span>{model.courses.length} كورسات متاحة</span>
                 </div>
               </div>
@@ -136,12 +153,21 @@ export function StudentTeacherProfilePreview({
       <section className="border-b border-[var(--border)] bg-[var(--surface)] py-10">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[1.4fr_1fr] lg:px-8">
           <div>
-            <p className="mb-2 text-xs font-extrabold text-[var(--brand-indigo)]">عن المدرس</p>
-            <h2 className="text-2xl font-black text-[var(--on-surface)]">خبرة تساعدك تفهم، مش تحفظ</h2>
-            <p className="mt-3 max-w-3xl text-sm font-medium leading-7 text-[var(--on-surface-muted)] line-clamp-4">{displayBio}</p>
+            <p className="mb-2 text-xs font-extrabold text-[var(--brand-indigo)]">
+              عن المدرس
+            </p>
+            <h2 className="text-2xl font-black text-[var(--on-surface)]">
+              خبرة تساعدك تفهم، مش تحفظ
+            </h2>
+            <p className="mt-3 line-clamp-4 max-w-3xl text-sm leading-7 font-medium text-[var(--on-surface-muted)]">
+              {displayBio}
+            </p>
             <div className="mt-5 flex flex-wrap gap-2">
               {model.subjects.map((sub) => (
-                <span key={sub} className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-800">
+                <span
+                  key={sub}
+                  className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-800"
+                >
                   {sub}
                 </span>
               ))}
@@ -150,35 +176,47 @@ export function StudentTeacherProfilePreview({
           <div className="grid h-full grid-cols-2 gap-px overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--border)]">
             <div className="bg-[var(--page)] p-4">
               <BookOpen className="mb-3 size-5 text-[var(--brand-indigo)]" />
-              <strong className="block text-xl font-black">{model.courses.length}</strong>
-              <span className="text-xs text-[var(--on-surface-muted)]">كورسات منشورة</span>
+              <strong className="block text-xl font-black">
+                {model.courses.length}
+              </strong>
+              <span className="text-xs text-[var(--on-surface-muted)]">
+                كورسات منشورة
+              </span>
             </div>
             <div className="bg-[var(--page)] p-4">
               <MapPin className="mb-3 size-5 text-[var(--brand-amber)]" />
-              <strong className="block text-sm font-black leading-6 truncate">{model.location ?? "أونلاين"}</strong>
-              <span className="text-xs text-[var(--on-surface-muted)]">مكان التدريس</span>
+              <strong className="block truncate text-sm leading-6 font-black">
+                {model.location ?? "أونلاين"}
+              </strong>
+              <span className="text-xs text-[var(--on-surface-muted)]">
+                مكان التدريس
+              </span>
             </div>
           </div>
         </div>
       </section>
 
       {/* Courses section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
         <section className="space-y-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-[var(--border)]">
+          <div className="flex flex-col items-start justify-between gap-4 border-b border-[var(--border)] pb-2 sm:flex-row sm:items-center">
             <div>
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[var(--brand-indigo-tint)] text-[var(--brand-indigo)] font-extrabold text-xs mb-2">
-                <BookOpen className="w-3.5 h-3.5" />
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-[var(--brand-indigo-tint)] px-3.5 py-1 text-xs font-extrabold text-[var(--brand-indigo)]">
+                <BookOpen className="h-3.5 w-3.5" />
                 <span>تصفح المحاضرات والاشتراكات</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-[var(--on-surface)]">الكورسات المتاحة</h2>
+              <h2 className="text-2xl font-black text-[var(--on-surface)] sm:text-3xl">
+                الكورسات المتاحة
+              </h2>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-stretch">
+          <div className="grid grid-cols-1 items-stretch gap-6 sm:grid-cols-2">
             {model.courses.slice(0, 2).map((course, index) => {
-              const isExpanded = expandedCourses[course.id];
-              const thumbnail = course.coverUrl || courseThumbnails[index % courseThumbnails.length];
+              const isExpanded = expandedCourses[course.id]
+              const thumbnail =
+                course.coverUrl ||
+                courseThumbnails[index % courseThumbnails.length]
 
               return (
                 <article
@@ -186,60 +224,76 @@ export function StudentTeacherProfilePreview({
                   className="group flex flex-col justify-between overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-md"
                 >
                   <div>
-                    <div className="relative w-full aspect-video overflow-hidden bg-slate-900">
+                    <div className="relative aspect-video w-full overflow-hidden bg-slate-900">
                       <img
-                        src={typeof thumbnail === "string" ? thumbnail : thumbnail.src}
+                        src={
+                          typeof thumbnail === "string"
+                            ? thumbnail
+                            : thumbnail.src
+                        }
                         alt={course.title}
                         loading="lazy"
-                        className="w-full h-full object-cover"
+                        className="h-full w-full object-cover"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
-                      <div className="absolute end-3 top-3 bg-[var(--brand-indigo)]/90 text-white text-[11px] font-black px-3 py-1 rounded-full backdrop-blur-md shadow-sm">{model.subject}</div>
+                      <div className="absolute end-3 top-3 rounded-full bg-[var(--brand-indigo)]/90 px-3 py-1 text-xs font-black text-white shadow-sm backdrop-blur-md">
+                        {model.subject}
+                      </div>
                       {course.duration && (
-                        <div className="absolute bottom-3 start-3 bg-slate-900/80 text-slate-200 text-[11px] font-bold px-2.5 py-1 rounded-lg backdrop-blur-md flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-sky-400" />
+                        <div className="absolute start-3 bottom-3 flex items-center gap-1 rounded-lg bg-slate-900/80 px-2.5 py-1 text-xs font-bold text-slate-200 backdrop-blur-md">
+                          <Clock className="h-3 w-3 text-sky-400" />
                           <span>{course.duration}</span>
                         </div>
                       )}
                     </div>
-                    <div className="p-5 space-y-3">
-                      <h3 className="text-lg font-black text-[var(--on-surface)] leading-snug line-clamp-2 min-h-[52px]">{course.title || "عنوان الكورس"}</h3>
-                      <p className="text-xs text-[var(--on-surface-muted)] leading-relaxed font-medium line-clamp-2">{course.description || "وصف الكورس"}</p>
-                      <div className="flex items-center justify-between text-xs font-bold text-[var(--on-surface-muted)] pt-2 border-t border-[var(--border-subtle)]">
+                    <div className="space-y-3 p-5">
+                      <h3 className="line-clamp-2 min-h-13 text-lg leading-snug font-black text-[var(--on-surface)]">
+                        {course.title || "عنوان الكورس"}
+                      </h3>
+                      <p className="line-clamp-2 text-xs leading-relaxed font-medium text-[var(--on-surface-muted)]">
+                        {course.description || "وصف الكورس"}
+                      </p>
+                      <div className="flex items-center justify-between border-t border-[var(--border-subtle)] pt-2 text-xs font-bold text-[var(--on-surface-muted)]">
                         <div className="flex items-center gap-1.5">
-                          <BookOpen className="w-3.5 h-3.5 text-[var(--brand-indigo)]" />
+                          <BookOpen className="h-3.5 w-3.5 text-[var(--brand-indigo)]" />
                           <span>{course.sessionsCount} محاضرة</span>
                         </div>
                         <div className="flex items-center gap-1.5 text-emerald-600">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <CheckCircle2 className="h-3.5 w-3.5" />
                           <span>اختبارات وملازم</span>
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div className="p-5 pt-0 mt-2">
-                    <div className="flex items-center justify-between gap-3 pt-3 border-t border-[#F1F5F9]">
+                  <div className="mt-2 p-5 pt-0">
+                    <div className="flex items-center justify-between gap-3 border-t border-[#F1F5F9] pt-3">
                       <div>
-                        <span className="text-2xl font-black text-[var(--on-surface)]">{course.price}</span>
-                        <span className="ms-1 text-xs font-bold text-[var(--on-surface-muted)]">ج.م / الشهر</span>
+                        <span className="text-2xl font-black text-[var(--on-surface)]">
+                          {course.price}
+                        </span>
+                        <span className="ms-1 text-xs font-bold text-[var(--on-surface-muted)]">
+                          ج.م / الشهر
+                        </span>
                       </div>
                       {course.isSubscribed ? (
                         <button
                           type="button"
                           onClick={() => toggleExpand(course.id)}
                           aria-expanded={!!isExpanded}
-                          className="py-2.5 px-5 font-black text-xs sm:text-sm rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-2 bg-emerald-600 text-white"
+                          className="flex cursor-pointer items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-black text-white shadow-md transition-all sm:text-sm"
                         >
-                          <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                          <ChevronDown
+                            className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                          />
                           <span>محتوى الكورس</span>
                         </button>
                       ) : (
                         <button
                           disabled
                           aria-disabled="true"
-                          className="py-2.5 px-5 font-black text-xs sm:text-sm rounded-xl shadow-md flex items-center gap-2 bg-[var(--brand-indigo)] text-white cursor-not-allowed opacity-60"
+                          className="flex cursor-not-allowed items-center gap-2 rounded-xl bg-[var(--brand-indigo)] px-5 py-2.5 text-xs font-black text-white opacity-60 shadow-md sm:text-sm"
                         >
-                          <BookOpen className="w-4 h-4" />
+                          <BookOpen className="h-4 w-4" />
                           <span>اشترك الآن</span>
                         </button>
                       )}
@@ -251,15 +305,33 @@ export function StudentTeacherProfilePreview({
                         <div className="space-y-4">
                           {course.sections.map((section) => (
                             <div key={section.id}>
-                              {section.title && <h4 className="mb-2 text-sm font-black text-[var(--on-surface)]">{section.title}</h4>}
+                              {section.title && (
+                                <h4 className="mb-2 text-sm font-black text-[var(--on-surface)]">
+                                  {section.title}
+                                </h4>
+                              )}
                               <div className="space-y-2">
                                 {section.lessons.map((lesson) => (
-                                  <div key={lesson.id} className="border-b border-[var(--border-subtle)] pb-2 last:border-0">
-                                    <p className="text-xs font-extrabold text-[var(--on-surface)]">{lesson.title}</p>
+                                  <div
+                                    key={lesson.id}
+                                    className="border-b border-[var(--border-subtle)] pb-2 last:border-0"
+                                  >
+                                    <p className="text-xs font-extrabold text-[var(--on-surface)]">
+                                      {lesson.title}
+                                    </p>
                                     <div className="mt-2 flex flex-wrap gap-2">
                                       {lesson.items.map((item) => (
-                                        <span key={item.id} className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[var(--on-surface-muted)]">
-                                          {item.hasVideo ? <PlayCircle className="size-3.5 text-[var(--brand-indigo)]" /> : item.hasDocument ? <FileText className="size-3.5 text-emerald-600" /> : <ClipboardList className="size-3.5 text-amber-600" />}
+                                        <span
+                                          key={item.id}
+                                          className="inline-flex items-center gap-1.5 text-xs font-bold text-[var(--on-surface-muted)]"
+                                        >
+                                          {item.hasVideo ? (
+                                            <PlayCircle className="size-3.5 text-[var(--brand-indigo)]" />
+                                          ) : item.hasDocument ? (
+                                            <FileText className="size-3.5 text-emerald-600" />
+                                          ) : (
+                                            <ClipboardList className="size-3.5 text-amber-600" />
+                                          )}
                                           {item.title}
                                         </span>
                                       ))}
@@ -271,16 +343,18 @@ export function StudentTeacherProfilePreview({
                           ))}
                         </div>
                       ) : (
-                        <p className="text-xs font-bold text-[var(--on-surface-muted)]">لم يضف المدرس محتوى للكورس بعد.</p>
+                        <p className="text-xs font-bold text-[var(--on-surface-muted)]">
+                          لم يضف المدرس محتوى للكورس بعد.
+                        </p>
                       )}
                     </div>
                   )}
                 </article>
-              );
+              )
             })}
           </div>
         </section>
       </div>
     </div>
-  );
+  )
 }

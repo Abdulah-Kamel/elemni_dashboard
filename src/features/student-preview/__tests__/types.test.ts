@@ -1,10 +1,9 @@
 import type {
   StudentTeacherPreviewModel,
   StudentCoursePreviewModel,
-  StudentPreviewSection,
   PreviewInteractionMode,
-} from "../types";
-import { describe, it, expect, expectTypeOf } from "vitest";
+} from "../types"
+import { describe, it, expect } from "vitest"
 
 describe("student-preview types", () => {
   it("StudentTeacherPreviewModel has required fields", () => {
@@ -20,9 +19,9 @@ describe("student-preview types", () => {
       bio: "Bio text",
       location: null,
       courses: [],
-    };
-    expect(model.id).toBeDefined();
-  });
+    }
+    expect(model.id).toBeDefined()
+  })
 
   it("StudentCoursePreviewModel has required fields", () => {
     const model: StudentCoursePreviewModel = {
@@ -36,12 +35,12 @@ describe("student-preview types", () => {
       stream: null,
       teacher: null,
       sections: [],
-    };
-    expect(model.id).toBeDefined();
-  });
+    }
+    expect(model.id).toBeDefined()
+  })
 
   it("PreviewInteractionMode is local-only", () => {
-    const mode: PreviewInteractionMode = "local-only";
-    expect(mode).toBe("local-only");
-  });
-});
+    const mode: PreviewInteractionMode = "local-only"
+    expect(mode).toBe("local-only")
+  })
+})

@@ -335,3 +335,11 @@
     }
   }
 }
+
+/* Full-bleed preview — when the teacher content shell contains a
+   student-preview-workspace, remove the max-width constraint so the
+   preview/editor split can fill the available width. Scoped via :has()
+   so non-preview pages keep the normal max-w-7xl. */
+.teacher-content-shell:has(.student-preview-workspace) {
+  max-width: none;
+}
