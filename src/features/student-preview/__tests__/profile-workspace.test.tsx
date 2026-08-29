@@ -192,7 +192,7 @@ describe("ProfileWorkspace", () => {
         publicImageUrl={null}
       />
     )
-    // Only the Browse button should exist, not a "Remove" button
+    // No persisted-avatar remove action should exist without an image.
     const buttons = screen.getAllByRole("button")
     const removeButtons = buttons.filter(
       (btn) => btn.textContent?.toLowerCase().includes("remove") && !btn.textContent?.toLowerCase().includes("remove file")

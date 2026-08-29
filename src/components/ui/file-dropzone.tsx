@@ -7,13 +7,17 @@ import { Button } from "@/components/ui/button"
 
 const COPY = {
   ar: {
-    browse: "استعراض",
+    browse: "اختيار ملف",
     dragDrop: "اسحب وأفلت الملف هنا",
+    clickToBrowse: "أو اضغط لاختيار ملف",
+    replace: "اضغط لتغيير الملف",
     removeFile: "إزالة الملف",
   },
   en: {
-    browse: "Browse",
+    browse: "Choose a file",
     dragDrop: "Drag & drop a file here",
+    clickToBrowse: "or click to browse",
+    replace: "Click to replace the file",
     removeFile: "Remove file",
   },
 }
@@ -56,12 +60,12 @@ export interface FileDropzoneProps {
  * Accessible drag-and-drop file picker.
  *
  * **Validation and toasts are caller-owned** — this component only renders the
- * drop region, browse button, selected-file metadata, and clear action.
+ * clickable drop region, selected-file metadata, and clear action.
  * It does not enforce file type, size, or count limits.
  *
  * Structure:
- * - Non-interactive `role="group"` drop region (no nested controls).
- * - Separate shadcn `Button` for browse activation.
+ * - Keyboard-accessible `role="button"` drop region (no nested controls).
+ * - Separate shadcn `Button` for clearing an existing file.
  * - Depth-tracked drag enter/leave for reliable visual feedback.
  */
 
@@ -85,8 +89,20 @@ export function FileDropzone({
   const [dragOver, setDragOver] = useState(false)
 
   const handleBrowse = useCallback(() => {
+    if (disabled) return
     inputRef.current?.click()
-  }, [])
+  }, [disabled])
+
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (disabled) return
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault()
+        handleBrowse()
+      }
+    },
+    [disabled, handleBrowse]
+  )
 
   const handleInputChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -132,67 +148,78 @@ export function FileDropzone({
     [disabled]
   )
 
-  const handleDragLeave = useCallback(
-    (event: React.DragEvent) => {
-      event.preventDefault()
-      dragDepthRef.current--
-      if (dragDepthRef.current <= 0) {
-        dragDepthRef.current = 0
-        setDragOver(false)
-      }
-    },
-    []
-  )
+  const handleDragLeave = useCallback((event: React.DragEvent) => {
+    event.preventDefault()
+    dragDepthRef.current--
+    if (dragDepthRef.current <= 0) {
+      dragDepthRef.current = 0
+      setDragOver(false)
+    }
+  }, [])
 
   const hasFile = selectedFile != null
 
   return (
     <div dir={dir} className={cn("w-full", className)}>
-      {/* Drop region — non-interactive, no nested controls */}
+      <input
+        ref={inputRef}
+        id={inputId}
+        type="file"
+        accept={accept}
+        onChange={handleInputChange}
+        className="sr-only"
+        disabled={disabled}
+        tabIndex={-1}
+      />
+
+      {/* The whole region is the browse target; keep controls outside it. */}
       <div
         data-testid="drop-region"
-        role="group"
-        aria-label={copy.dragDrop}
+        role="button"
+        tabIndex={disabled ? -1 : 0}
+        aria-label={hasFile ? copy.replace : copy.browse}
+        aria-disabled={disabled || undefined}
+        onClick={handleBrowse}
+        onKeyDown={handleKeyDown}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
         className={cn(
-          "relative flex flex-col items-center gap-2 rounded-xl border-2 border-dashed p-6 text-center transition-colors",
-          dragOver
-            ? "border-primary bg-primary/5"
-            : "border-border",
-          disabled && "cursor-not-allowed opacity-50",
+          "relative flex min-h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-6 text-center transition-colors hover:bg-muted/40 focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-primary/20 focus-visible:outline-none",
+          dragOver ? "border-primary bg-primary/5" : "border-border",
+          disabled && "cursor-not-allowed opacity-50 hover:bg-transparent",
           error && "border-destructive/50"
         )}
       >
-        <input
-          ref={inputRef}
-          id={inputId}
-          type="file"
-          accept={accept}
-          onChange={handleInputChange}
-          className="sr-only"
-          disabled={disabled}
-          tabIndex={-1}
-        />
-
         {hasFile ? (
-          <div className="flex items-center gap-3">
-            <FileIcon className="size-8 text-muted-foreground" />
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+              <FileIcon className="size-5" />
+            </span>
             <div className="min-w-0 text-start">
-              <p className="truncate text-sm font-medium">{selectedFile!.name}</p>
+              <p className="truncate text-sm font-medium">
+                {selectedFile!.name}
+              </p>
               <p className="text-xs text-muted-foreground">
                 {formatFileSize(selectedFile!.size)}
               </p>
             </div>
+            <span className="text-xs text-muted-foreground">
+              {copy.replace}
+            </span>
           </div>
         ) : (
           <>
-            <Upload className="size-8 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
+            <span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Upload className="size-5" />
+            </span>
+            <p className="text-sm font-medium text-foreground">
               {copy.dragDrop}
             </p>
+            <span className="text-xs text-muted-foreground">
+              {copy.clickToBrowse}
+            </span>
             {description && (
               <p className="text-xs text-muted-foreground">{description}</p>
             )}
@@ -200,21 +227,9 @@ export function FileDropzone({
         )}
       </div>
 
-      {/* Actions row — Browse button + clear, outside the drop region */}
-      <div className="mt-2 flex items-center gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={disabled}
-          onClick={handleBrowse}
-          aria-label={copy.browse}
-        >
-          <Upload className="me-1.5 size-3.5" />
-          {copy.browse}
-        </Button>
-
-        {hasFile && onClear && (
+      {/* Clear remains a separate control so the drop target has no nested actions. */}
+      {hasFile && onClear && (
+        <div className="mt-2 flex items-center justify-end">
           <Button
             type="button"
             variant="ghost"
@@ -225,8 +240,8 @@ export function FileDropzone({
             <X className="me-1 size-3.5" />
             {copy.removeFile}
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
       {error && (
         <p role="alert" className="mt-1.5 text-xs text-destructive">

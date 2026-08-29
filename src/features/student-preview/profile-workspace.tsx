@@ -44,6 +44,7 @@ const COPY = {
     error: "حدث خطأ",
     invalidType: "نوع الملف غير صالح",
     tooLarge: "الملف كبير جداً (الحد الأقصى 5 ميجا)",
+    avatarHint: "PNG أو JPG أو WEBP بحد أقصى ٥ ميجابايت",
   },
   en: {
     edit: "Edit Profile",
@@ -58,6 +59,7 @@ const COPY = {
     error: "Something went wrong",
     invalidType: "Invalid file type",
     tooLarge: "File too large (max 5MB)",
+    avatarHint: "PNG, JPG, or WEBP up to 5 MB",
   },
 }
 
@@ -246,15 +248,15 @@ export function ProfileWorkspace({
       </div>
       <div>
         <Label htmlFor="profile-avatar">{copy.image}</Label>
-        <div className="mt-2 flex items-center gap-4">
-          <Avatar size="lg" className="size-16">
+        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
+          <Avatar size="lg" className="size-20">
             {avatarUrl ? (
               <AvatarImage src={avatarUrl} alt={name || "Avatar"} />
             ) : (
               <AvatarFallback>{name?.charAt(0) || "?"}</AvatarFallback>
             )}
           </Avatar>
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 space-y-1">
             <FileDropzone
               onFileSelect={(file) => handleAvatarChange(file)}
               locale={locale}
@@ -263,6 +265,7 @@ export function ProfileWorkspace({
               selectedFile={avatarFile}
               onClear={() => handleAvatarChange(null)}
               disabled={saving}
+              description={copy.avatarHint}
             />
             {publicImageUrl && !avatarFile && avatarUrl && (
               <Button
@@ -272,7 +275,8 @@ export function ProfileWorkspace({
                 className="mt-1.5"
                 disabled={saving}
                 onClick={() => {
-                  for (const url of objectUrlsRef.current) URL.revokeObjectURL(url)
+                  for (const url of objectUrlsRef.current)
+                    URL.revokeObjectURL(url)
                   objectUrlsRef.current = []
                   setAvatarFile(null)
                   setAvatarUrl(null)

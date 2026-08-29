@@ -3,49 +3,62 @@ import { render, screen, fireEvent } from "@testing-library/react"
 import { FileDropzone } from "../file-dropzone"
 
 describe("FileDropzone", () => {
-  it("renders the browse button and drop region", () => {
-    render(
-      <FileDropzone
-        onFileSelect={vi.fn()}
-        locale="en"
-        accept="image/*"
-      />
-    )
-    expect(screen.getByRole("button", { name: /browse/i })).toBeDefined()
-    expect(screen.getByTestId("drop-region")).toBeDefined()
+  it("renders a clickable browse region", () => {
+    render(<FileDropzone onFileSelect={vi.fn()} locale="en" accept="image/*" />)
+    const region = screen.getByRole("button", { name: /choose a file/i })
+    expect(region).toBeDefined()
+    expect(region.getAttribute("tabindex")).toBe("0")
   })
 
   it("has no nested interactive controls inside the drop region", () => {
-    render(
-      <FileDropzone
-        onFileSelect={vi.fn()}
-        locale="en"
-        accept="image/*"
-      />
-    )
+    render(<FileDropzone onFileSelect={vi.fn()} locale="en" accept="image/*" />)
     const region = screen.getByTestId("drop-region")
-    const buttonsInside = region.querySelectorAll("[role='button'], button, a, input:not([type='file']), select, textarea")
+    const buttonsInside = region.querySelectorAll(
+      "[role='button'], button, a, input:not([type='file']), select, textarea"
+    )
     expect(buttonsInside).toHaveLength(0)
   })
 
-  it("uses group role on drop region, not button", () => {
-    render(
-      <FileDropzone
-        onFileSelect={vi.fn()}
-        locale="en"
-        accept="image/*"
-      />
-    )
+  it("uses button role on the drop region", () => {
+    render(<FileDropzone onFileSelect={vi.fn()} locale="en" accept="image/*" />)
     const region = screen.getByTestId("drop-region")
-    expect(region.getAttribute("role")).toBe("group")
+    expect(region.getAttribute("role")).toBe("button")
   })
 
-  it("calls onFileSelect when a file is chosen via browse button", () => {
+  it("opens the file picker when the drop region is clicked", () => {
+    render(<FileDropzone onFileSelect={vi.fn()} locale="en" accept="image/*" />)
+    const input = document.querySelector(
+      "input[type='file']"
+    ) as HTMLInputElement
+    const clickSpy = vi.spyOn(input, "click").mockImplementation(() => {})
+    fireEvent.click(screen.getByTestId("drop-region"))
+    expect(clickSpy).toHaveBeenCalledOnce()
+    clickSpy.mockRestore()
+  })
+
+  it("opens the file picker from Enter and Space", () => {
+    render(<FileDropzone onFileSelect={vi.fn()} locale="en" accept="image/*" />)
+    const input = document.querySelector(
+      "input[type='file']"
+    ) as HTMLInputElement
+    const clickSpy = vi.spyOn(input, "click").mockImplementation(() => {})
+    const region = screen.getByTestId("drop-region")
+
+    fireEvent.keyDown(region, { key: "Enter" })
+    fireEvent.keyDown(region, { key: " " })
+
+    expect(clickSpy).toHaveBeenCalledTimes(2)
+    clickSpy.mockRestore()
+  })
+
+  it("calls onFileSelect when a file is chosen via the hidden input", () => {
     const onFileSelect = vi.fn()
     render(
       <FileDropzone onFileSelect={onFileSelect} locale="en" accept="image/*" />
     )
-    const input = document.querySelector("input[type='file']") as HTMLInputElement
+    const input = document.querySelector(
+      "input[type='file']"
+    ) as HTMLInputElement
     const file = new File(["test"], "test.png", { type: "image/png" })
     fireEvent.change(input, { target: { files: [file] } })
     expect(onFileSelect).toHaveBeenCalledWith(file)
@@ -66,14 +79,10 @@ describe("FileDropzone", () => {
   })
 
   it("does not set an id on the input when inputId is omitted", () => {
-    render(
-      <FileDropzone
-        onFileSelect={vi.fn()}
-        locale="en"
-        accept="image/*"
-      />
-    )
-    const input = document.querySelector("input[type='file']") as HTMLInputElement
+    render(<FileDropzone onFileSelect={vi.fn()} locale="en" accept="image/*" />)
+    const input = document.querySelector(
+      "input[type='file']"
+    ) as HTMLInputElement
     expect(input.id).toBe("")
   })
 
@@ -90,7 +99,9 @@ describe("FileDropzone", () => {
   })
 
   it("shows file size for selected file", () => {
-    const largeFile = new File([new ArrayBuffer(2048)], "large.png", { type: "image/png" })
+    const largeFile = new File([new ArrayBuffer(2048)], "large.png", {
+      type: "image/png",
+    })
     render(
       <FileDropzone
         onFileSelect={vi.fn()}
@@ -159,7 +170,7 @@ describe("FileDropzone", () => {
     expect(screen.getByText("JPEG, PNG or WebP, max 5MB")).toBeDefined()
   })
 
-  it("disables the browse button when disabled prop is true", () => {
+  it("disables the drop region when disabled prop is true", () => {
     render(
       <FileDropzone
         onFileSelect={vi.fn()}
@@ -168,8 +179,9 @@ describe("FileDropzone", () => {
         disabled
       />
     )
-    const browseBtn = screen.getByRole("button", { name: /browse/i })
-    expect(browseBtn.hasAttribute("disabled")).toBe(true)
+    const region = screen.getByTestId("drop-region")
+    expect(region.getAttribute("aria-disabled")).toBe("true")
+    expect(region.getAttribute("tabindex")).toBe("-1")
   })
 
   it("applies opacity to drop region when disabled", () => {
@@ -186,11 +198,9 @@ describe("FileDropzone", () => {
   })
 
   it("renders Arabic labels", () => {
-    render(
-      <FileDropzone onFileSelect={vi.fn()} locale="ar" accept="image/*" />
-    )
+    render(<FileDropzone onFileSelect={vi.fn()} locale="ar" accept="image/*" />)
     expect(screen.getByText(/اسحب وأفلت/i)).toBeDefined()
-    expect(screen.getByRole("button", { name: /استعراض/i })).toBeDefined()
+    expect(screen.getByRole("button", { name: /اختيار ملف/i })).toBeDefined()
   })
 
   it("does not call onFileSelect on drop when disabled", () => {
@@ -212,11 +222,7 @@ describe("FileDropzone", () => {
   it("calls onFileSelect on drop with a valid file", () => {
     const onFileSelect = vi.fn()
     render(
-      <FileDropzone
-        onFileSelect={onFileSelect}
-        locale="en"
-        accept="image/*"
-      />
+      <FileDropzone onFileSelect={onFileSelect} locale="en" accept="image/*" />
     )
     const region = screen.getByTestId("drop-region")
     const file = new File(["test"], "test.png", { type: "image/png" })
@@ -225,15 +231,9 @@ describe("FileDropzone", () => {
   })
 
   it("sets dragOver styling on drag enter and clears on drag leave", () => {
-    render(
-      <FileDropzone
-        onFileSelect={vi.fn()}
-        locale="en"
-        accept="image/*"
-      />
-    )
+    render(<FileDropzone onFileSelect={vi.fn()} locale="en" accept="image/*" />)
     const region = screen.getByTestId("drop-region")
-    expect(region.className).not.toContain("border-primary")
+    expect(region.className).toContain("border-border")
 
     fireEvent.dragEnter(region)
     expect(region.className).toContain("border-primary")
