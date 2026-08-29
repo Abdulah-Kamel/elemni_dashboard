@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { StudentCourseDetailPreview } from "../student-course-detail-preview";
 import type { StudentCoursePreviewModel } from "../types";
 
@@ -133,12 +133,14 @@ describe("StudentCourseDetailPreview", () => {
     expect(btn.textContent).toMatch(/[٢2][\u0660\u06F00]/);
   });
 
-  it("subscribe button is disabled", () => {
+  it("subscribe button remains inert without looking disabled", () => {
     render(
       <StudentCourseDetailPreview model={baseModel} locale="ar" viewer="guest" interactionMode="local-only" />
     );
     const btn = screen.getByText(/اشترك الآن/).closest("button");
-    expect(btn!.disabled || btn!.hasAttribute("disabled")).toBeTruthy();
+    expect(btn!.disabled).toBe(false);
+    expect(btn!.getAttribute("aria-disabled")).toBe("true");
+    expect(btn!.className).not.toContain("opacity-60");
   });
 
   it("shows chapters", () => {
@@ -175,6 +177,48 @@ describe("StudentCourseDetailPreview", () => {
     const chapterBtn = screen.getByText("الوحدة الثانية: الكهرباء").closest("button");
     fireEvent.click(chapterBtn!);
     expect(screen.getByText("التيار الكهربائي")).toBeDefined();
+  });
+
+  it("notifies the editor when a preview lesson is selected", () => {
+    const onSelectNode = vi.fn();
+    render(
+      <StudentCourseDetailPreview
+        model={baseModel}
+        locale="ar"
+        viewer="guest"
+        interactionMode="local-only"
+        onSelectNode={onSelectNode}
+      />
+    );
+
+    fireEvent.click(screen.getByText("الحركة الخطية").closest("button")!);
+    expect(onSelectNode).toHaveBeenCalledWith({ type: "lesson", id: 10 });
+  });
+
+  it("opens the selected editor lesson in the preview", async () => {
+    const { rerender } = render(
+      <StudentCourseDetailPreview
+        model={baseModel}
+        locale="ar"
+        viewer="guest"
+        interactionMode="local-only"
+        selectedNode={null}
+      />
+    );
+
+    expect(screen.queryByText("فيديو نيوتن")).toBeNull();
+
+    rerender(
+      <StudentCourseDetailPreview
+        model={baseModel}
+        locale="ar"
+        viewer="guest"
+        interactionMode="local-only"
+        selectedNode={{ type: "lesson", id: 11 }}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText("فيديو نيوتن")).toBeDefined());
   });
 
   it("collapse works for lessons", () => {
@@ -297,12 +341,11 @@ describe("StudentCourseDetailPreview", () => {
     expect(heroGrid).toBeDefined();
   });
 
-  it("guest viewer back link shows 'العودة'", () => {
+  it("guest viewer back link matches the student detail copy", () => {
     render(
       <StudentCourseDetailPreview model={baseModel} locale="ar" viewer="guest" interactionMode="local-only" />
     );
-    // "العودة" alone - not "العودة إلى دوراتي"
-    expect(screen.getByText("العودة")).toBeDefined();
+    expect(screen.getByText("العودة إلى الاستكشاف")).toBeDefined();
   });
 
   it("content heading changes based on viewer", () => {

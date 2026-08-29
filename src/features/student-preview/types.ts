@@ -61,6 +61,11 @@ export type StudentCoursePreviewModel = {
 
 export type PreviewInteractionMode = 'local-only';
 
+export type CourseBuilderNode = {
+  type: "chapter" | "lesson" | "item";
+  id: string | number;
+};
+
 /**
  * Desktop space presets. `split` is the default (preview 60% / editor 40%),
  * `even` is the optional 50/50.

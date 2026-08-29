@@ -36,6 +36,7 @@ import { listItems, createItem, reorderItems } from "@/features/course-managemen
 import { applyOptimisticReorder, buildReorderPayload, rollbackReorder } from "@/features/course-management/reorder-utils";
 import { toast } from "sonner";
 import type { ItemOut } from "@/features/course-management/items-schema";
+import { useCourseBuilderBridge } from "@/features/course-management/course-builder-bridge";
 
 function SortableItemCard({
   item,
@@ -109,6 +110,7 @@ export function ItemList({
   const [parentRef] = useAutoAnimate({ duration: 200 });
 
   const t = useTranslations("items");
+  const { notifyCurriculumCommitted } = useCourseBuilderBridge();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
   );
@@ -178,24 +180,29 @@ export function ItemList({
       if (!result.success) {
         setItems(rollbackReorder(previousRef.current));
         toast.error(t("reorder_error"));
+      } else {
+        void notifyCurriculumCommitted();
       }
     },
-    [items, courseId, lessonId, t],
+    [items, courseId, lessonId, notifyCurriculumCommitted, t],
   );
 
   const handleUpdated = useCallback((updated: ItemOut) => {
     setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
-  }, []);
+    void notifyCurriculumCommitted();
+  }, [notifyCurriculumCommitted]);
 
   const handleDeleted = useCallback((itemId: number) => {
     setItems((prev) => prev.filter((i) => i.id !== itemId));
-  }, []);
+    void notifyCurriculumCommitted();
+  }, [notifyCurriculumCommitted]);
 
   const handleCreated = useCallback((item: ItemOut) => {
     setItems((prev) => [...prev, item]);
     setCreateOpen(false);
     setCreateTitle("");
-  }, []);
+    void notifyCurriculumCommitted();
+  }, [notifyCurriculumCommitted]);
 
   const handleCreate = useCallback(async () => {
     const trimmed = createTitle.trim();

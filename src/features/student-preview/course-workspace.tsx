@@ -1,7 +1,7 @@
 "use client"
 
-import { useId, useState, useCallback } from "react"
-import { Loader2, RefreshCw } from "lucide-react"
+import { useId, useState, useCallback, type ReactNode } from "react"
+import { BookOpen, Loader2, RefreshCw } from "lucide-react"
 import type {
   StudentCoursePreviewModel,
   StudentPreviewSection,
@@ -10,12 +10,17 @@ import type {
 import { PreviewWorkspace } from "./preview-workspace"
 import { StudentCourseDetailPreview } from "./student-course-detail-preview"
 import { loadCoursePreviewCurriculum } from "./server-actions"
+import { CourseBuilderBridgeProvider } from "@/features/course-management/course-builder-bridge"
 
 interface CourseWorkspaceProps {
   model: StudentCoursePreviewModel
   locale: string
   viewer: "guest" | "subscribed"
   initialSections?: StudentPreviewSection[]
+  editorActions?: ReactNode
+  curriculum?: ReactNode
+  curriculumTitle?: string
+  curriculumHint?: string
 }
 
 const COPY = {
@@ -56,6 +61,10 @@ export function CourseWorkspace({
   locale,
   viewer: initialViewer,
   initialSections,
+  editorActions,
+  curriculum,
+  curriculumTitle,
+  curriculumHint,
 }: CourseWorkspaceProps) {
   const lang = locale.startsWith("ar") ? "ar" : "en"
   const copy = COPY[lang]
@@ -103,9 +112,30 @@ export function CourseWorkspace({
     }
   }, [])
 
+  const refreshCurriculum = useCallback(
+    () => handleCurriculumCommitted(Number(model.id)),
+    [handleCurriculumCommitted, model.id]
+  )
+
   const editor = (
-    <div className="space-y-4 p-4">
-      <h2 className="text-lg font-bold">{copy.edit}</h2>
+    <div className="space-y-6 p-4">
+      {editorActions && (
+        <div
+          data-testid="course-editor-actions"
+          className="border-b border-border pb-4"
+        >
+          {editorActions}
+        </div>
+      )}
+      <section aria-labelledby={`${id}-settings-title`} className="space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 id={`${id}-settings-title`} className="text-lg font-bold">
+            {copy.edit}
+          </h2>
+          <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary-deep">
+            {lang === "ar" ? "معاينة مباشرة" : "Live preview"}
+          </span>
+        </div>
       <div>
         <label htmlFor={`${id}-title`} className="block text-sm font-medium">
           {copy.title}
@@ -212,11 +242,11 @@ export function CourseWorkspace({
           </button>
         </div>
       </div>
-      <div className="space-y-2 border-t border-border pt-4">
+        <div className="space-y-2 border-t border-border pt-4">
         <button
           type="button"
           disabled={refreshing}
-          onClick={() => handleCurriculumCommitted(Number(model.id))}
+          onClick={() => void refreshCurriculum()}
           className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-bold transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-60"
         >
           {refreshing ? (
@@ -231,25 +261,63 @@ export function CourseWorkspace({
             {copy.loadError}
           </p>
         )}
-      </div>
+        </div>
+      </section>
+
+      {curriculum && (
+        <section
+          aria-labelledby={`${id}-curriculum-title`}
+          className="space-y-4 border-t border-border pt-6"
+        >
+          <div className="flex items-start gap-3">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <BookOpen className="size-4" aria-hidden="true" />
+            </span>
+            <div className="min-w-0">
+              <h2
+                id={`${id}-curriculum-title`}
+                className="text-base font-bold"
+              >
+                {curriculumTitle ?? (lang === "ar" ? "المنهج" : "Curriculum")}
+              </h2>
+              {curriculumHint && (
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  {curriculumHint}
+                </p>
+              )}
+            </div>
+          </div>
+          <div
+            data-testid="course-curriculum"
+            className="rounded-xl bg-muted/20 p-2 sm:p-3"
+          >
+            {curriculum}
+          </div>
+        </section>
+      )}
     </div>
   )
 
   return (
-    <PreviewWorkspace
-      editor={editor}
-      preview={
-        <StudentCourseDetailPreview
-          key={curriculumKey}
-          model={previewModel}
-          locale={locale}
-          viewer={viewer}
-          interactionMode="local-only"
-        />
-      }
-      locale={locale}
-      deviceWidth={deviceWidth}
-      onDeviceWidthChange={setDeviceWidth}
-    />
+    <CourseBuilderBridgeProvider
+      onCurriculumCommitted={refreshCurriculum}
+    >
+      <PreviewWorkspace
+        editor={editor}
+        preview={
+          <StudentCourseDetailPreview
+            key={curriculumKey}
+            model={previewModel}
+            locale={locale}
+            viewer={viewer}
+            interactionMode="local-only"
+            showEditAffordance
+          />
+        }
+        locale={locale}
+        deviceWidth={deviceWidth}
+        onDeviceWidthChange={setDeviceWidth}
+      />
+    </CourseBuilderBridgeProvider>
   )
 }

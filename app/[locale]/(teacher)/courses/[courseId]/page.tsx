@@ -16,11 +16,10 @@ import { ChapterList } from "@/features/course-management/components/chapter-lis
 import { LessonList } from "@/features/course-management/components/lesson-list"
 import { EditCourseDialog } from "@/features/course-management/components/edit-course-dialog"
 import { CourseCardActions } from "@/features/course-management/components/course-card-actions"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import Link from "next/link"
-import { ArrowLeft, ArrowRight, BookOpen, Layers3, Pencil } from "lucide-react"
+import { ArrowLeft, ArrowRight, Pencil } from "lucide-react"
 import { redirect } from "next/navigation"
 import { Suspense } from "react"
 import type { LessonOut } from "@/features/course-management/lessons-schema"
@@ -30,16 +29,6 @@ import type { CourseFormValues } from "@/features/course-management/schema"
 import { loadCoursePreviewCurriculum } from "@/features/student-preview/server-actions"
 
 export const dynamic = "force-dynamic"
-
-function formatPrice(price: string, locale: string) {
-  const value = Number(price)
-  if (Number.isNaN(value)) return price
-  return new Intl.NumberFormat(locale === "ar" ? "ar-EG" : "en-EG", {
-    style: "currency",
-    currency: "EGP",
-    maximumFractionDigits: 2,
-  }).format(value)
-}
 
 async function getTeacherPreviewIdentity() {
   const profile = await getTeacherProfile()
@@ -161,88 +150,48 @@ async function CourseEditor({
     )
   }
 
+  const editorActions = (
+    <div
+      dir="ltr"
+      className="flex items-center justify-between gap-3"
+    >
+      <Link
+        href={`/${locale}/courses`}
+        dir={locale === "ar" ? "rtl" : "ltr"}
+        className="inline-flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+      >
+        {locale === "ar" ? (
+          <ArrowRight className="size-4" aria-hidden="true" />
+        ) : (
+          <ArrowLeft className="size-4" aria-hidden="true" />
+        )}
+        {t("title")}
+      </Link>
+
+      <div
+        className="flex shrink-0 items-center gap-2"
+        dir={locale === "ar" ? "rtl" : "ltr"}
+      >
+        <EditCourseDialog
+          courseId={course.id}
+          teacherProfileId={course.teacher_profile_id}
+        >
+          <Button variant="outline">
+            <Pencil className="me-2 size-4" />
+            {t("course_settings")}
+          </Button>
+        </EditCourseDialog>
+        <CourseCardActions
+          courseId={course.id}
+          isPublished={course.is_published}
+          teacherProfileId={course.teacher_profile_id}
+        />
+      </div>
+    </div>
+  )
+
   return (
     <div className="space-y-6">
-      <header className="space-y-5">
-        <Link
-          href={`/${locale}/courses`}
-          className="animate-slide-up inline-flex items-center text-sm text-muted-foreground transition-colors hover:text-foreground"
-        >
-          {locale === "ar" ? (
-            <ArrowRight className="me-2 size-4" />
-          ) : (
-            <ArrowLeft className="me-2 size-4" />
-          )}
-          {t("title")}
-        </Link>
-
-        <div className="flex animate-slide-up animate-stagger-1 flex-col justify-between gap-4 sm:flex-row sm:items-start">
-          <div className="min-w-0 space-y-2">
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-                {course.title}
-              </h1>
-              <Badge
-                variant={course.is_published ? "default" : "secondary"}
-                className={
-                  course.is_published
-                    ? "bg-success-tint text-success"
-                    : undefined
-                }
-              >
-                {course.is_published ? t("published") : t("draft")}
-              </Badge>
-            </div>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-              {course.subject_name && <span>{course.subject_name}</span>}
-              <span className="inline-flex items-center gap-1.5">
-                <Layers3 className="size-3.5" />
-                {course.use_chapters
-                  ? t("chapters_organized")
-                  : t("flat_lessons")}
-              </span>
-              <span>
-                {course.price === "0.00"
-                  ? t("free")
-                  : formatPrice(course.price, locale)}
-              </span>
-            </div>
-            {course.description && (
-              <p className="w-full text-sm leading-6 text-muted-foreground">
-                {course.description}
-              </p>
-            )}
-          </div>
-
-          <div className="flex shrink-0 items-center gap-2">
-            <EditCourseDialog
-              courseId={course.id}
-              teacherProfileId={course.teacher_profile_id}
-            >
-              <Button variant="outline">
-                <Pencil className="me-2 size-4" />
-                {t("course_settings")}
-              </Button>
-            </EditCourseDialog>
-            <CourseCardActions
-              courseId={course.id}
-              isPublished={course.is_published}
-              teacherProfileId={course.teacher_profile_id}
-            />
-          </div>
-        </div>
-
-        <nav
-          className="flex border-b border-border"
-          aria-label={t("course_navigation")}
-        >
-          <span className="inline-flex items-center gap-2 border-b-2 border-primary px-1 pb-3 text-sm font-semibold text-primary">
-            <BookOpen className="size-4" />
-            {t("content_tab")}
-          </span>
-        </nav>
-      </header>
-
       <section className="animate-slide-up animate-stagger-2 rounded-2xl border border-border bg-card p-4 shadow-xs sm:p-6">
         <CourseWorkspace
           model={buildCoursePreviewModel({
@@ -266,24 +215,14 @@ async function CourseEditor({
           })}
           locale={locale}
           viewer="guest"
+          editorActions={editorActions}
           initialSections={
             previewCurriculum.success ? previewCurriculum.data : []
           }
+          curriculum={curriculum}
+          curriculumTitle={course.use_chapters ? ct("title") : lt("title")}
+          curriculumHint={t("curriculum_hint")}
         />
-      </section>
-
-      <section className="animate-slide-up animate-stagger-3 rounded-2xl border border-border bg-card p-4 shadow-xs sm:p-6">
-        <div className="mb-5 flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-bold">
-              {course.use_chapters ? ct("title") : lt("title")}
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {t("curriculum_hint")}
-            </p>
-          </div>
-        </div>
-        {curriculum}
       </section>
     </div>
   )

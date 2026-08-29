@@ -1,7 +1,7 @@
 "use client"
 /* eslint-disable @next/next/no-img-element -- preview renderers use native <img> for object URLs per spec */
 
-import { useState, useMemo } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type {
   StudentCoursePreviewModel,
   StudentPreviewSection,
@@ -20,6 +20,8 @@ import {
   PlayCircle,
   Video,
 } from "lucide-react"
+import { useCourseBuilderBridge } from "@/features/course-management/course-builder-bridge"
+import type { CourseBuilderNode } from "./types"
 
 function formatDuration(minutes: number | null): string {
   if (!minutes) return "المدة غير محددة"
@@ -48,12 +50,23 @@ interface StudentCourseDetailPreviewProps {
   viewer: "guest" | "subscribed"
   interactionMode: PreviewInteractionMode
   onCurriculumCommitted?: () => void
+  selectedNode?: CourseBuilderNode | null
+  onSelectNode?: (node: CourseBuilderNode) => void
+  showEditAffordance?: boolean
 }
 
 export function StudentCourseDetailPreview({
   model,
   viewer,
+  selectedNode: selectedNodeProp,
+  onSelectNode: onSelectNodeProp,
+  showEditAffordance = false,
 }: StudentCourseDetailPreviewProps) {
+  const bridge = useCourseBuilderBridge()
+  const selectedNode =
+    selectedNodeProp === undefined ? bridge.selectedNode : selectedNodeProp
+  const onSelectNode = onSelectNodeProp ?? bridge.selectNode
+  const previewSelectionRef = useRef(false)
   const sections = model.sections
   const sectionsWithLessons = useMemo(
     () => sections.filter((s) => s.lessons.length),
@@ -102,34 +115,92 @@ export function StudentCourseDetailPreview({
     setExpandedLessonId((prev) => (prev === lessonId ? null : lessonId))
   }
 
+  const selectPreviewNode = useCallback(
+    (node: CourseBuilderNode) => {
+      previewSelectionRef.current = true
+      onSelectNode(node)
+    },
+    [onSelectNode]
+  )
+
+  useEffect(() => {
+    if (!selectedNode) return
+
+    // Preview clicks already control their own expand/collapse behavior.
+    // Only selections originating in the curriculum editor should open the
+    // corresponding preview location automatically.
+    if (previewSelectionRef.current) {
+      previewSelectionRef.current = false
+      return
+    }
+
+    const selectedSection =
+      selectedNode.type === "chapter"
+        ? sectionsWithLessons.find((section) => section.id === selectedNode.id)
+        : sectionsWithLessons.find((section) =>
+            section.lessons.some((lesson) =>
+              selectedNode.type === "lesson"
+                ? lesson.id === selectedNode.id
+                : lesson.items.some((item) => item.id === selectedNode.id)
+            )
+          )
+
+    if (!selectedSection) return
+
+    const selectedLesson =
+      selectedNode.type === "chapter"
+        ? selectedSection.lessons[0]
+        : selectedSection.lessons.find((lesson) =>
+            selectedNode.type === "lesson"
+              ? lesson.id === selectedNode.id
+              : lesson.items.some((item) => item.id === selectedNode.id)
+          )
+
+    const timeout = window.setTimeout(() => {
+      setExpandedChapterId(selectedSection.id)
+      setExpandedLessonId(selectedLesson?.id ?? null)
+    }, 0)
+
+    return () => window.clearTimeout(timeout)
+  }, [sectionsWithLessons, selectedNode])
+
   const enrolled = viewer === "subscribed"
 
   return (
-    <div dir="rtl" className="student-preview bg-[#FCFCFE] text-[#1B1B24]">
+    <div dir="rtl" className="student-preview min-h-full bg-[var(--page)] text-[var(--on-surface)]">
       <div className="mx-auto max-w-7xl px-4 py-7 @sm/preview:px-6 @sm/preview:py-8 @lg/preview:px-8">
-        {/* Back link (disabled) */}
-        <span className="mb-5 inline-flex cursor-not-allowed items-center gap-2 text-sm font-bold text-[#777587] opacity-60">
+        {/* The preview keeps this navigation inert, while preserving the student-facing styling. */}
+        <span
+          aria-disabled="true"
+          className="mb-5 inline-flex items-center gap-2 text-sm font-bold text-[var(--on-surface-muted)] transition-colors hover:text-[var(--brand-indigo-deep)]"
+        >
           <ChevronLeft className="size-4 rotate-180" />
-          {enrolled ? "العودة إلى دوراتي" : "العودة"}
+          {enrolled ? "العودة إلى دوراتي" : "العودة إلى الاستكشاف"}
         </span>
 
         {/* Course hero */}
-        <section className="rounded-2xl border border-[#E2E0EF] bg-white p-5 @sm/preview:p-7">
+        <section
+          className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 @sm/preview:p-7"
+          aria-labelledby="course-preview-title"
+        >
           <div className="grid gap-7 @lg/preview:grid-cols-[1fr_auto] @lg/preview:items-end">
             <div>
               <div className="mb-4 flex flex-wrap gap-2">
                 {model.subject && (
-                  <span className="rounded-full bg-[#0284C7]/5 px-3 py-1 text-xs font-bold text-[#0369A1]">
+                  <span className="rounded-full bg-[var(--brand-indigo)]/5 px-3 py-1 text-xs font-bold text-[var(--brand-indigo-deep)]">
                     {model.subject}
                   </span>
                 )}
                 {(model.grade || model.stream) && (
-                  <span className="rounded-full bg-[#F0F9FF] px-3 py-1 text-xs font-bold text-[#464555]">
+                  <span className="rounded-full bg-[var(--surface-muted)] px-3 py-1 text-xs font-bold text-[var(--on-surface-body)]">
                     {[model.grade, model.stream].filter(Boolean).join(" - ")}
                   </span>
                 )}
               </div>
-              <h1 className="line-clamp-2 text-3xl leading-tight font-black text-[#1B1B24] @sm/preview:text-4xl">
+              <h1
+                id="course-preview-title"
+                className="text-3xl leading-tight font-black text-[var(--on-surface)] @sm/preview:text-4xl"
+              >
                 {model.title}
               </h1>
               {model.teacher && (
@@ -138,10 +209,10 @@ export function StudentCourseDetailPreview({
                     <img
                       src={model.teacher.avatarUrl}
                       alt={model.teacher.name}
-                      className="size-11 rounded-full border border-[#E2E0EF] object-cover"
+                      className="size-11 rounded-full border border-[var(--border)] object-cover"
                     />
                   ) : (
-                    <span className="flex size-11 items-center justify-center rounded-full bg-[#E0F2FE] text-sm font-black text-[#0369A1]">
+                    <span className="flex size-11 items-center justify-center rounded-full bg-[var(--brand-indigo-tint)] text-sm font-black text-[var(--brand-indigo-deep)]">
                       {model.teacher.name.charAt(0)}
                     </span>
                   )}
@@ -149,48 +220,47 @@ export function StudentCourseDetailPreview({
                     <strong className="block text-sm font-black">
                       {model.teacher.name}
                     </strong>
-                    <span className="text-xs text-[#777587]">
+                    <span className="text-xs text-[var(--on-surface-muted)]">
                       مدرس {model.subject || "الكورس"}
                     </span>
                   </span>
                 </div>
               )}
-              <p className="mt-5 line-clamp-3 max-w-3xl text-sm leading-7 text-[#464555] @sm/preview:text-base">
+              <p className="mt-5 text-sm leading-7 text-[var(--on-surface-body)] @sm/preview:text-base">
                 {model.description ||
                   "تابع محتوى الكورس ودروس المدرس من مكان واحد."}
               </p>
             </div>
 
             <div className="w-full @lg/preview:w-auto">
-              <div className="mb-5 grid grid-cols-3 gap-3 text-center text-xs font-bold text-[#464555] @sm/preview:flex @sm/preview:grid-cols-none @sm/preview:justify-end @sm/preview:gap-5">
+              <div className="mb-5 grid grid-cols-3 gap-5 text-center text-xs font-bold text-[var(--on-surface-body)] @sm/preview:flex @sm/preview:justify-end">
                 <span className="grid justify-items-center gap-1">
-                  <PlayCircle className="size-5 text-[#0284C7]" />
+                  <PlayCircle className="size-5 text-[var(--brand-indigo)]" />
                   {totalLessons} درس
                 </span>
                 <span className="grid justify-items-center gap-1">
-                  <Clock3 className="size-5 text-[#0284C7]" />
+                  <Clock3 className="size-5 text-[var(--brand-indigo)]" />
                   {formatDuration(totalDuration)}
                 </span>
                 <span className="grid justify-items-center gap-1">
-                  <ClipboardList className="size-5 text-[#0284C7]" />
+                  <ClipboardList className="size-5 text-[var(--brand-indigo)]" />
                   {totalExams} اختبار
                 </span>
               </div>
               {enrolled ? (
                 <button
                   type="button"
-                  disabled
                   aria-disabled="true"
-                  className="inline-flex h-12 w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-[#0284C7] px-7 text-sm font-black text-white opacity-60 @lg/preview:w-auto"
+                  className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--brand-indigo)] px-7 text-sm font-black text-[var(--on-primary)] transition-colors hover:bg-[var(--brand-indigo-deep)] @lg/preview:w-auto"
                 >
                   عرض محتوى الكورس
                   <ArrowLeft className="size-4" />
                 </button>
               ) : (
                 <button
-                  disabled
+                  type="button"
                   aria-disabled="true"
-                  className="inline-flex h-12 w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-[#0284C7] px-7 text-sm font-black text-white opacity-60 @lg/preview:w-auto"
+                  className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--brand-indigo)] px-7 text-sm font-black text-[var(--on-primary)] transition-colors hover:bg-[var(--brand-indigo-deep)] @lg/preview:w-auto"
                 >
                   اشترك الآن - {formatPrice(model.price)} ج.م
                   <ArrowLeft className="size-4" />
@@ -199,10 +269,10 @@ export function StudentCourseDetailPreview({
             </div>
           </div>
 
-          <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-[#E2E0EF] pt-4 text-xs font-bold text-[#777587]">
+          <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-[var(--border)] pt-4 text-xs font-bold text-[var(--on-surface-muted)]">
             {!!sections.length && (
               <span className="inline-flex items-center gap-2">
-                <FolderOpen className="size-4 text-[#0284C7]" />
+                <FolderOpen className="size-4 text-[var(--brand-indigo)]" />
                 {sections.length} {sections.length === 1 ? "وحدة" : "وحدات"}
               </span>
             )}
@@ -211,7 +281,7 @@ export function StudentCourseDetailPreview({
 
         {/* Tabs (disabled except content) */}
         <nav
-          className="mt-8 flex gap-2 overflow-x-auto border-b border-[#E2E0EF]"
+          className="mt-8 flex gap-2 overflow-x-auto border-b border-[var(--border)]"
           aria-label="أقسام الكورس"
         >
           {["المحتوى", "الاختبارات", "الملفات", "المناقشات", "التقدم"].map(
@@ -221,7 +291,7 @@ export function StudentCourseDetailPreview({
                 type="button"
                 disabled={index !== 0}
                 title={index !== 0 ? `${tab} - قريباً` : undefined}
-                className={`shrink-0 border-b-2 px-4 py-3 text-sm font-black ${index === 0 ? "border-[#0284C7] text-[#0369A1]" : "cursor-not-allowed border-transparent text-[#A6A3B5]"}`}
+                className={`shrink-0 border-b-2 px-4 py-3 text-sm font-black ${index === 0 ? "border-[var(--brand-indigo)] text-[var(--brand-indigo-deep)]" : "cursor-not-allowed border-transparent text-[var(--on-surface-subtle)]"}`}
               >
                 {tab}
               </button>
@@ -230,12 +300,12 @@ export function StudentCourseDetailPreview({
         </nav>
 
         {/* Content section */}
-        <section className="pt-8">
+        <section id="course-preview-content" className="scroll-mt-24 pt-8" aria-labelledby="course-preview-content-title">
           <div className="mb-5 flex flex-wrap items-end justify-between gap-3 px-1">
-            <h2 className="text-2xl font-black text-[#1B1B24] @sm/preview:text-3xl">
+            <h2 id="course-preview-content-title" className="text-2xl font-black text-[var(--on-surface)] @sm/preview:text-3xl">
               {enrolled ? "محتوى الكورس" : "خطة الكورس"}
             </h2>
-            <p className="text-xs font-bold text-[#777587]">
+            <p className="text-xs font-bold text-[var(--on-surface-muted)]">
               {totalLessons
                 ? `${totalLessons} درس · ${formatDuration(totalDuration)}`
                 : "سيظهر المحتوى المنشور هنا"}
@@ -244,25 +314,29 @@ export function StudentCourseDetailPreview({
 
           {hasContent ? (
             <div className="space-y-3">
-              {sectionsWithLessons.map((section) => (
+              {sectionsWithLessons.map((section, sectionIndex) => (
                 <Section
-                  key={section.id}
+                  key={`${section.id}-${sectionIndex}`}
                   section={section}
+                  sectionIndex={sectionIndex}
                   expanded={expandedChapterId === section.id}
                   expandedLessonId={expandedLessonId}
                   onToggleChapter={() => toggleChapter(section.id)}
                   onToggleLesson={toggleLesson}
                   viewer={viewer}
+                  selectedNode={selectedNode}
+                  onSelectNode={selectPreviewNode}
+                  showEditAffordance={showEditAffordance}
                 />
               ))}
             </div>
           ) : (
-            <div className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-[#E2E0EF] bg-white px-4 text-center">
-              <BookOpen className="mb-4 size-10 text-[#C7C4D8]" />
+            <div className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 text-center">
+              <BookOpen className="mb-4 size-10 text-[var(--brand-indigo-icon)]" />
               <h3 className="text-lg font-black">
                 محتوى الكورس غير متاح حالياً
               </h3>
-              <p className="mt-2 max-w-md text-sm leading-6 text-[#777587]">
+              <p className="mt-2 max-w-md text-sm leading-6 text-[var(--on-surface-muted)]">
                 عند نشر المدرس للدروس والمواد التعليمية ستظهر هنا تلقائياً.
               </p>
             </div>
@@ -275,46 +349,66 @@ export function StudentCourseDetailPreview({
 
 function Section({
   section,
+  sectionIndex,
   expanded,
   expandedLessonId,
   onToggleChapter,
   onToggleLesson,
   viewer,
+  selectedNode,
+  onSelectNode,
+  showEditAffordance,
 }: {
   section: StudentPreviewSection
+  sectionIndex: number
   expanded: boolean
   expandedLessonId: string | number | null
   onToggleChapter: () => void
   onToggleLesson: (id: string | number) => void
   viewer: "guest" | "subscribed"
+  selectedNode: CourseBuilderNode | null
+  onSelectNode: (node: CourseBuilderNode) => void
+  showEditAffordance: boolean
 }) {
   const duration = chapterDuration(section.lessons)
+  const headingId = `course-preview-chapter-${sectionIndex}`
+  const contentId = `${headingId}-content`
+  const isSelected =
+    selectedNode?.type === "chapter" && selectedNode.id === section.id
 
   return (
-    <div className="overflow-hidden rounded-xl border border-[#DDD9E8] bg-white">
+    <section
+      className="overflow-hidden rounded-xl border border-[var(--border-strong)] bg-[var(--surface)]"
+      aria-labelledby={headingId}
+    >
       <button
         type="button"
-        onClick={onToggleChapter}
         aria-expanded={expanded}
-        className={`flex min-h-15 w-full cursor-pointer items-center gap-4 px-4 py-4 text-start transition-colors @sm/preview:px-5 ${expanded ? "bg-[#F0F9FF]" : "hover:bg-[#FAF9FD]"}`}
+        aria-controls={contentId}
+        onClick={() => {
+          onSelectNode({ type: "chapter", id: section.id })
+          onToggleChapter()
+        }}
+        className={`flex min-h-15 w-full cursor-pointer items-center gap-4 px-4 py-4 text-start transition-colors @sm/preview:px-5 ${expanded ? "bg-[var(--surface-muted)]" : "hover:bg-[var(--surface-strong)]"} ${isSelected ? "ring-2 ring-inset ring-[var(--brand-indigo)]" : ""}`}
       >
         <span className="flex min-w-0 flex-1 items-center gap-2">
           <h3
-            className={`truncate text-base font-black @sm/preview:text-lg ${expanded ? "text-[#0369A1]" : "text-[#292733]"}`}
+            id={headingId}
+            className={`truncate text-base font-black @sm/preview:text-lg ${expanded ? "text-[var(--brand-indigo-deep)]" : "text-[var(--on-surface-strong)]"}`}
           >
             {section.title || "دروس الكورس"}
           </h3>
           <ChevronDown
-            className={`size-4 shrink-0 text-[#777587] transition-transform ${expanded ? "rotate-180" : ""}`}
+            className={`size-4 shrink-0 text-[var(--on-surface-muted)] transition-transform motion-reduce:transition-none ${expanded ? "rotate-180" : ""}`}
           />
         </span>
-        <span className="shrink-0 text-xs font-medium text-[#777587]">
+        <span className="shrink-0 text-xs font-medium text-[var(--on-surface-muted)]">
           {section.lessons.length} دروس · {formatDuration(duration)}
         </span>
       </button>
 
       {expanded && (
-        <div className="overflow-hidden border-t border-[#DDD9E8]">
+        <div id={contentId} className="overflow-hidden border-t border-[var(--border-strong)]">
           {section.lessons.map((lesson) => (
             <LessonRow
               key={lesson.id}
@@ -322,11 +416,14 @@ function Section({
               expanded={expandedLessonId === lesson.id}
               onToggle={() => onToggleLesson(lesson.id)}
               viewer={viewer}
+              selectedNode={selectedNode}
+              onSelectNode={onSelectNode}
+              showEditAffordance={showEditAffordance}
             />
           ))}
         </div>
       )}
-    </div>
+    </section>
   )
 }
 
@@ -335,6 +432,9 @@ function LessonRow({
   expanded,
   onToggle,
   viewer,
+  selectedNode,
+  onSelectNode,
+  showEditAffordance,
 }: {
   lesson: {
     id: string | number
@@ -352,19 +452,30 @@ function LessonRow({
   expanded: boolean
   onToggle: () => void
   viewer: "guest" | "subscribed"
+  selectedNode: CourseBuilderNode | null
+  onSelectNode: (node: CourseBuilderNode) => void
+  showEditAffordance: boolean
 }) {
   const hasVideo = lesson.items.some((i) => i.hasVideo)
   const hasDocument = lesson.items.some((i) => i.hasDocument)
+  const hasExam = lesson.items.some((i) => i.hasExam)
+  const contentId = `course-preview-lesson-${lesson.id}`
+  const isSelected =
+    selectedNode?.type === "lesson" && selectedNode.id === lesson.id
 
   return (
-    <div className="border-b border-[#E8E5F0] last:border-b-0">
+    <div className="border-b border-[var(--border-subtle)] last:border-b-0">
       <button
         type="button"
-        onClick={onToggle}
+        onClick={() => {
+          onSelectNode({ type: "lesson", id: lesson.id })
+          onToggle()
+        }}
         aria-expanded={expanded}
-        className="flex min-h-18 w-full cursor-pointer items-center gap-3 px-4 py-3.5 text-start transition-colors hover:bg-[#F0F9FF] @sm/preview:px-5"
+        aria-controls={contentId}
+        className={`flex min-h-18 w-full cursor-pointer items-center gap-3 px-4 py-3.5 text-start transition-colors hover:bg-[var(--surface-muted)] @sm/preview:px-5 ${isSelected ? "bg-[var(--surface-muted)] ring-2 ring-inset ring-[var(--brand-indigo)]" : ""}`}
       >
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#F0F9FF] text-[#0284C7]">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--surface-muted)] text-[var(--brand-indigo)]">
           {hasVideo ? (
             <PlayCircle className="size-5" />
           ) : hasDocument ? (
@@ -374,25 +485,25 @@ function LessonRow({
           )}
         </span>
         <span className="min-w-0 flex-1">
-          <strong className="block text-sm leading-6 font-bold text-[#292733] @sm/preview:text-base">
+          <strong className="block text-sm leading-6 font-bold text-[var(--on-surface-strong)] @sm/preview:text-base">
             {lesson.title}
           </strong>
-          <span className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-[#777587]">
+          <span className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-[var(--on-surface-muted)]">
             <span>{formatDuration(lesson.durationMinutes)}</span>
             {hasVideo && <span>فيديو</span>}
             {hasDocument && <span>ملفات</span>}
-            {lesson.items.some((i) => i.hasExam) && <span>اختبار</span>}
+            {hasExam && <span>اختبار</span>}
           </span>
         </span>
         <ChevronLeft
-          className={`size-4 shrink-0 text-[#A6A3B5] transition-transform ${expanded ? "-rotate-90" : ""}`}
+          className={`size-4 shrink-0 text-[var(--on-surface-subtle)] transition-transform motion-reduce:transition-none ${expanded ? "-rotate-90" : ""}`}
         />
       </button>
 
       {expanded && (
-        <div className="space-y-2 overflow-hidden bg-[#FAF9FD] px-4 py-4 @sm/preview:ps-16">
+        <div id={contentId} className="space-y-2 overflow-hidden bg-[var(--surface-strong)] px-4 py-4 @sm/preview:ps-16">
           {lesson.description && (
-            <p className="pb-2 text-sm leading-6 text-[#777587]">
+            <p className="pb-2 text-sm leading-6 text-[var(--on-surface-muted)]">
               {lesson.description}
             </p>
           )}
@@ -414,26 +525,46 @@ function LessonRow({
               return (
                 <div
                   key={item.id}
-                  className="flex items-center gap-3 rounded-lg border border-[#E2E0EF] bg-white px-3 py-3 text-start"
+                  className={`group flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-3 text-start transition-colors ${showEditAffordance ? "cursor-pointer hover:border-[var(--brand-indigo-border)] hover:bg-[var(--surface-muted)]" : ""} ${selectedNode?.type === "item" && selectedNode.id === item.id ? "ring-2 ring-inset ring-[var(--brand-indigo)]" : ""}`}
+                  role={showEditAffordance ? "button" : undefined}
+                  tabIndex={showEditAffordance ? 0 : undefined}
+                  onClick={
+                    showEditAffordance
+                      ? () => onSelectNode({ type: "item", id: item.id })
+                      : undefined
+                  }
+                  onKeyDown={
+                    showEditAffordance
+                      ? (event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault()
+                            onSelectNode({ type: "item", id: item.id })
+                          }
+                        }
+                      : undefined
+                  }
                 >
-                  <ItemIcon className="size-5 shrink-0 text-[#777587]" />
+                  <ItemIcon className="size-5 shrink-0 text-[var(--on-surface-muted)]" />
                   <span className="min-w-0 flex-1">
                     <strong className="block truncate text-sm">
                       {item.title}
                     </strong>
-                    <span className="text-xs text-[#777587]">
+                    <span className="text-xs text-[var(--on-surface-muted)]">
                       {itemMeta || "محتوى الدرس"}
                     </span>
                   </span>
-                  <span className="inline-flex shrink-0 items-center gap-1 text-xs font-bold text-[#A6A3B5]">
+                  <span className="inline-flex shrink-0 items-center gap-1 text-xs font-bold text-[var(--on-surface-subtle)]">
                     {viewer === "guest" && <LockKeyhole className="size-3.5" />}
                     {viewer === "guest" ? "يتطلب الاشتراك" : "غير متاح حالياً"}
                   </span>
+                  {showEditAffordance && (
+                    <span className="sr-only">تحديد العنصر للتعديل</span>
+                  )}
                 </div>
               )
             })
           ) : (
-            <p className="text-sm font-medium text-[#777587]">
+            <p className="text-sm font-medium text-[var(--on-surface-muted)]">
               لم تتم إضافة مواد لهذا الدرس بعد.
             </p>
           )}

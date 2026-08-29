@@ -364,6 +364,27 @@ describe("PreviewWorkspace", () => {
       const { container } = renderWorkspace()
       expect(previewPane(container)?.className).not.toContain("overflow-y-auto")
     })
+
+    it("exposes an accessible desktop resize handle", () => {
+      renderWorkspace()
+      const handle = screen.getByTestId("workspace-resize-handle")
+
+      expect(handle.getAttribute("role")).toBe("separator")
+      expect(handle.getAttribute("aria-valuemin")).toBe("42")
+      expect(handle.getAttribute("aria-valuemax")).toBe("72")
+      expect(handle.getAttribute("aria-valuenow")).toBe("60")
+    })
+
+    it("supports keyboard resizing within sensible bounds", () => {
+      renderWorkspace()
+      const handle = screen.getByTestId("workspace-resize-handle")
+
+      fireEvent.keyDown(handle, { key: "ArrowRight" })
+      expect(handle.getAttribute("aria-valuenow")).toBe("65")
+
+      fireEvent.keyDown(handle, { key: "Home" })
+      expect(handle.getAttribute("aria-valuenow")).toBe("42")
+    })
   })
 
   describe("theming", () => {

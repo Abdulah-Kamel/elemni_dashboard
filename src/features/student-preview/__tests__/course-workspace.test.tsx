@@ -28,6 +28,25 @@ describe("CourseWorkspace", () => {
     expect(screen.getByText("كورس الفيزياء")).toBeDefined()
   })
 
+  it("renders the existing curriculum editor inside the workspace", () => {
+    render(
+      <CourseWorkspace
+        model={mockModel}
+        locale="ar"
+        viewer="guest"
+        curriculum={<div>Curriculum tree</div>}
+        curriculumTitle="المنهج"
+        curriculumHint="إدارة الدروس"
+      />
+    )
+
+    const curriculum = screen.getByTestId("course-curriculum")
+    const editorPane = screen.getByTestId("editor-pane")
+    expect(editorPane.contains(curriculum)).toBe(true)
+    expect(screen.getByText("Curriculum tree")).toBeDefined()
+    expect(screen.getByText("المنهج")).toBeDefined()
+  })
+
   it("updates preview when title changes", () => {
     render(<CourseWorkspace model={mockModel} locale="ar" viewer="guest" />)
     const titleInput = screen.getByDisplayValue("كورس الفيزياء")

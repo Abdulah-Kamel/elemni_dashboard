@@ -33,6 +33,7 @@ import {
 import { updateLesson, deleteLesson } from "@/features/course-management/lessons-actions";
 import { ItemList } from "@/features/course-management/components/item-list";
 import type { LessonOut } from "@/features/course-management/lessons-schema";
+import { useCourseBuilderBridge } from "@/features/course-management/course-builder-bridge";
 
 export function LessonCard({
   lesson,
@@ -54,6 +55,7 @@ export function LessonCard({
   nested?: boolean;
 }) {
   const t = useTranslations("lessons");
+  const { selectedNode, selectNode } = useCourseBuilderBridge();
   const [itemsExpanded, setItemsExpanded] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -61,6 +63,7 @@ export function LessonCard({
   const [editDescription, setEditDescription] = useState(lesson.description ?? "");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isSelected = selectedNode?.type === "lesson" && selectedNode.id === lesson.id;
 
   const handleSave = useCallback(async () => {
     const trimmed = editTitle.trim();
@@ -124,10 +127,12 @@ export function LessonCard({
   return (
     <Collapsible.Root open={itemsExpanded} onOpenChange={setItemsExpanded}>
       <div
+        data-builder-node-type="lesson"
+        data-builder-node-id={lesson.id}
         className={
           nested
-            ? "overflow-hidden rounded-lg border border-border/80 bg-card transition-shadow hover:shadow-xs"
-            : "overflow-hidden rounded-xl border border-border bg-card shadow-xs transition-shadow hover:shadow-sm"
+            ? `overflow-hidden rounded-lg border border-border/80 bg-card transition-shadow hover:shadow-xs ${isSelected ? "ring-2 ring-primary/35 ring-inset" : ""}`
+            : `overflow-hidden rounded-xl border border-border bg-card shadow-xs transition-shadow hover:shadow-sm ${isSelected ? "ring-2 ring-primary/35 ring-inset" : ""}`
         }
       >
         <div className="flex min-h-14 items-center gap-2 px-3 py-2.5 sm:px-4">
@@ -138,7 +143,10 @@ export function LessonCard({
           >
             <GripVertical className="size-4 text-muted-foreground" />
           </button>
-          <Collapsible.Trigger className="flex items-center gap-2 flex-1 min-w-0 text-start cursor-pointer">
+          <Collapsible.Trigger
+            className="flex items-center gap-2 flex-1 min-w-0 text-start cursor-pointer"
+            onClick={() => selectNode({ type: "lesson", id: lesson.id })}
+          >
             {itemsExpanded ? (
               <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
             ) : (

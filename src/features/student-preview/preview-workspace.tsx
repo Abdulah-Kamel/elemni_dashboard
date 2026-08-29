@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useId, useRef, useState } from "react"
+import { useCallback, useEffect, useId, useRef, useState } from "react"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import type { PreviewDeviceWidth } from "./types"
@@ -27,6 +27,7 @@ type WorkspaceCopy = {
   deviceGroupLabel: string
   devices: Record<PreviewDeviceWidth, string>
   fullPreview: string
+  resizeLabel: string
 }
 
 const COPY: Record<"ar" | "en", WorkspaceCopy> = {
@@ -36,6 +37,7 @@ const COPY: Record<"ar" | "en", WorkspaceCopy> = {
     deviceGroupLabel: "عرض الجهاز",
     devices: { full: "كامل", tablet: "تابلت", mobile: "موبايل" },
     fullPreview: "معاينة",
+    resizeLabel: "تغيير عرض اللوحات",
   },
   en: {
     tabsLabel: "View mode",
@@ -43,6 +45,7 @@ const COPY: Record<"ar" | "en", WorkspaceCopy> = {
     deviceGroupLabel: "Device width",
     devices: { full: "Full", tablet: "Tablet", mobile: "Mobile" },
     fullPreview: "Preview",
+    resizeLabel: "Resize panels",
   },
 }
 
@@ -83,6 +86,10 @@ export function PreviewWorkspace({
 }: PreviewWorkspaceProps) {
   const [activeTab, setActiveTab] = useState<PreviewTab>("edit")
   const [fullPreviewOpen, setFullPreviewOpen] = useState(false)
+  const [previewSplit, setPreviewSplit] = useState(60)
+  const [desktopReady, setDesktopReady] = useState(false)
+  const [resizing, setResizing] = useState(false)
+  const workspaceGridRef = useRef<HTMLDivElement | null>(null)
   const tabRefs = useRef<Partial<Record<PreviewTab, HTMLButtonElement | null>>>(
     {}
   )
@@ -92,6 +99,81 @@ export function PreviewWorkspace({
   const baseId = useId()
   const tabId = (tab: PreviewTab) => `${baseId}-tab-${tab}`
   const panelId = (tab: PreviewTab) => `${baseId}-panel-${tab}`
+
+  useEffect(() => {
+    let stored: string | null = null
+    try {
+      stored = window.localStorage?.getItem("course-builder-preview-split") ?? null
+    } catch {
+      // Storage may be unavailable in embedded/private browsing contexts.
+    }
+    const parsed = stored ? Number(stored) : NaN
+    let storedSplitFrame: number | undefined
+    if (Number.isFinite(parsed)) {
+      const applyStoredSplit = () =>
+        setPreviewSplit(Math.min(72, Math.max(42, parsed)))
+      if (typeof window.requestAnimationFrame === "function") {
+        storedSplitFrame = window.requestAnimationFrame(applyStoredSplit)
+      } else {
+        window.setTimeout(applyStoredSplit, 0)
+      }
+    }
+
+    const media = window.matchMedia?.("(min-width: 1024px)")
+    if (!media) {
+      const timer = window.setTimeout(() => setDesktopReady(true), 0)
+      return () => window.clearTimeout(timer)
+    }
+
+    const updateDesktopState = () => setDesktopReady(media.matches)
+    updateDesktopState()
+    media.addEventListener?.("change", updateDesktopState)
+    return () => {
+      if (storedSplitFrame !== undefined) {
+        window.cancelAnimationFrame?.(storedSplitFrame)
+      }
+      media.removeEventListener?.("change", updateDesktopState)
+    }
+  }, [])
+
+  const updatePreviewSplit = useCallback((value: number) => {
+    const next = Math.min(72, Math.max(42, value))
+    setPreviewSplit(next)
+    try {
+      window.localStorage?.setItem("course-builder-preview-split", String(next))
+    } catch {
+      // Resizing still works when storage is unavailable.
+    }
+  }, [])
+
+  const handleResizePointerMove = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>) => {
+      if (!resizing) return
+      const rect = workspaceGridRef.current?.getBoundingClientRect()
+      if (!rect || rect.width === 0) return
+      updatePreviewSplit(((event.clientX - rect.left) / rect.width) * 100)
+    },
+    [resizing, updatePreviewSplit]
+  )
+
+  const handleResizeKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLButtonElement>) => {
+      if (event.key === "ArrowLeft") {
+        event.preventDefault()
+        updatePreviewSplit(previewSplit - 5)
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault()
+        updatePreviewSplit(previewSplit + 5)
+      } else if (event.key === "Home") {
+        event.preventDefault()
+        updatePreviewSplit(42)
+      } else if (event.key === "End") {
+        event.preventDefault()
+        updatePreviewSplit(72)
+      }
+    },
+    [previewSplit, updatePreviewSplit]
+  )
 
   const selectTab = useCallback((tab: PreviewTab) => {
     setActiveTab(tab)
@@ -198,11 +280,19 @@ export function PreviewWorkspace({
        * both panes declare an explicit column — never RTL auto-placement.
        */}
       <div
+        ref={workspaceGridRef}
         data-testid="workspace-grid"
         dir="ltr"
         className={cn(
-          "grid grid-cols-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]"
+          "relative grid grid-cols-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]"
         )}
+        style={
+          desktopReady
+            ? {
+                gridTemplateColumns: `minmax(0, ${previewSplit}fr) minmax(0, ${100 - previewSplit}fr)`,
+              }
+            : undefined
+        }
       >
         <section
           data-testid="preview-pane"
@@ -212,6 +302,7 @@ export function PreviewWorkspace({
           dir={dir}
           className={cn(
             "min-w-0 lg:col-start-1 lg:row-start-1 lg:block",
+            "lg:sticky lg:top-0 lg:self-start",
             activeTab === "preview" ? "block" : "hidden"
           )}
         >
@@ -264,6 +355,29 @@ export function PreviewWorkspace({
         >
           <div data-testid="editor-content">{editor}</div>
         </section>
+
+        <button
+          type="button"
+          data-testid="workspace-resize-handle"
+          aria-label={copy.resizeLabel}
+          aria-valuemin={42}
+          aria-valuemax={72}
+          aria-valuenow={Math.round(previewSplit)}
+          role="separator"
+          tabIndex={0}
+          className="absolute inset-y-0 z-10 hidden w-3 -translate-x-1/2 cursor-col-resize items-center justify-center rounded-full text-border-strong transition-colors hover:bg-primary/10 focus-visible:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary lg:flex"
+          style={{ left: `${previewSplit}%` }}
+          onPointerDown={(event) => {
+            event.currentTarget.setPointerCapture(event.pointerId)
+            setResizing(true)
+          }}
+          onPointerMove={handleResizePointerMove}
+          onPointerUp={() => setResizing(false)}
+          onPointerCancel={() => setResizing(false)}
+          onKeyDown={handleResizeKeyDown}
+        >
+          <span className="h-12 w-px rounded-full bg-border-strong" aria-hidden="true" />
+        </button>
       </div>
 
       <Dialog open={fullPreviewOpen} onOpenChange={setFullPreviewOpen}>

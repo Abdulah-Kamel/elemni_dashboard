@@ -28,6 +28,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { UploadDialog } from "./upload-dialog";
 import type { ItemOut } from "@/features/course-management/items-schema";
+import { useCourseBuilderBridge } from "@/features/course-management/course-builder-bridge";
 
 function itemType(item: ItemOut): { label: string; icon: React.ReactNode; bg: string } {
   if (item.bunny_stream_id) return { label: "type_video", icon: <Film className="size-3.5 text-white" />, bg: "bg-brand-indigo" };
@@ -62,6 +63,7 @@ export function ItemCard({
   onDelete: (itemId: number) => void;
 }) {
   const t = useTranslations("items");
+  const { selectedNode, selectNode } = useCourseBuilderBridge();
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [editOpen, setEditOpen] = useState(false);
@@ -74,6 +76,7 @@ export function ItemCard({
 
   const type = itemType(item);
   const status = itemStatus(item);
+  const isSelected = selectedNode?.type === "item" && selectedNode.id === item.id;
 
   const openUploadDialog = useCallback((uploadType: "video" | "document") => {
     setUploadDialogType(uploadType);
@@ -180,7 +183,12 @@ export function ItemCard({
   }, [courseId, item.id, lessonId, onDelete]);
 
   return (
-    <div className="flex items-center gap-2.5 px-3.5 py-2 transition-colors hover:bg-surface-muted/30 group">
+    <div
+      data-builder-node-type="item"
+      data-builder-node-id={item.id}
+      className={`group flex items-center gap-2.5 px-3.5 py-2 transition-colors hover:bg-surface-muted/30 ${isSelected ? "bg-primary/10 ring-2 ring-primary/35 ring-inset" : ""}`}
+      onClick={() => selectNode({ type: "item", id: item.id })}
+    >
 
       <span className={cn("inline-flex size-7 shrink-0 items-center justify-center rounded-md text-white", type.bg)} title={t(type.label)}>
         {type.icon}

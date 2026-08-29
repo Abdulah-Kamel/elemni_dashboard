@@ -34,6 +34,7 @@ import { updateChapter, deleteChapter } from "@/features/course-management/chapt
 import { LessonList } from "./lesson-list";
 import type { ChapterOut } from "@/features/course-management/chapters-schema";
 import type { LessonOut } from "@/features/course-management/lessons-schema";
+import { useCourseBuilderBridge } from "@/features/course-management/course-builder-bridge";
 
 export function ChapterCard({
   chapter,
@@ -55,6 +56,7 @@ export function ChapterCard({
   dragHandleProps?: React.HTMLAttributes<HTMLButtonElement>;
 }) {
   const t = useTranslations("chapters");
+  const { selectedNode, selectNode } = useCourseBuilderBridge();
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [lessonCount, setLessonCount] = useState(initialLessons.length);
   const [editOpen, setEditOpen] = useState(false);
@@ -62,6 +64,7 @@ export function ChapterCard({
   const [editTitle, setEditTitle] = useState(chapter.title);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isSelected = selectedNode?.type === "chapter" && selectedNode.id === chapter.id;
 
   const handleSave = useCallback(async () => {
     const trimmed = editTitle.trim();
@@ -99,7 +102,11 @@ export function ChapterCard({
 
   return (
     <Collapsible.Root open={expanded} onOpenChange={setExpanded}>
-      <section className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
+      <section
+        data-builder-node-type="chapter"
+        data-builder-node-id={chapter.id}
+        className={`overflow-hidden rounded-xl border border-border bg-card shadow-xs ${isSelected ? "ring-2 ring-primary/35 ring-inset" : ""}`}
+      >
         <div className="flex min-h-16 items-center gap-2 bg-muted/35 px-3 sm:px-4">
           <button
             type="button"
@@ -110,7 +117,10 @@ export function ChapterCard({
             <GripVertical className="size-4" />
           </button>
 
-          <Collapsible.Trigger className="flex min-w-0 flex-1 items-center gap-3 text-start">
+          <Collapsible.Trigger
+            className="flex min-w-0 flex-1 items-center gap-3 text-start"
+            onClick={() => selectNode({ type: "chapter", id: chapter.id })}
+          >
             <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <BookOpen className="size-4" />
             </span>

@@ -42,6 +42,7 @@ import {
   rollbackReorder,
 } from "@/features/course-management/reorder-utils";
 import type { LessonOut } from "@/features/course-management/lessons-schema";
+import { useCourseBuilderBridge } from "@/features/course-management/course-builder-bridge";
 
 function SortableLessonCard({
   lesson,
@@ -110,6 +111,7 @@ export function LessonList({
   onCountChange?: (count: number) => void;
 }) {
   const t = useTranslations("lessons");
+  const { notifyCurriculumCommitted } = useCourseBuilderBridge();
   const [lessons, setLessons] = useState(initialLessons);
   const [error, setError] = useState<string | null>(initialError);
   const [createOpen, setCreateOpen] = useState(false);
@@ -194,9 +196,11 @@ export function LessonList({
       if (!result.success) {
         setLessons(rollbackReorder(previousLessonsRef.current));
         toast.error(result.error.message);
+      } else {
+        void notifyCurriculumCommitted();
       }
     },
-    [lessons, courseId, chapterId],
+    [lessons, courseId, chapterId, notifyCurriculumCommitted],
   );
 
   const handleDragCancel = useCallback(() => {
@@ -207,17 +211,20 @@ export function LessonList({
     setLessons((prev) =>
       prev.map((l) => (l.id === updated.id ? updated : l)),
     );
-  }, []);
+    void notifyCurriculumCommitted();
+  }, [notifyCurriculumCommitted]);
 
   const handleDeleted = useCallback((lessonId: number) => {
     setLessons((prev) => prev.filter((l) => l.id !== lessonId));
-  }, []);
+    void notifyCurriculumCommitted();
+  }, [notifyCurriculumCommitted]);
 
   const handleCreated = useCallback((lesson: LessonOut) => {
     setLessons((prev) => [...prev, lesson]);
     setCreateOpen(false);
     setCreateTitle("");
-  }, []);
+    void notifyCurriculumCommitted();
+  }, [notifyCurriculumCommitted]);
 
   const handleCreate = useCallback(async () => {
     const trimmed = createTitle.trim();

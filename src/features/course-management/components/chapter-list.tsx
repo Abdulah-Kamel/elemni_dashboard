@@ -38,6 +38,7 @@ import { applyOptimisticReorder, buildReorderPayload, rollbackReorder } from "@/
 import { toast } from "sonner";
 import type { ChapterOut } from "@/features/course-management/chapters-schema";
 import type { LessonOut } from "@/features/course-management/lessons-schema";
+import { useCourseBuilderBridge } from "@/features/course-management/course-builder-bridge";
 
 function SortableChapterCard({
   chapter,
@@ -106,6 +107,7 @@ export function ChapterList({
   error: string | null;
 }) {
   const t = useTranslations("chapters");
+  const { notifyCurriculumCommitted } = useCourseBuilderBridge();
   const [chapters, setChapters] = useState<ChapterOut[]>(initialChapters);
   const [error, setError] = useState<string | null>(initialError);
   const [createOpen, setCreateOpen] = useState(false);
@@ -149,6 +151,7 @@ export function ChapterList({
       const result = await reorderChapters(courseId, payload);
       if (result.success) {
         toast.success(t("reorder_success"));
+        void notifyCurriculumCommitted();
       } else {
         setChapters(rollbackReorder(previousChaptersRef.current));
         if (result.error.type === "Conflict") {
@@ -160,7 +163,7 @@ export function ChapterList({
         }
       }
     },
-    [chapters, courseId, t],
+    [chapters, courseId, notifyCurriculumCommitted, t],
   );
 
   const handleDragCancel = useCallback(() => {
@@ -171,17 +174,20 @@ export function ChapterList({
     setChapters((prev) =>
       prev.map((ch) => (ch.id === updated.id ? updated : ch)),
     );
-  }, []);
+    void notifyCurriculumCommitted();
+  }, [notifyCurriculumCommitted]);
 
   const handleDeleted = useCallback((chapterId: number) => {
     setChapters((prev) => prev.filter((ch) => ch.id !== chapterId));
-  }, []);
+    void notifyCurriculumCommitted();
+  }, [notifyCurriculumCommitted]);
 
   const handleCreated = useCallback((chapter: ChapterOut) => {
     setChapters((prev) => [...prev, chapter]);
     setCreateOpen(false);
     setCreateTitle("");
-  }, []);
+    void notifyCurriculumCommitted();
+  }, [notifyCurriculumCommitted]);
 
   const handleCreate = useCallback(async () => {
     const trimmed = createTitle.trim();
