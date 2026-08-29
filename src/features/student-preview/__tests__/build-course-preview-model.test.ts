@@ -106,6 +106,23 @@ describe('buildCoursePreviewModel', () => {
     expect(result.description).toBe('وصف الكورس');
   });
 
+  it('uses English placeholders for the English preview locale', () => {
+    const result = buildCoursePreviewModel({
+      courseId: 1,
+      values: { ...baseValues, title: '', description: null },
+      coverObjectUrl: null,
+      publicCoverUrl: null,
+      teacher: null,
+      subjects,
+      grades,
+      streams,
+      sections: [],
+      locale: 'en',
+    });
+    expect(result.title).toBe('Course title');
+    expect(result.description).toBe('Course description');
+  });
+
   it('coverObjectUrl takes precedence over publicCoverUrl', () => {
     const result = buildCoursePreviewModel({
       courseId: 1,

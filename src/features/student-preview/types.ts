@@ -64,6 +64,9 @@ export type PreviewInteractionMode = 'local-only';
 export type CourseBuilderNode = {
   type: "chapter" | "lesson" | "item";
   id: string | number;
+  /** Ancestors let the editor open collapsed containers before focusing a node. */
+  chapterId?: string | number;
+  lessonId?: string | number;
 };
 
 /**

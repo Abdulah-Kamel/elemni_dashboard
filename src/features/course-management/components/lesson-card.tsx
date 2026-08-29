@@ -1,10 +1,10 @@
-"use client";
+"use client"
 
-import { useState, useCallback } from "react";
-import { useTranslations } from "next-intl";
-import { Collapsible } from "@base-ui/react/collapsible";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { useState, useCallback, useEffect } from "react"
+import { useTranslations } from "next-intl"
+import { Collapsible } from "@base-ui/react/collapsible"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Dialog,
   DialogContent,
@@ -13,15 +13,15 @@ import {
   DialogDescription,
   DialogFooter,
   DialogClose,
-} from "@/components/ui/dialog";
+} from "@/components/ui/dialog"
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+} from "@/components/ui/dropdown-menu"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   GripVertical,
   ChevronDown,
@@ -29,11 +29,14 @@ import {
   MoreHorizontal,
   Pencil,
   Trash2,
-} from "lucide-react";
-import { updateLesson, deleteLesson } from "@/features/course-management/lessons-actions";
-import { ItemList } from "@/features/course-management/components/item-list";
-import type { LessonOut } from "@/features/course-management/lessons-schema";
-import { useCourseBuilderBridge } from "@/features/course-management/course-builder-bridge";
+} from "lucide-react"
+import {
+  updateLesson,
+  deleteLesson,
+} from "@/features/course-management/lessons-actions"
+import { ItemList } from "@/features/course-management/components/item-list"
+import type { LessonOut } from "@/features/course-management/lessons-schema"
+import { useCourseBuilderBridge } from "@/features/course-management/course-builder-bridge"
 
 export function LessonCard({
   lesson,
@@ -45,83 +48,121 @@ export function LessonCard({
   dragHandleProps,
   nested = false,
 }: {
-  lesson: LessonOut;
-  courseId: number;
-  itemCount?: number;
-  status?: "ready" | "failed" | "mixed" | null;
-  onUpdate: (lesson: LessonOut) => void;
-  onDelete: (lessonId: number) => void;
-  dragHandleProps?: React.HTMLAttributes<HTMLButtonElement>;
-  nested?: boolean;
+  lesson: LessonOut
+  courseId: number
+  itemCount?: number
+  status?: "ready" | "failed" | "mixed" | null
+  onUpdate: (lesson: LessonOut) => void
+  onDelete: (lessonId: number) => void
+  dragHandleProps?: React.HTMLAttributes<HTMLButtonElement>
+  nested?: boolean
 }) {
-  const t = useTranslations("lessons");
-  const { selectedNode, selectNode } = useCourseBuilderBridge();
-  const [itemsExpanded, setItemsExpanded] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [editTitle, setEditTitle] = useState(lesson.title);
-  const [editDescription, setEditDescription] = useState(lesson.description ?? "");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const isSelected = selectedNode?.type === "lesson" && selectedNode.id === lesson.id;
+  const t = useTranslations("lessons")
+  const {
+    enabled,
+    selectedNode,
+    hoveredNode,
+    setHoveredNode,
+    highlightNode,
+    clearSelectedNode,
+    selectNode,
+  } = useCourseBuilderBridge()
+  const [itemsExpanded, setItemsExpanded] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [editTitle, setEditTitle] = useState(lesson.title)
+  const [editDescription, setEditDescription] = useState(
+    lesson.description ?? ""
+  )
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const isSelected =
+    selectedNode?.type === "lesson" &&
+    String(selectedNode.id) === String(lesson.id)
+  const isHovered =
+    hoveredNode?.type === "lesson" &&
+    String(hoveredNode.id) === String(lesson.id)
+  const node = {
+    type: "lesson" as const,
+    id: lesson.id,
+    chapterId: lesson.chapter_id ?? undefined,
+  }
+
+  useEffect(() => {
+    if (!enabled || !selectedNode) return
+
+    const selectedInLesson =
+      (selectedNode.type === "lesson" &&
+        String(selectedNode.id) === String(lesson.id)) ||
+      (selectedNode.lessonId !== undefined &&
+        String(selectedNode.lessonId) === String(lesson.id))
+
+    if (!selectedInLesson || itemsExpanded) return
+
+    const frame = window.requestAnimationFrame(() => setItemsExpanded(true))
+    return () => window.cancelAnimationFrame(frame)
+  }, [enabled, itemsExpanded, lesson.id, selectedNode])
 
   const handleSave = useCallback(async () => {
-    const trimmed = editTitle.trim();
-    if (!trimmed) return;
+    const trimmed = editTitle.trim()
+    if (!trimmed) return
 
-    setSubmitting(true);
-    setError(null);
+    setSubmitting(true)
+    setError(null)
     try {
       const result = await updateLesson(courseId, lesson.id, {
         title: trimmed,
         description: editDescription.trim() || null,
-      });
+      })
       if (result.success) {
-        onUpdate(result.data);
-        setEditOpen(false);
+        onUpdate(result.data)
+        setEditOpen(false)
       } else {
-        setError(result.error.message);
+        setError(result.error.message)
       }
     } finally {
-      setSubmitting(false);
+      setSubmitting(false)
     }
-  }, [courseId, lesson.id, editTitle, editDescription, onUpdate]);
+  }, [courseId, lesson.id, editTitle, editDescription, onUpdate])
 
   const handleDelete = useCallback(async () => {
-    setSubmitting(true);
-    setError(null);
+    setSubmitting(true)
+    setError(null)
     try {
-      const result = await deleteLesson(courseId, lesson.id);
+      const result = await deleteLesson(courseId, lesson.id)
       if (result.success) {
-        onDelete(lesson.id);
-        setDeleteOpen(false);
+        onDelete(lesson.id)
+        setDeleteOpen(false)
       } else {
-        setError(result.error.message);
+        setError(result.error.message)
       }
     } finally {
-      setSubmitting(false);
+      setSubmitting(false)
     }
-  }, [courseId, lesson.id, onDelete]);
+  }, [courseId, lesson.id, onDelete])
 
-  let statusBadge = null;
+  let statusBadge = null
   if (status === "ready") {
     statusBadge = (
-      <Badge variant="default" className="bg-success/10 text-success border-0 text-[11px] px-2 py-px">
+      <Badge
+        variant="default"
+        className="border-0 bg-success/10 px-2 py-px text-[11px] text-success"
+      >
         {t("status_ready")}
       </Badge>
-    );
+    )
   } else if (status === "failed") {
     statusBadge = (
-      <Badge variant="destructive" className="text-[11px] px-2 py-px">
+      <Badge variant="destructive" className="px-2 py-px text-[11px]">
         {t("status_failed")}
       </Badge>
-    );
+    )
   } else if (status === "mixed") {
     statusBadge = (
-      <Badge variant="secondary" className="text-[11px] px-2 py-px">
+      <Badge variant="secondary" className="px-2 py-px text-[11px]">
         {t("status_mixed")}
       </Badge>
-    );
+    )
   }
 
   return (
@@ -129,35 +170,55 @@ export function LessonCard({
       <div
         data-builder-node-type="lesson"
         data-builder-node-id={lesson.id}
+        data-builder-node-state={
+          isSelected ? "selected" : isHovered ? "hovered" : "idle"
+        }
+        tabIndex={enabled ? -1 : undefined}
+        onMouseEnter={() => enabled && setHoveredNode(node)}
+        onMouseLeave={() => setHoveredNode(null)}
+        onFocus={(event) => {
+          // Focus bubbles through nested item cards; don't replace an item
+          // selection when its parent receives the bubbled event.
+          if (event.target === event.currentTarget) highlightNode(node)
+        }}
+        onBlur={(event) => {
+          const nextTarget = event.relatedTarget
+          if (
+            !(nextTarget instanceof Node) ||
+            !event.currentTarget.contains(nextTarget)
+          ) {
+            clearSelectedNode(node)
+          }
+        }}
         className={
           nested
-            ? `overflow-hidden rounded-lg border border-border/80 bg-card transition-shadow hover:shadow-xs ${isSelected ? "ring-2 ring-primary/35 ring-inset" : ""}`
-            : `overflow-hidden rounded-xl border border-border bg-card shadow-xs transition-shadow hover:shadow-sm ${isSelected ? "ring-2 ring-primary/35 ring-inset" : ""}`
+            ? `overflow-hidden rounded-lg border border-border/80 bg-card transition-shadow hover:shadow-xs ${isHovered ? "ring-2 ring-sky-400/70 ring-inset" : ""} ${isSelected ? "ring-2 ring-primary/35 ring-inset" : ""}`
+            : `overflow-hidden rounded-xl border border-border bg-card shadow-xs transition-shadow hover:shadow-sm ${isHovered ? "ring-2 ring-sky-400/70 ring-inset" : ""} ${isSelected ? "ring-2 ring-primary/35 ring-inset" : ""}`
         }
       >
         <div className="flex min-h-14 items-center gap-2 px-3 py-2.5 sm:px-4">
           <button
-            className="cursor-grab active:cursor-grabbing touch-none size-7 flex items-center justify-center shrink-0 rounded-md hover:bg-surface-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex size-7 shrink-0 cursor-grab touch-none items-center justify-center rounded-md hover:bg-surface-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:cursor-grabbing"
             aria-label={t("drag_handle_label")}
             {...(dragHandleProps ?? {})}
           >
             <GripVertical className="size-4 text-muted-foreground" />
           </button>
           <Collapsible.Trigger
-            className="flex items-center gap-2 flex-1 min-w-0 text-start cursor-pointer"
-            onClick={() => selectNode({ type: "lesson", id: lesson.id })}
+            className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-start"
+            onClick={() => selectNode(node)}
           >
             {itemsExpanded ? (
               <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
             ) : (
               <ChevronRight className="size-4 shrink-0 text-muted-foreground rtl:rotate-180" />
             )}
-            <span className="text-sm font-medium truncate">
+            <span className="truncate text-sm font-medium">
               {lesson.order}. {lesson.title}
             </span>
           </Collapsible.Trigger>
           {itemCount != null && (
-            <span className="text-[11px] text-muted-foreground shrink-0 whitespace-nowrap">
+            <span className="shrink-0 text-[11px] whitespace-nowrap text-muted-foreground">
               {itemCount} {t("items")}
             </span>
           )}
@@ -165,7 +226,11 @@ export function LessonCard({
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
-                <Button variant="ghost" size="icon-sm" className="size-7 shrink-0" />
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="size-7 shrink-0"
+                />
               }
             >
               <MoreHorizontal className="size-4" />
@@ -173,10 +238,10 @@ export function LessonCard({
             <DropdownMenuContent align="end">
               <DropdownMenuItem
                 onClick={() => {
-                  setEditTitle(lesson.title);
-                  setEditDescription(lesson.description ?? "");
-                  setError(null);
-                  setEditOpen(true);
+                  setEditTitle(lesson.title)
+                  setEditDescription(lesson.description ?? "")
+                  setError(null)
+                  setEditOpen(true)
                 }}
               >
                 <Pencil className="size-3.5" />
@@ -184,8 +249,8 @@ export function LessonCard({
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
-                  setError(null);
-                  setDeleteOpen(true);
+                  setError(null)
+                  setDeleteOpen(true)
                 }}
                 variant="destructive"
               >
@@ -200,6 +265,7 @@ export function LessonCard({
             <ItemList
               courseId={courseId}
               lessonId={lesson.id}
+              chapterId={lesson.chapter_id}
               error={null}
             />
           </div>
@@ -209,8 +275,8 @@ export function LessonCard({
       <Dialog
         open={editOpen}
         onOpenChange={(val) => {
-          setEditOpen(val);
-          if (!val) setError(null);
+          setEditOpen(val)
+          if (!val) setError(null)
         }}
       >
         <DialogContent>
@@ -219,7 +285,9 @@ export function LessonCard({
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium">{t("create_title_placeholder")}</label>
+              <label className="text-sm font-medium">
+                {t("create_title_placeholder")}
+              </label>
               <Input
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
@@ -227,14 +295,16 @@ export function LessonCard({
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSave();
+                    e.preventDefault()
+                    handleSave()
                   }
                 }}
               />
             </div>
             <div>
-              <label className="text-sm font-medium">{t("description_label")}</label>
+              <label className="text-sm font-medium">
+                {t("description_label")}
+              </label>
               <Textarea
                 value={editDescription}
                 onChange={(e) => setEditDescription(e.target.value)}
@@ -245,7 +315,13 @@ export function LessonCard({
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <DialogFooter>
-            <DialogClose render={<Button variant="outline" disabled={submitting}>{t("cancel")}</Button>} />
+            <DialogClose
+              render={
+                <Button variant="outline" disabled={submitting}>
+                  {t("cancel")}
+                </Button>
+              }
+            />
             <Button onClick={handleSave} disabled={submitting}>
               {submitting ? t("saving") : t("save")}
             </Button>
@@ -256,8 +332,8 @@ export function LessonCard({
       <Dialog
         open={deleteOpen}
         onOpenChange={(val) => {
-          setDeleteOpen(val);
-          if (!val) setError(null);
+          setDeleteOpen(val)
+          if (!val) setError(null)
         }}
       >
         <DialogContent>
@@ -267,13 +343,23 @@ export function LessonCard({
           </DialogHeader>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <DialogFooter>
-            <DialogClose render={<Button variant="outline" disabled={submitting}>{t("cancel")}</Button>} />
-            <Button variant="destructive" onClick={handleDelete} disabled={submitting}>
+            <DialogClose
+              render={
+                <Button variant="outline" disabled={submitting}>
+                  {t("cancel")}
+                </Button>
+              }
+            />
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={submitting}
+            >
               {submitting ? t("saving") : t("confirm")}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </Collapsible.Root>
-  );
+  )
 }

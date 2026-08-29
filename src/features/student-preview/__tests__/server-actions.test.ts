@@ -33,7 +33,10 @@ describe("loadCoursePreviewCurriculum", () => {
       created_at: "2024-01-01",
     }
     vi.mocked(verifySession).mockResolvedValue(mockUser as never)
-    vi.mocked(getCourse).mockResolvedValue({ id: 42 } as never)
+    vi.mocked(getCourse).mockResolvedValue({
+      id: 42,
+      use_chapters: true,
+    } as never)
     vi.mocked(listChapters).mockResolvedValue([
       { id: 10, course_id: 42, title: "Chapter 1", order: 1 },
     ])
@@ -102,6 +105,10 @@ describe("loadCoursePreviewCurriculum", () => {
   })
 
   it("keeps lessons without chapters in a flat-course section", async () => {
+    vi.mocked(getCourse).mockResolvedValue({
+      id: 42,
+      use_chapters: false,
+    } as never)
     vi.mocked(listChapters).mockResolvedValue([])
     vi.mocked(listLessons).mockResolvedValue([
       {
@@ -122,6 +129,7 @@ describe("loadCoursePreviewCurriculum", () => {
       expect(result.data[0]).toMatchObject({ title: null })
       expect(result.data[0].lessons[0].title).toBe("Flat lesson")
     }
+    expect(listChapters).not.toHaveBeenCalled()
   })
 
   it("checks access to the course before returning curriculum", async () => {

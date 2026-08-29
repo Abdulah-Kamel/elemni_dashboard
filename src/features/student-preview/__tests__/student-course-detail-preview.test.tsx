@@ -192,7 +192,11 @@ describe("StudentCourseDetailPreview", () => {
     );
 
     fireEvent.click(screen.getByText("الحركة الخطية").closest("button")!);
-    expect(onSelectNode).toHaveBeenCalledWith({ type: "lesson", id: 10 });
+    expect(onSelectNode).toHaveBeenCalledWith({
+      type: "lesson",
+      id: 10,
+      chapterId: 1,
+    });
   });
 
   it("opens the selected editor lesson in the preview", async () => {
@@ -263,6 +267,11 @@ describe("StudentCourseDetailPreview", () => {
       <StudentCourseDetailPreview model={emptySectionsModel} locale="ar" viewer="guest" interactionMode="local-only" />
     );
     expect(screen.getByText("محتوى الكورس غير متاح حالياً")).toBeDefined();
+    const emptyStateCopy = screen
+      .getByText("عند نشر المدرس للدروس والمواد التعليمية ستظهر هنا تلقائياً.")
+      .closest("p");
+    expect(emptyStateCopy?.className).toContain("w-full");
+    expect(emptyStateCopy?.className).not.toContain("max-w-");
     // Subscribe button should not render (price = "200" but no sections, still shows subscribe)
   });
 
@@ -277,7 +286,7 @@ describe("StudentCourseDetailPreview", () => {
     expect(screen.getByText("محتوى الكورس غير متاح حالياً")).toBeDefined();
   });
 
-  it("guest viewer shows lock icon on lesson items", () => {
+  it("shows subscription requirements for public lesson items", () => {
     render(
       <StudentCourseDetailPreview model={baseModel} locale="ar" viewer="guest" interactionMode="local-only" />
     );
@@ -285,35 +294,15 @@ describe("StudentCourseDetailPreview", () => {
     expect(screen.getAllByText("يتطلب الاشتراك").length).toBeGreaterThan(0);
   });
 
-  it("subscribed viewer shows 'غير متاح حالياً' instead of lock", () => {
-    render(
-      <StudentCourseDetailPreview model={baseModel} locale="ar" viewer="subscribed" interactionMode="local-only" />
-    );
-    // First lesson is auto-expanded — items should be visible without clicking
-    expect(screen.queryByText("يتطلب الاشتراك")).toBeNull();
-    expect(screen.getAllByText("غير متاح حالياً").length).toBeGreaterThan(0);
-  });
-
-  it("guest viewer shows subscribe CTA", () => {
+  it("shows the public subscribe CTA regardless of the deprecated viewer prop", () => {
     render(
       <StudentCourseDetailPreview model={baseModel} locale="ar" viewer="guest" interactionMode="local-only" />
     );
-    expect(screen.getByText(/اشترك الآن/)).toBeDefined();
-  });
-
-  it("subscribed viewer shows 'عرض محتوى الكورس' CTA", () => {
+    expect(screen.getAllByText(/اشترك الآن/).length).toBeGreaterThan(0);
     render(
       <StudentCourseDetailPreview model={baseModel} locale="ar" viewer="subscribed" interactionMode="local-only" />
     );
-    expect(screen.getByText("عرض محتوى الكورس")).toBeDefined();
-    expect(screen.queryByText(/اشترك الآن/)).toBeNull();
-  });
-
-  it("subscribed viewer back link shows 'العودة إلى دوراتي'", () => {
-    render(
-      <StudentCourseDetailPreview model={baseModel} locale="ar" viewer="subscribed" interactionMode="local-only" />
-    );
-    expect(screen.getByText("العودة إلى دوراتي")).toBeDefined();
+    expect(screen.getAllByText(/اشترك الآن/).length).toBeGreaterThan(0);
   });
 
   it("does not call onCurriculumCommitted (preview is read-only)", () => {
@@ -341,21 +330,22 @@ describe("StudentCourseDetailPreview", () => {
     expect(heroGrid).toBeDefined();
   });
 
-  it("guest viewer back link matches the student detail copy", () => {
+  it("uses the public student detail copy", () => {
     render(
       <StudentCourseDetailPreview model={baseModel} locale="ar" viewer="guest" interactionMode="local-only" />
     );
     expect(screen.getByText("العودة إلى الاستكشاف")).toBeDefined();
+    expect(screen.getByText("خطة الكورس")).toBeDefined();
   });
 
-  it("content heading changes based on viewer", () => {
-    const { rerender } = render(
-      <StudentCourseDetailPreview model={baseModel} locale="ar" viewer="guest" interactionMode="local-only" />
+  it("localizes the public preview in English", () => {
+    const { container } = render(
+      <StudentCourseDetailPreview model={baseModel} locale="en" interactionMode="local-only" />
     );
-    expect(screen.getByText("خطة الكورس")).toBeDefined();
-    rerender(
-      <StudentCourseDetailPreview model={baseModel} locale="ar" viewer="subscribed" interactionMode="local-only" />
-    );
-    expect(screen.getByText("محتوى الكورس")).toBeDefined();
+    expect(container.firstElementChild?.getAttribute("dir")).toBe("ltr");
+    expect(screen.getByText("Back to discovery")).toBeDefined();
+    expect(screen.getByText("Course plan")).toBeDefined();
+    expect(screen.getByText(/Subscribe now/)).toBeDefined();
+    expect(screen.getAllByText(/lesson/).length).toBeGreaterThan(0);
   });
 });

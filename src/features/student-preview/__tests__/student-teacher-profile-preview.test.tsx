@@ -217,6 +217,18 @@ describe("StudentTeacherProfilePreview", () => {
     expect(screen.getByText("القاهرة")).toBeDefined();
   });
 
+  it("localizes the profile preview in English", () => {
+    const { container } = render(
+      <StudentTeacherProfilePreview model={baseModel} locale="en" interactionMode="local-only" />
+    );
+    expect(container.firstElementChild?.getAttribute("dir")).toBe("ltr");
+    expect(screen.getByText("All teachers")).toBeDefined();
+    expect(screen.getByText("About the teacher")).toBeDefined();
+    expect(screen.getByText("Available courses")).toBeDefined();
+    expect(screen.getByText("Subscribe now")).toBeDefined();
+    expect(screen.getByText("Course content")).toBeDefined();
+  });
+
   it("uses container-query breakpoints for the emulated device frame", () => {
     const { container } = render(
       <StudentTeacherProfilePreview model={baseModel} locale="ar" interactionMode="local-only" />

@@ -8,14 +8,21 @@ import type {
   PreviewDeviceWidth,
 } from "./types"
 import { PreviewWorkspace } from "./preview-workspace"
+import type { PreviewWorkspaceTab } from "./preview-workspace"
 import { StudentCourseDetailPreview } from "./student-course-detail-preview"
 import { loadCoursePreviewCurriculum } from "./server-actions"
-import { CourseBuilderBridgeProvider } from "@/features/course-management/course-builder-bridge"
+import {
+  CourseBuilderBridgeProvider,
+  type CourseBuilderField,
+  useCourseBuilderBridge,
+} from "@/features/course-management/course-builder-bridge"
+import { cn } from "@/lib/utils"
 
 interface CourseWorkspaceProps {
   model: StudentCoursePreviewModel
   locale: string
-  viewer: "guest" | "subscribed"
+  /** @deprecated The preview now uses one public student view. */
+  viewer?: "guest" | "subscribed"
   initialSections?: StudentPreviewSection[]
   editorActions?: ReactNode
   curriculum?: ReactNode
@@ -26,12 +33,9 @@ interface CourseWorkspaceProps {
 const COPY = {
   ar: {
     edit: "تعديل الكورس",
-    guest: "زائر",
-    subscribed: "مشترك",
     title: "العنوان",
     description: "الوصف",
     price: "السعر",
-    viewerLabel: "عرض الكورس",
     subject: "المادة",
     grade: "المرحلة",
     stream: "الشعبة",
@@ -41,12 +45,9 @@ const COPY = {
   },
   en: {
     edit: "Edit Course",
-    guest: "Guest",
-    subscribed: "Subscribed",
     title: "Title",
     description: "Description",
     price: "Price",
-    viewerLabel: "Viewer",
     subject: "Subject",
     grade: "Grade",
     stream: "Stream",
@@ -56,16 +57,41 @@ const COPY = {
   },
 }
 
-export function CourseWorkspace({
+export function CourseWorkspace({ ...props }: CourseWorkspaceProps) {
+  const [activeTab, setActiveTab] = useState<PreviewWorkspaceTab>("edit")
+  const [fullPreviewOpen, setFullPreviewOpen] = useState(false)
+
+  return (
+    <CourseWorkspaceContent
+      {...props}
+      activeTab={activeTab}
+      fullPreviewOpen={fullPreviewOpen}
+      onActiveTabChange={setActiveTab}
+      onFullPreviewOpenChange={setFullPreviewOpen}
+    />
+  )
+}
+
+interface CourseWorkspaceContentProps extends CourseWorkspaceProps {
+  activeTab: PreviewWorkspaceTab
+  fullPreviewOpen: boolean
+  onActiveTabChange: (tab: PreviewWorkspaceTab) => void
+  onFullPreviewOpenChange: (open: boolean) => void
+}
+
+function CourseWorkspaceContent({
   model,
   locale,
-  viewer: initialViewer,
   initialSections,
   editorActions,
   curriculum,
   curriculumTitle,
   curriculumHint,
-}: CourseWorkspaceProps) {
+  activeTab,
+  fullPreviewOpen,
+  onActiveTabChange,
+  onFullPreviewOpenChange,
+}: CourseWorkspaceContentProps) {
   const lang = locale.startsWith("ar") ? "ar" : "en"
   const copy = COPY[lang]
   const id = useId()
@@ -73,7 +99,6 @@ export function CourseWorkspace({
   const [title, setTitle] = useState(model.title)
   const [description, setDescription] = useState(model.description)
   const [price, setPrice] = useState(model.price)
-  const [viewer, setViewer] = useState<"guest" | "subscribed">(initialViewer)
   const [sections, setSections] = useState<StudentPreviewSection[]>(
     initialSections ?? model.sections
   )
@@ -136,131 +161,135 @@ export function CourseWorkspace({
             {lang === "ar" ? "معاينة مباشرة" : "Live preview"}
           </span>
         </div>
-      <div>
-        <label htmlFor={`${id}-title`} className="block text-sm font-medium">
-          {copy.title}
-        </label>
-        <input
-          id={`${id}-title`}
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full rounded-lg border border-border px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
-        />
-      </div>
-      <div>
-        <label
-          htmlFor={`${id}-description`}
-          className="block text-sm font-medium"
-        >
-          {copy.description}
-        </label>
-        <textarea
-          id={`${id}-description`}
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="w-full rounded-lg border border-border px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
-          rows={3}
-        />
-      </div>
-      <div>
-        <label htmlFor={`${id}-price`} className="block text-sm font-medium">
-          {copy.price}
-        </label>
-        <input
-          id={`${id}-price`}
-          type="number"
-          min="0"
-          step="0.01"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          className="w-full rounded-lg border border-border px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
-        />
-      </div>
-      <div>
-        <label htmlFor={`${id}-subject`} className="block text-sm font-medium">
-          {copy.subject}
-        </label>
-        <input
-          id={`${id}-subject`}
-          type="text"
-          value={model.subject ?? ""}
-          readOnly
-          className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-muted-foreground"
-        />
-      </div>
-      <div>
-        <label htmlFor={`${id}-grade`} className="block text-sm font-medium">
-          {copy.grade}
-        </label>
-        <input
-          id={`${id}-grade`}
-          type="text"
-          value={model.grade ?? ""}
-          readOnly
-          className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-muted-foreground"
-        />
-      </div>
-      <div>
-        <label htmlFor={`${id}-stream`} className="block text-sm font-medium">
-          {copy.stream}
-        </label>
-        <input
-          id={`${id}-stream`}
-          type="text"
-          value={model.stream ?? ""}
-          readOnly
-          className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-muted-foreground"
-        />
-      </div>
-      <div>
-        <p id={`${id}-viewer-label`} className="block text-sm font-medium">
-          {copy.viewerLabel}
-        </p>
-        <div
-          className="flex gap-2"
-          role="radiogroup"
-          aria-labelledby={`${id}-viewer-label`}
-        >
-          <button
-            type="button"
-            role="radio"
-            aria-checked={viewer === "guest"}
-            onClick={() => setViewer("guest")}
-            className={`min-h-11 rounded-lg px-3 py-1.5 text-xs font-bold focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none ${viewer === "guest" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
-          >
-            {copy.guest}
-          </button>
-          <button
-            type="button"
-            role="radio"
-            aria-checked={viewer === "subscribed"}
-            onClick={() => setViewer("subscribed")}
-            className={`min-h-11 rounded-lg px-3 py-1.5 text-xs font-bold focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none ${viewer === "subscribed" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
-          >
-            {copy.subscribed}
-          </button>
-        </div>
-      </div>
-        <div className="space-y-2 border-t border-border pt-4">
-        <button
-          type="button"
-          disabled={refreshing}
-          onClick={() => void refreshCurriculum()}
-          className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-bold transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-60"
-        >
-          {refreshing ? (
-            <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-          ) : (
-            <RefreshCw className="size-4" aria-hidden="true" />
+        <CourseEditorField field="title">
+          {(controlClassName) => (
+            <>
+              <label
+                htmlFor={`${id}-title`}
+                className="block text-sm font-medium"
+              >
+                {copy.title}
+              </label>
+              <input
+                id={`${id}-title`}
+                data-builder-field-input="title"
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className={cn(
+                  "w-full rounded-lg border border-border px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none",
+                  controlClassName
+                )}
+              />
+            </>
           )}
-          {refreshing ? copy.refreshing : copy.refresh}
-        </button>
-        {loadError && (
-          <p role="alert" className="text-sm text-destructive">
-            {copy.loadError}
-          </p>
-        )}
+        </CourseEditorField>
+        <CourseEditorField field="description">
+          {(controlClassName) => (
+            <>
+              <label
+                htmlFor={`${id}-description`}
+                className="block text-sm font-medium"
+              >
+                {copy.description}
+              </label>
+              <textarea
+                id={`${id}-description`}
+                data-builder-field-input="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className={cn(
+                  "w-full rounded-lg border border-border px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none",
+                  controlClassName
+                )}
+                rows={3}
+              />
+            </>
+          )}
+        </CourseEditorField>
+        <CourseEditorField field="price">
+          {(controlClassName) => (
+            <>
+              <label
+                htmlFor={`${id}-price`}
+                className="block text-sm font-medium"
+              >
+                {copy.price}
+              </label>
+              <input
+                id={`${id}-price`}
+                data-builder-field-input="price"
+                type="number"
+                min="0"
+                step="0.01"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                className={cn(
+                  "w-full rounded-lg border border-border px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none",
+                  controlClassName
+                )}
+              />
+            </>
+          )}
+        </CourseEditorField>
+        <div>
+          <label
+            htmlFor={`${id}-subject`}
+            className="block text-sm font-medium"
+          >
+            {copy.subject}
+          </label>
+          <input
+            id={`${id}-subject`}
+            type="text"
+            value={model.subject ?? ""}
+            readOnly
+            className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-muted-foreground"
+          />
+        </div>
+        <div>
+          <label htmlFor={`${id}-grade`} className="block text-sm font-medium">
+            {copy.grade}
+          </label>
+          <input
+            id={`${id}-grade`}
+            type="text"
+            value={model.grade ?? ""}
+            readOnly
+            className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-muted-foreground"
+          />
+        </div>
+        <div>
+          <label htmlFor={`${id}-stream`} className="block text-sm font-medium">
+            {copy.stream}
+          </label>
+          <input
+            id={`${id}-stream`}
+            type="text"
+            value={model.stream ?? ""}
+            readOnly
+            className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-muted-foreground"
+          />
+        </div>
+        <div className="space-y-2 border-t border-border pt-4">
+          <button
+            type="button"
+            disabled={refreshing}
+            onClick={() => void refreshCurriculum()}
+            className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-bold transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-60"
+          >
+            {refreshing ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <RefreshCw className="size-4" aria-hidden="true" />
+            )}
+            {refreshing ? copy.refreshing : copy.refresh}
+          </button>
+          {loadError && (
+            <p role="alert" className="text-sm text-destructive">
+              {copy.loadError}
+            </p>
+          )}
         </div>
       </section>
 
@@ -274,10 +303,7 @@ export function CourseWorkspace({
               <BookOpen className="size-4" aria-hidden="true" />
             </span>
             <div className="min-w-0">
-              <h2
-                id={`${id}-curriculum-title`}
-                className="text-base font-bold"
-              >
+              <h2 id={`${id}-curriculum-title`} className="text-base font-bold">
                 {curriculumTitle ?? (lang === "ar" ? "المنهج" : "Curriculum")}
               </h2>
               {curriculumHint && (
@@ -300,6 +326,11 @@ export function CourseWorkspace({
 
   return (
     <CourseBuilderBridgeProvider
+      enabled={!fullPreviewOpen}
+      onSelectTarget={() => {
+        onActiveTabChange("edit")
+        onFullPreviewOpenChange(false)
+      }}
       onCurriculumCommitted={refreshCurriculum}
     >
       <PreviewWorkspace
@@ -309,7 +340,6 @@ export function CourseWorkspace({
             key={curriculumKey}
             model={previewModel}
             locale={locale}
-            viewer={viewer}
             interactionMode="local-only"
             showEditAffordance
           />
@@ -317,7 +347,58 @@ export function CourseWorkspace({
         locale={locale}
         deviceWidth={deviceWidth}
         onDeviceWidthChange={setDeviceWidth}
+        activeTab={activeTab}
+        onActiveTabChange={onActiveTabChange}
+        onFullPreviewOpenChange={onFullPreviewOpenChange}
       />
     </CourseBuilderBridgeProvider>
+  )
+}
+
+function CourseEditorField({
+  field,
+  children,
+}: {
+  field: CourseBuilderField
+  children: (controlClassName: string) => ReactNode
+}) {
+  const {
+    hoveredField,
+    selectedField,
+    setHoveredField,
+    highlightField,
+    clearSelectedField,
+  } = useCourseBuilderBridge()
+  const isHovered = hoveredField === field
+  const isSelected = selectedField === field
+  const controlClassName = cn(
+    "transition-[box-shadow,background-color] duration-200",
+    (isHovered || isSelected) &&
+      "bg-primary/5 ring-2 ring-offset-2 ring-offset-background",
+    isHovered && "ring-primary/30",
+    isSelected && "ring-primary/55"
+  )
+
+  return (
+    <div
+      data-builder-field={field}
+      data-builder-field-state={
+        isSelected ? "selected" : isHovered ? "hovered" : "idle"
+      }
+      onMouseEnter={() => setHoveredField(field)}
+      onMouseLeave={() => setHoveredField(null)}
+      onFocus={() => highlightField(field)}
+      onBlur={(event) => {
+        const nextTarget = event.relatedTarget
+        if (
+          !(nextTarget instanceof Node) ||
+          !event.currentTarget.contains(nextTarget)
+        ) {
+          clearSelectedField(field)
+        }
+      }}
+    >
+      {children(controlClassName)}
+    </div>
   )
 }

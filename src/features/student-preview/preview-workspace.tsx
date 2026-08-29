@@ -19,7 +19,8 @@ const DEVICE_ORDER: readonly PreviewDeviceWidth[] = ["full", "tablet", "mobile"]
 
 const TAB_ORDER = ["edit", "preview"] as const
 
-type PreviewTab = (typeof TAB_ORDER)[number]
+export type PreviewWorkspaceTab = (typeof TAB_ORDER)[number]
+type PreviewTab = PreviewWorkspaceTab
 
 type WorkspaceCopy = {
   tabsLabel: string
@@ -72,8 +73,13 @@ interface PreviewWorkspaceProps {
   locale: string
   deviceWidth?: PreviewDeviceWidth
   onDeviceWidthChange?: (width: PreviewDeviceWidth) => void
+  /** Optional controlled tab state for flows that need to reveal the editor. */
+  activeTab?: PreviewWorkspaceTab
+  onActiveTabChange?: (tab: PreviewWorkspaceTab) => void
   /** Fired when the full-preview dialog is opened. The dialog itself is owned here. */
   onFullPreview?: () => void
+  /** Notifies consumers when the full-preview dialog opens or closes. */
+  onFullPreviewOpenChange?: (open: boolean) => void
 }
 
 export function PreviewWorkspace({
@@ -82,9 +88,12 @@ export function PreviewWorkspace({
   locale,
   deviceWidth = "full",
   onDeviceWidthChange,
+  activeTab: controlledActiveTab,
+  onActiveTabChange,
   onFullPreview,
+  onFullPreviewOpenChange,
 }: PreviewWorkspaceProps) {
-  const [activeTab, setActiveTab] = useState<PreviewTab>("edit")
+  const [internalActiveTab, setInternalActiveTab] = useState<PreviewTab>("edit")
   const [fullPreviewOpen, setFullPreviewOpen] = useState(false)
   const [previewSplit, setPreviewSplit] = useState(60)
   const [desktopReady, setDesktopReady] = useState(false)
@@ -96,6 +105,14 @@ export function PreviewWorkspace({
 
   const copy = workspaceCopy(locale)
   const dir = resolveLocale(locale) === "ar" ? "rtl" : "ltr"
+  const activeTab = controlledActiveTab ?? internalActiveTab
+  const setActiveTab = useCallback(
+    (tab: PreviewTab) => {
+      if (controlledActiveTab === undefined) setInternalActiveTab(tab)
+      onActiveTabChange?.(tab)
+    },
+    [controlledActiveTab, onActiveTabChange]
+  )
   const baseId = useId()
   const tabId = (tab: PreviewTab) => `${baseId}-tab-${tab}`
   const panelId = (tab: PreviewTab) => `${baseId}-panel-${tab}`
@@ -103,7 +120,8 @@ export function PreviewWorkspace({
   useEffect(() => {
     let stored: string | null = null
     try {
-      stored = window.localStorage?.getItem("course-builder-preview-split") ?? null
+      stored =
+        window.localStorage?.getItem("course-builder-preview-split") ?? null
     } catch {
       // Storage may be unavailable in embedded/private browsing contexts.
     }
@@ -175,10 +193,13 @@ export function PreviewWorkspace({
     [previewSplit, updatePreviewSplit]
   )
 
-  const selectTab = useCallback((tab: PreviewTab) => {
-    setActiveTab(tab)
-    tabRefs.current[tab]?.focus()
-  }, [])
+  const selectTab = useCallback(
+    (tab: PreviewTab) => {
+      setActiveTab(tab)
+      tabRefs.current[tab]?.focus()
+    },
+    [setActiveTab]
+  )
 
   const onTabKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
@@ -202,8 +223,17 @@ export function PreviewWorkspace({
 
   const openFullPreview = () => {
     setFullPreviewOpen(true)
+    onFullPreviewOpenChange?.(true)
     onFullPreview?.()
   }
+
+  const handleFullPreviewOpenChange = useCallback(
+    (open: boolean) => {
+      setFullPreviewOpen(open)
+      onFullPreviewOpenChange?.(open)
+    },
+    [onFullPreviewOpenChange]
+  )
 
   const onDeviceKeyDown = (
     event: React.KeyboardEvent<HTMLButtonElement>,
@@ -365,7 +395,7 @@ export function PreviewWorkspace({
           aria-valuenow={Math.round(previewSplit)}
           role="separator"
           tabIndex={0}
-          className="absolute inset-y-0 z-10 hidden w-3 -translate-x-1/2 cursor-col-resize items-center justify-center rounded-full text-border-strong transition-colors hover:bg-primary/10 focus-visible:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary lg:flex"
+          className="absolute inset-y-0 z-10 hidden w-3 -translate-x-1/2 cursor-col-resize items-center justify-center rounded-full text-border-strong transition-colors hover:bg-primary/10 focus-visible:bg-primary/10 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none lg:flex"
           style={{ left: `${previewSplit}%` }}
           onPointerDown={(event) => {
             event.currentTarget.setPointerCapture(event.pointerId)
@@ -376,11 +406,14 @@ export function PreviewWorkspace({
           onPointerCancel={() => setResizing(false)}
           onKeyDown={handleResizeKeyDown}
         >
-          <span className="h-12 w-px rounded-full bg-border-strong" aria-hidden="true" />
+          <span
+            className="h-12 w-px rounded-full bg-border-strong"
+            aria-hidden="true"
+          />
         </button>
       </div>
 
-      <Dialog open={fullPreviewOpen} onOpenChange={setFullPreviewOpen}>
+      <Dialog open={fullPreviewOpen} onOpenChange={handleFullPreviewOpenChange}>
         <DialogContent
           dir={dir}
           className="flex h-[90dvh] max-h-[90dvh] w-[95vw] max-w-[95vw] flex-col overflow-hidden sm:max-w-[95vw]"

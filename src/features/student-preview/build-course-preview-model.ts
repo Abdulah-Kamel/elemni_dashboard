@@ -11,6 +11,7 @@ export function buildCoursePreviewModel({
   grades,
   streams,
   sections,
+  locale = "ar",
 }: {
   courseId: string | number | null;
   values: CourseFormValues;
@@ -21,11 +22,13 @@ export function buildCoursePreviewModel({
   grades: GradeOut[];
   streams: StreamOut[];
   sections: StudentPreviewSection[];
+  locale?: string;
 }): StudentCoursePreviewModel {
+  const isArabic = locale.toLowerCase().startsWith("ar");
   return {
     id: courseId ?? "preview",
-    title: values.title || "عنوان الكورس",
-    description: values.description || "وصف الكورس",
+    title: values.title || (isArabic ? "عنوان الكورس" : "Course title"),
+    description: values.description || (isArabic ? "وصف الكورس" : "Course description"),
     coverUrl: coverObjectUrl ?? publicCoverUrl ?? null,
     price: values.price || "0",
     subject: subjects.find((s) => s.id === values.subjectId)?.name ?? null,

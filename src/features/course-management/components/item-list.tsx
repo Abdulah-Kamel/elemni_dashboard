@@ -42,12 +42,14 @@ function SortableItemCard({
   item,
   courseId,
   lessonId,
+  chapterId,
   onUpdate,
   onDelete,
 }: {
   item: ItemOut;
   courseId: number;
   lessonId: number;
+  chapterId?: number | null;
   onUpdate: (item: ItemOut) => void;
   onDelete: (itemId: number) => void;
 }) {
@@ -79,6 +81,7 @@ function SortableItemCard({
             item={item}
             courseId={courseId}
             lessonId={lessonId}
+            chapterId={chapterId}
             onUpdate={onUpdate}
             onDelete={onDelete}
           />
@@ -92,11 +95,13 @@ export function ItemList({
   initialItems: _initialItems,
   courseId,
   lessonId,
+  chapterId,
   error: initialError,
 }: {
   initialItems?: ItemOut[];
   courseId: number;
   lessonId: number;
+  chapterId?: number | null;
   error: string | null;
 }) {
   const [items, setItems] = useState<ItemOut[]>(_initialItems ?? []);
@@ -288,6 +293,7 @@ export function ItemList({
               item={item}
               courseId={courseId}
               lessonId={lessonId}
+              chapterId={chapterId}
               onUpdate={handleUpdated}
               onDelete={handleDeleted}
             />

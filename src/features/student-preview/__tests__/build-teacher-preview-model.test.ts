@@ -107,6 +107,21 @@ describe('buildTeacherPreviewModel', () => {
     expect(result.bio).toBe('نبذة عن المدرس');
   });
 
+  it('uses English placeholders for the English preview locale', () => {
+    const result = buildTeacherPreviewModel({
+      profile: { ...baseProfile, name: '', description: null, subjects: [] },
+      courses: [{ ...baseCourse, title: '', description: null }],
+      avatarObjectUrl: null,
+      publicAvatarUrl: null,
+      locale: 'en',
+    });
+    expect(result.name).toBe('Teacher name');
+    expect(result.bio).toBe('Teacher bio');
+    expect(result.title).toBe('Teacher');
+    expect(result.courses[0].title).toBe('Course title');
+    expect(result.courses[0].description).toBe('Course description');
+  });
+
   it('uses default title when no subjects', () => {
     const result = buildTeacherPreviewModel({
       profile: { ...baseProfile, subjects: [] },

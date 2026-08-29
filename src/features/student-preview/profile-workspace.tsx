@@ -18,10 +18,23 @@ import {
 } from "@/features/profile/actions"
 import { buildTeacherPreviewModel } from "./build-teacher-preview-model"
 import { PreviewWorkspace } from "./preview-workspace"
+import type { PreviewWorkspaceTab } from "./preview-workspace"
 import { StudentTeacherProfilePreview } from "./student-teacher-profile-preview"
+import {
+  ProfilePreviewBridgeProvider,
+  type ProfilePreviewField,
+  useProfilePreviewBridge,
+} from "./profile-preview-bridge"
+import { cn } from "@/lib/utils"
 
 const MAX_AVATAR_SIZE = 10 * 1024 * 1024
 const ALLOWED_AVATAR_TYPES = new Set(["image/jpeg", "image/png", "image/webp"])
+
+function parseExperience(value: string): number | null {
+  if (!value.trim()) return null
+  const parsed = Number(value)
+  return Number.isFinite(parsed) && parsed >= 0 ? Math.trunc(parsed) : null
+}
 
 interface ProfileWorkspaceProps {
   profile: TeacherProfile
@@ -38,6 +51,7 @@ const COPY = {
     name: "الاسم",
     bio: "النبذة",
     location: "الموقع",
+    experience: "سنوات الخبرة",
     image: "الصورة",
     remove: "إزالة",
     saved: "تم الحفظ",
@@ -53,6 +67,7 @@ const COPY = {
     name: "Name",
     bio: "Bio",
     location: "Location",
+    experience: "Years of experience",
     image: "Profile Image",
     remove: "Remove",
     saved: "Saved",
@@ -69,6 +84,45 @@ export function ProfileWorkspace({
   locale,
   publicImageUrl,
 }: ProfileWorkspaceProps) {
+  const [activeTab, setActiveTab] = useState<PreviewWorkspaceTab>("edit")
+  const [fullPreviewOpen, setFullPreviewOpen] = useState(false)
+
+  return (
+    <ProfilePreviewBridgeProvider
+      enabled={!fullPreviewOpen}
+      onSelectField={() => {
+        setActiveTab("edit")
+        setFullPreviewOpen(false)
+      }}
+    >
+      <ProfileWorkspaceContent
+        profile={profile}
+        courses={courses}
+        locale={locale}
+        publicImageUrl={publicImageUrl}
+        activeTab={activeTab}
+        onActiveTabChange={setActiveTab}
+        onFullPreviewOpenChange={setFullPreviewOpen}
+      />
+    </ProfilePreviewBridgeProvider>
+  )
+}
+
+interface ProfileWorkspaceContentProps extends ProfileWorkspaceProps {
+  activeTab: PreviewWorkspaceTab
+  onActiveTabChange: (tab: PreviewWorkspaceTab) => void
+  onFullPreviewOpenChange: (open: boolean) => void
+}
+
+function ProfileWorkspaceContent({
+  profile,
+  courses,
+  locale,
+  publicImageUrl,
+  activeTab,
+  onActiveTabChange,
+  onFullPreviewOpenChange,
+}: ProfileWorkspaceContentProps) {
   const lang = locale.startsWith("ar") ? "ar" : "en"
   const copy = COPY[lang]
   const router = useRouter()
@@ -76,6 +130,9 @@ export function ProfileWorkspace({
   const [name, setName] = useState(profile.name)
   const [bio, setBio] = useState(profile.description ?? "")
   const [location_, setLocation] = useState(profile.location ?? "")
+  const [experience, setExperience] = useState(
+    profile.experience == null ? "" : String(profile.experience)
+  )
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarUrl, setAvatarUrl] = useState<string | null>(publicImageUrl)
   const [avatarRemoved, setAvatarRemoved] = useState(false)
@@ -83,6 +140,57 @@ export function ProfileWorkspace({
   const [saving, setSaving] = useState(false)
   const [deviceWidth, setDeviceWidth] = useState<PreviewDeviceWidth>("full")
   const objectUrlsRef = useRef<string[]>([])
+  const {
+    hoveredField,
+    selectedField,
+    setHoveredField,
+    highlightField,
+    clearSelectedField,
+  } = useProfilePreviewBridge()
+
+  const editorControlClass = useCallback(
+    (field: ProfilePreviewField) =>
+      cn(
+        "transition-[box-shadow,background-color] duration-200",
+        field === "avatar" ? "rounded-xl" : "rounded-lg",
+        hoveredField === field &&
+          "bg-primary/5 ring-2 ring-primary/30 ring-offset-2 ring-offset-background",
+        selectedField === field &&
+          "bg-primary/5 ring-2 ring-primary/55 ring-offset-2 ring-offset-background"
+      ),
+    [hoveredField, selectedField]
+  )
+
+  const editorFieldEvents = useCallback(
+    (field: ProfilePreviewField) => ({
+      "data-profile-editor-field": field,
+      "data-profile-editor-state":
+        selectedField === field
+          ? "selected"
+          : hoveredField === field
+            ? "hovered"
+            : "idle",
+      onMouseEnter: () => setHoveredField(field),
+      onMouseLeave: () => setHoveredField(null),
+      onFocus: () => highlightField(field),
+      onBlur: (event: React.FocusEvent<HTMLDivElement>) => {
+        const nextTarget = event.relatedTarget
+        if (
+          !(nextTarget instanceof Node) ||
+          !event.currentTarget.contains(nextTarget)
+        ) {
+          clearSelectedField(field)
+        }
+      },
+    }),
+    [
+      clearSelectedField,
+      highlightField,
+      hoveredField,
+      selectedField,
+      setHoveredField,
+    ]
+  )
 
   const markDirty = useCallback(() => setDirty(true), [])
 
@@ -135,10 +243,17 @@ export function ProfileWorkspace({
   }, [dirty])
 
   const previewModel = buildTeacherPreviewModel({
-    profile: { ...profile, name, description: bio, location: location_ },
+    profile: {
+      ...profile,
+      name,
+      description: bio,
+      location: location_,
+      experience: parseExperience(experience),
+    },
     courses,
     avatarObjectUrl: avatarRemoved ? null : avatarUrl,
     publicAvatarUrl: avatarRemoved ? null : publicImageUrl,
+    locale,
   })
 
   async function handleSave() {
@@ -174,6 +289,7 @@ export function ProfileWorkspace({
         name: name.trim(),
         description: bio.trim() || null,
         location: location_.trim() || null,
+        experience: parseExperience(experience),
         img: imagePath,
       })
       if (!result.success) {
@@ -196,12 +312,13 @@ export function ProfileWorkspace({
   const editor = (
     <div className="space-y-4 p-4">
       <h2 className="text-lg font-bold">{copy.edit}</h2>
-      <div>
+      <div {...editorFieldEvents("name")}>
         <label htmlFor="profile-name" className="block text-sm font-medium">
           {copy.name}
         </label>
         <input
           id="profile-name"
+          data-profile-editor-input="name"
           type="text"
           value={name}
           maxLength={100}
@@ -209,44 +326,80 @@ export function ProfileWorkspace({
             setName(e.target.value)
             markDirty()
           }}
-          className="w-full rounded-lg border border-border px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+          className={cn(
+            "w-full rounded-lg border border-border px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none",
+            editorControlClass("name")
+          )}
         />
       </div>
-      <div>
+      <div {...editorFieldEvents("bio")}>
         <label htmlFor="profile-bio" className="block text-sm font-medium">
           {copy.bio}
         </label>
         <textarea
           id="profile-bio"
+          data-profile-editor-input="bio"
           value={bio}
           maxLength={60}
           onChange={(e) => {
             setBio(e.target.value)
             markDirty()
           }}
-          className="w-full rounded-lg border border-border px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+          className={cn(
+            "w-full rounded-lg border border-border px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none",
+            editorControlClass("bio")
+          )}
           rows={3}
         />
         <p className="mt-1 text-end text-xs text-muted-foreground">
           {bio.length}/60
         </p>
       </div>
-      <div>
+      <div {...editorFieldEvents("location")}>
         <label htmlFor="profile-location" className="block text-sm font-medium">
           {copy.location}
         </label>
         <input
           id="profile-location"
+          data-profile-editor-input="location"
           type="text"
           value={location_}
           onChange={(e) => {
             setLocation(e.target.value)
             markDirty()
           }}
-          className="w-full rounded-lg border border-border px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
+          className={cn(
+            "w-full rounded-lg border border-border px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none",
+            editorControlClass("location")
+          )}
         />
       </div>
-      <div>
+      <div {...editorFieldEvents("experience")}>
+        <label
+          htmlFor="profile-experience"
+          className="block text-sm font-medium"
+        >
+          {copy.experience}
+        </label>
+        <input
+          id="profile-experience"
+          data-profile-editor-input="experience"
+          type="number"
+          min="0"
+          step="1"
+          inputMode="numeric"
+          value={experience}
+          onChange={(e) => {
+            setExperience(e.target.value)
+            markDirty()
+          }}
+          className={cn(
+            "w-full rounded-lg border border-border px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none",
+            editorControlClass("experience")
+          )}
+        />
+      </div>
+      <div {...editorFieldEvents("avatar")}>
         <Label htmlFor="profile-avatar">{copy.image}</Label>
         <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
           <Avatar size="lg" className="size-20">
@@ -266,6 +419,7 @@ export function ProfileWorkspace({
               onClear={() => handleAvatarChange(null)}
               disabled={saving}
               description={copy.avatarHint}
+              className={editorControlClass("avatar")}
             />
             {publicImageUrl && !avatarFile && avatarUrl && (
               <Button
@@ -315,6 +469,9 @@ export function ProfileWorkspace({
       locale={locale}
       deviceWidth={deviceWidth}
       onDeviceWidthChange={setDeviceWidth}
+      activeTab={activeTab}
+      onActiveTabChange={onActiveTabChange}
+      onFullPreviewOpenChange={onFullPreviewOpenChange}
     />
   )
 }

@@ -9,6 +9,7 @@ import type {
 } from "./types"
 import {
   ArrowLeft,
+  ArrowRight,
   BookOpen,
   ChevronDown,
   ChevronLeft,
@@ -21,20 +22,123 @@ import {
   Video,
 } from "lucide-react"
 import { useCourseBuilderBridge } from "@/features/course-management/course-builder-bridge"
+import type { CourseBuilderField } from "@/features/course-management/course-builder-bridge"
 import type { CourseBuilderNode } from "./types"
+import { cn } from "@/lib/utils"
 
-function formatDuration(minutes: number | null): string {
-  if (!minutes) return "المدة غير محددة"
-  if (minutes < 60) return `${minutes} دقيقة`
-  const hours = Math.floor(minutes / 60)
-  const remainder = minutes % 60
-  return remainder ? `${hours} س ${remainder} د` : `${hours} ساعات`
+type CoursePreviewCopy = {
+  backToDiscovery: string
+  teacherLabel: (subject: string) => string
+  fallbackDescription: string
+  lessonCount: (count: number) => string
+  examCount: (count: number) => string
+  durationUnknown: string
+  durationMinutes: (count: number) => string
+  durationHours: (hours: number, minutes: number) => string
+  subscribeCta: (price: string) => string
+  sectionCount: (count: number) => string
+  navLabel: string
+  tabs: readonly string[]
+  comingSoon: (tab: string) => string
+  contentTitle: string
+  contentSummary: (lessons: number, duration: string) => string
+  contentSummaryEmpty: string
+  emptyTitle: string
+  emptyBody: string
+  chapterFallback: string
+  chapterSummary: (lessons: number, duration: string) => string
+  video: string
+  files: string
+  exam: string
+  itemFallback: string
+  accessRequired: string
+  emptyLesson: string
+  selectItem: string
 }
 
-function formatPrice(value: string | number): string {
-  return new Intl.NumberFormat("ar-EG", { maximumFractionDigits: 2 }).format(
-    Number(value)
-  )
+const COURSE_PREVIEW_COPY: Record<"ar" | "en", CoursePreviewCopy> = {
+  ar: {
+    backToDiscovery: "العودة إلى الاستكشاف",
+    teacherLabel: (subject) => `مدرس ${subject || "الكورس"}`,
+    fallbackDescription: "تابع محتوى الكورس ودروس المدرس من مكان واحد.",
+    lessonCount: (count) => `${count} درس`,
+    examCount: (count) => `${count} اختبار`,
+    durationUnknown: "المدة غير محددة",
+    durationMinutes: (count) => `${count} دقيقة`,
+    durationHours: (hours, minutes) =>
+      minutes ? `${hours} س ${minutes} د` : `${hours} ساعات`,
+    subscribeCta: (price) => `اشترك الآن - ${price} ج.م`,
+    sectionCount: (count) => `${count} ${count === 1 ? "وحدة" : "وحدات"}`,
+    navLabel: "أقسام الكورس",
+    tabs: ["المحتوى", "الاختبارات", "الملفات", "المناقشات", "التقدم"],
+    comingSoon: (tab) => `${tab} - قريباً`,
+    contentTitle: "خطة الكورس",
+    contentSummary: (lessons, duration) => `${lessons} درس · ${duration}`,
+    contentSummaryEmpty: "سيظهر المحتوى المنشور هنا",
+    emptyTitle: "محتوى الكورس غير متاح حالياً",
+    emptyBody: "عند نشر المدرس للدروس والمواد التعليمية ستظهر هنا تلقائياً.",
+    chapterFallback: "دروس الكورس",
+    chapterSummary: (lessons, duration) => `${lessons} دروس · ${duration}`,
+    video: "فيديو",
+    files: "ملفات",
+    exam: "اختبار",
+    itemFallback: "محتوى الدرس",
+    accessRequired: "يتطلب الاشتراك",
+    emptyLesson: "لم تتم إضافة مواد لهذا الدرس بعد.",
+    selectItem: "تحديد العنصر للتعديل",
+  },
+  en: {
+    backToDiscovery: "Back to discovery",
+    teacherLabel: (subject) => `${subject || "Course"} instructor`,
+    fallbackDescription: "Follow the course content and lessons in one place.",
+    lessonCount: (count) => `${count} ${count === 1 ? "lesson" : "lessons"}`,
+    examCount: (count) => `${count} ${count === 1 ? "exam" : "exams"}`,
+    durationUnknown: "Duration not specified",
+    durationMinutes: (count) => `${count} min`,
+    durationHours: (hours, minutes) =>
+      minutes
+        ? `${hours}h ${minutes}m`
+        : `${hours} ${hours === 1 ? "hour" : "hours"}`,
+    subscribeCta: (price) => `Subscribe now - ${price} EGP`,
+    sectionCount: (count) => `${count} ${count === 1 ? "section" : "sections"}`,
+    navLabel: "Course sections",
+    tabs: ["Content", "Quizzes", "Files", "Discussions", "Progress"],
+    comingSoon: (tab) => `${tab} - Coming soon`,
+    contentTitle: "Course plan",
+    contentSummary: (lessons, duration) =>
+      `${lessons} ${lessons === 1 ? "lesson" : "lessons"} · ${duration}`,
+    contentSummaryEmpty: "Published content will appear here",
+    emptyTitle: "Course content is not available yet",
+    emptyBody:
+      "Once the teacher publishes lessons and learning materials, they will appear here automatically.",
+    chapterFallback: "Course lessons",
+    chapterSummary: (lessons, duration) =>
+      `${lessons} ${lessons === 1 ? "lesson" : "lessons"} · ${duration}`,
+    video: "Video",
+    files: "Files",
+    exam: "Quiz",
+    itemFallback: "Lesson content",
+    accessRequired: "Subscription required",
+    emptyLesson: "No materials have been added to this lesson yet.",
+    selectItem: "Select item to edit",
+  },
+}
+
+function formatDuration(
+  minutes: number | null,
+  copy: CoursePreviewCopy
+): string {
+  if (!minutes) return copy.durationUnknown
+  if (minutes < 60) return copy.durationMinutes(minutes)
+  const hours = Math.floor(minutes / 60)
+  const remainder = minutes % 60
+  return copy.durationHours(hours, remainder)
+}
+
+function formatPrice(value: string | number, lang: "ar" | "en"): string {
+  return new Intl.NumberFormat(lang === "ar" ? "ar-EG" : "en-EG", {
+    maximumFractionDigits: 2,
+  }).format(Number(value))
 }
 
 function chapterDuration(
@@ -44,10 +148,71 @@ function chapterDuration(
   return total || null
 }
 
+function sameNode(
+  left: CourseBuilderNode | null,
+  right: CourseBuilderNode
+): boolean {
+  return left?.type === right.type && String(left.id) === String(right.id)
+}
+
+function CoursePreviewField({
+  field,
+  ariaLabel,
+  className,
+  overlay = true,
+  children,
+}: {
+  field: CourseBuilderField
+  ariaLabel: string
+  className?: string
+  overlay?: boolean
+  children: React.ReactNode
+}) {
+  const { enabled, hoveredField, selectedField, setHoveredField, selectField } =
+    useCourseBuilderBridge()
+  const active = enabled && (hoveredField === field || selectedField === field)
+
+  return (
+    <div
+      data-course-preview-field={field}
+      data-course-preview-state={
+        enabled && selectedField === field
+          ? "selected"
+          : enabled && hoveredField === field
+            ? "hovered"
+            : "idle"
+      }
+      className={cn(
+        "relative transition-[box-shadow,background-color] duration-200 outline-none",
+        className,
+        enabled && "cursor-pointer",
+        active &&
+          "bg-primary/5 shadow-[0_0_22px_rgb(14_165_233_/_0.2)] ring-2 ring-sky-400/75 ring-offset-2 ring-offset-[var(--page)]"
+      )}
+      onMouseEnter={() => enabled && setHoveredField(field)}
+      onMouseLeave={() => setHoveredField(null)}
+      onClick={!overlay && enabled ? () => selectField(field) : undefined}
+    >
+      {children}
+      {enabled && overlay && (
+        <button
+          type="button"
+          aria-label={ariaLabel}
+          className="absolute inset-0 z-10 cursor-pointer rounded-[inherit] border-0 bg-transparent p-0 outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--page)]"
+          onMouseEnter={() => setHoveredField(field)}
+          onMouseLeave={() => setHoveredField(null)}
+          onClick={() => selectField(field)}
+        />
+      )}
+    </div>
+  )
+}
+
 interface StudentCourseDetailPreviewProps {
   model: StudentCoursePreviewModel
   locale: string
-  viewer: "guest" | "subscribed"
+  /** @deprecated The preview always represents the public student view. */
+  viewer?: "guest" | "subscribed"
   interactionMode: PreviewInteractionMode
   onCurriculumCommitted?: () => void
   selectedNode?: CourseBuilderNode | null
@@ -57,14 +222,20 @@ interface StudentCourseDetailPreviewProps {
 
 export function StudentCourseDetailPreview({
   model,
-  viewer,
+  locale,
   selectedNode: selectedNodeProp,
   onSelectNode: onSelectNodeProp,
   showEditAffordance = false,
 }: StudentCourseDetailPreviewProps) {
+  const lang = locale.toLowerCase().startsWith("ar") ? "ar" : "en"
+  const copy = COURSE_PREVIEW_COPY[lang]
   const bridge = useCourseBuilderBridge()
   const selectedNode =
-    selectedNodeProp === undefined ? bridge.selectedNode : selectedNodeProp
+    selectedNodeProp === undefined
+      ? bridge.enabled
+        ? bridge.selectedNode
+        : null
+      : selectedNodeProp
   const onSelectNode = onSelectNodeProp ?? bridge.selectNode
   const previewSelectionRef = useRef(false)
   const sections = model.sections
@@ -135,26 +306,40 @@ export function StudentCourseDetailPreview({
     }
 
     const selectedSection =
-      selectedNode.type === "chapter"
-        ? sectionsWithLessons.find((section) => section.id === selectedNode.id)
-        : sectionsWithLessons.find((section) =>
-            section.lessons.some((lesson) =>
-              selectedNode.type === "lesson"
-                ? lesson.id === selectedNode.id
-                : lesson.items.some((item) => item.id === selectedNode.id)
-            )
+      selectedNode.chapterId !== undefined
+        ? sectionsWithLessons.find(
+            (section) => String(section.id) === String(selectedNode.chapterId)
           )
+        : selectedNode.type === "chapter"
+          ? sectionsWithLessons.find(
+              (section) => String(section.id) === String(selectedNode.id)
+            )
+          : sectionsWithLessons.find((section) =>
+              section.lessons.some((lesson) =>
+                selectedNode.type === "lesson"
+                  ? String(lesson.id) === String(selectedNode.id)
+                  : lesson.items.some(
+                      (item) => String(item.id) === String(selectedNode.id)
+                    )
+              )
+            )
 
     if (!selectedSection) return
 
     const selectedLesson =
       selectedNode.type === "chapter"
         ? selectedSection.lessons[0]
-        : selectedSection.lessons.find((lesson) =>
-            selectedNode.type === "lesson"
-              ? lesson.id === selectedNode.id
-              : lesson.items.some((item) => item.id === selectedNode.id)
-          )
+        : selectedNode.lessonId !== undefined
+          ? selectedSection.lessons.find(
+              (lesson) => String(lesson.id) === String(selectedNode.lessonId)
+            )
+          : selectedSection.lessons.find((lesson) =>
+              selectedNode.type === "lesson"
+                ? String(lesson.id) === String(selectedNode.id)
+                : lesson.items.some(
+                    (item) => String(item.id) === String(selectedNode.id)
+                  )
+            )
 
     const timeout = window.setTimeout(() => {
       setExpandedChapterId(selectedSection.id)
@@ -164,18 +349,34 @@ export function StudentCourseDetailPreview({
     return () => window.clearTimeout(timeout)
   }, [sectionsWithLessons, selectedNode])
 
-  const enrolled = viewer === "subscribed"
+  const fieldEditLabels: Record<CourseBuilderField, string> =
+    lang === "ar"
+      ? {
+          title: "تعديل عنوان الكورس",
+          description: "تعديل وصف الكورس",
+          price: "تعديل سعر الكورس",
+        }
+      : {
+          title: "Edit course title",
+          description: "Edit course description",
+          price: "Edit course price",
+        }
 
   return (
-    <div dir="rtl" className="student-preview min-h-full bg-[var(--page)] text-[var(--on-surface)]">
+    <div
+      dir={lang === "ar" ? "rtl" : "ltr"}
+      className="student-preview min-h-full bg-[var(--page)] text-[var(--on-surface)]"
+    >
       <div className="mx-auto max-w-7xl px-4 py-7 @sm/preview:px-6 @sm/preview:py-8 @lg/preview:px-8">
         {/* The preview keeps this navigation inert, while preserving the student-facing styling. */}
         <span
           aria-disabled="true"
           className="mb-5 inline-flex items-center gap-2 text-sm font-bold text-[var(--on-surface-muted)] transition-colors hover:text-[var(--brand-indigo-deep)]"
         >
-          <ChevronLeft className="size-4 rotate-180" />
-          {enrolled ? "العودة إلى دوراتي" : "العودة إلى الاستكشاف"}
+          <ChevronLeft
+            className={`size-4 ${lang === "ar" ? "rotate-180" : ""}`}
+          />
+          {copy.backToDiscovery}
         </span>
 
         {/* Course hero */}
@@ -197,12 +398,18 @@ export function StudentCourseDetailPreview({
                   </span>
                 )}
               </div>
-              <h1
-                id="course-preview-title"
-                className="text-3xl leading-tight font-black text-[var(--on-surface)] @sm/preview:text-4xl"
+              <CoursePreviewField
+                field="title"
+                ariaLabel={fieldEditLabels.title}
+                className="rounded-lg"
               >
-                {model.title}
-              </h1>
+                <h1
+                  id="course-preview-title"
+                  className="text-3xl leading-tight font-black text-[var(--on-surface)] @sm/preview:text-4xl"
+                >
+                  {model.title}
+                </h1>
+              </CoursePreviewField>
               {model.teacher && (
                 <div className="mt-5 flex w-fit items-center gap-3 rounded-lg">
                   {model.teacher.avatarUrl ? (
@@ -221,51 +428,56 @@ export function StudentCourseDetailPreview({
                       {model.teacher.name}
                     </strong>
                     <span className="text-xs text-[var(--on-surface-muted)]">
-                      مدرس {model.subject || "الكورس"}
+                      {copy.teacherLabel(model.subject ?? "")}
                     </span>
                   </span>
                 </div>
               )}
-              <p className="mt-5 text-sm leading-7 text-[var(--on-surface-body)] @sm/preview:text-base">
-                {model.description ||
-                  "تابع محتوى الكورس ودروس المدرس من مكان واحد."}
-              </p>
+              <CoursePreviewField
+                field="description"
+                ariaLabel={fieldEditLabels.description}
+                className="mt-5 rounded-lg"
+              >
+                <p className="text-sm leading-7 text-[var(--on-surface-body)] @sm/preview:text-base">
+                  {model.description || copy.fallbackDescription}
+                </p>
+              </CoursePreviewField>
             </div>
 
             <div className="w-full @lg/preview:w-auto">
               <div className="mb-5 grid grid-cols-3 gap-5 text-center text-xs font-bold text-[var(--on-surface-body)] @sm/preview:flex @sm/preview:justify-end">
                 <span className="grid justify-items-center gap-1">
                   <PlayCircle className="size-5 text-[var(--brand-indigo)]" />
-                  {totalLessons} درس
+                  {copy.lessonCount(totalLessons)}
                 </span>
                 <span className="grid justify-items-center gap-1">
                   <Clock3 className="size-5 text-[var(--brand-indigo)]" />
-                  {formatDuration(totalDuration)}
+                  {formatDuration(totalDuration, copy)}
                 </span>
                 <span className="grid justify-items-center gap-1">
                   <ClipboardList className="size-5 text-[var(--brand-indigo)]" />
-                  {totalExams} اختبار
+                  {copy.examCount(totalExams)}
                 </span>
               </div>
-              {enrolled ? (
+              <CoursePreviewField
+                field="price"
+                ariaLabel={fieldEditLabels.price}
+                overlay={false}
+                className="rounded-xl"
+              >
                 <button
                   type="button"
                   aria-disabled="true"
                   className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--brand-indigo)] px-7 text-sm font-black text-[var(--on-primary)] transition-colors hover:bg-[var(--brand-indigo-deep)] @lg/preview:w-auto"
                 >
-                  عرض محتوى الكورس
-                  <ArrowLeft className="size-4" />
+                  {copy.subscribeCta(formatPrice(model.price, lang))}
+                  {lang === "ar" ? (
+                    <ArrowLeft className="size-4" />
+                  ) : (
+                    <ArrowRight className="size-4" />
+                  )}
                 </button>
-              ) : (
-                <button
-                  type="button"
-                  aria-disabled="true"
-                  className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--brand-indigo)] px-7 text-sm font-black text-[var(--on-primary)] transition-colors hover:bg-[var(--brand-indigo-deep)] @lg/preview:w-auto"
-                >
-                  اشترك الآن - {formatPrice(model.price)} ج.م
-                  <ArrowLeft className="size-4" />
-                </button>
-              )}
+              </CoursePreviewField>
             </div>
           </div>
 
@@ -273,7 +485,7 @@ export function StudentCourseDetailPreview({
             {!!sections.length && (
               <span className="inline-flex items-center gap-2">
                 <FolderOpen className="size-4 text-[var(--brand-indigo)]" />
-                {sections.length} {sections.length === 1 ? "وحدة" : "وحدات"}
+                {copy.sectionCount(sections.length)}
               </span>
             )}
           </div>
@@ -282,33 +494,41 @@ export function StudentCourseDetailPreview({
         {/* Tabs (disabled except content) */}
         <nav
           className="mt-8 flex gap-2 overflow-x-auto border-b border-[var(--border)]"
-          aria-label="أقسام الكورس"
+          aria-label={copy.navLabel}
         >
-          {["المحتوى", "الاختبارات", "الملفات", "المناقشات", "التقدم"].map(
-            (tab, index) => (
-              <button
-                key={tab}
-                type="button"
-                disabled={index !== 0}
-                title={index !== 0 ? `${tab} - قريباً` : undefined}
-                className={`shrink-0 border-b-2 px-4 py-3 text-sm font-black ${index === 0 ? "border-[var(--brand-indigo)] text-[var(--brand-indigo-deep)]" : "cursor-not-allowed border-transparent text-[var(--on-surface-subtle)]"}`}
-              >
-                {tab}
-              </button>
-            )
-          )}
+          {copy.tabs.map((tab, index) => (
+            <button
+              key={tab}
+              type="button"
+              disabled={index !== 0}
+              title={index !== 0 ? copy.comingSoon(tab) : undefined}
+              className={`shrink-0 border-b-2 px-4 py-3 text-sm font-black ${index === 0 ? "border-[var(--brand-indigo)] text-[var(--brand-indigo-deep)]" : "cursor-not-allowed border-transparent text-[var(--on-surface-subtle)]"}`}
+            >
+              {tab}
+            </button>
+          ))}
         </nav>
 
         {/* Content section */}
-        <section id="course-preview-content" className="scroll-mt-24 pt-8" aria-labelledby="course-preview-content-title">
+        <section
+          id="course-preview-content"
+          className="scroll-mt-24 pt-8"
+          aria-labelledby="course-preview-content-title"
+        >
           <div className="mb-5 flex flex-wrap items-end justify-between gap-3 px-1">
-            <h2 id="course-preview-content-title" className="text-2xl font-black text-[var(--on-surface)] @sm/preview:text-3xl">
-              {enrolled ? "محتوى الكورس" : "خطة الكورس"}
+            <h2
+              id="course-preview-content-title"
+              className="text-2xl font-black text-[var(--on-surface)] @sm/preview:text-3xl"
+            >
+              {copy.contentTitle}
             </h2>
             <p className="text-xs font-bold text-[var(--on-surface-muted)]">
               {totalLessons
-                ? `${totalLessons} درس · ${formatDuration(totalDuration)}`
-                : "سيظهر المحتوى المنشور هنا"}
+                ? copy.contentSummary(
+                    totalLessons,
+                    formatDuration(totalDuration, copy)
+                  )
+                : copy.contentSummaryEmpty}
             </p>
           </div>
 
@@ -323,7 +543,7 @@ export function StudentCourseDetailPreview({
                   expandedLessonId={expandedLessonId}
                   onToggleChapter={() => toggleChapter(section.id)}
                   onToggleLesson={toggleLesson}
-                  viewer={viewer}
+                  copy={copy}
                   selectedNode={selectedNode}
                   onSelectNode={selectPreviewNode}
                   showEditAffordance={showEditAffordance}
@@ -333,11 +553,9 @@ export function StudentCourseDetailPreview({
           ) : (
             <div className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 text-center">
               <BookOpen className="mb-4 size-10 text-[var(--brand-indigo-icon)]" />
-              <h3 className="text-lg font-black">
-                محتوى الكورس غير متاح حالياً
-              </h3>
-              <p className="mt-2 max-w-md text-sm leading-6 text-[var(--on-surface-muted)]">
-                عند نشر المدرس للدروس والمواد التعليمية ستظهر هنا تلقائياً.
+              <h3 className="text-lg font-black">{copy.emptyTitle}</h3>
+              <p className="mt-2 w-full text-sm leading-6 text-[var(--on-surface-muted)]">
+                {copy.emptyBody}
               </p>
             </div>
           )}
@@ -354,7 +572,7 @@ function Section({
   expandedLessonId,
   onToggleChapter,
   onToggleLesson,
-  viewer,
+  copy,
   selectedNode,
   onSelectNode,
   showEditAffordance,
@@ -365,7 +583,7 @@ function Section({
   expandedLessonId: string | number | null
   onToggleChapter: () => void
   onToggleLesson: (id: string | number) => void
-  viewer: "guest" | "subscribed"
+  copy: CoursePreviewCopy
   selectedNode: CourseBuilderNode | null
   onSelectNode: (node: CourseBuilderNode) => void
   showEditAffordance: boolean
@@ -373,8 +591,10 @@ function Section({
   const duration = chapterDuration(section.lessons)
   const headingId = `course-preview-chapter-${sectionIndex}`
   const contentId = `${headingId}-content`
-  const isSelected =
-    selectedNode?.type === "chapter" && selectedNode.id === section.id
+  const { enabled, hoveredNode, setHoveredNode } = useCourseBuilderBridge()
+  const node: CourseBuilderNode = { type: "chapter", id: section.id }
+  const isSelected = sameNode(selectedNode, node)
+  const isHovered = sameNode(hoveredNode, node)
 
   return (
     <section
@@ -386,36 +606,47 @@ function Section({
         aria-expanded={expanded}
         aria-controls={contentId}
         onClick={() => {
-          onSelectNode({ type: "chapter", id: section.id })
+          onSelectNode(node)
           onToggleChapter()
         }}
-        className={`flex min-h-15 w-full cursor-pointer items-center gap-4 px-4 py-4 text-start transition-colors @sm/preview:px-5 ${expanded ? "bg-[var(--surface-muted)]" : "hover:bg-[var(--surface-strong)]"} ${isSelected ? "ring-2 ring-inset ring-[var(--brand-indigo)]" : ""}`}
+        data-course-preview-node-type="chapter"
+        data-course-preview-node-id={section.id}
+        onMouseEnter={() => enabled && setHoveredNode(node)}
+        onMouseLeave={() => setHoveredNode(null)}
+        className={`flex min-h-15 w-full cursor-pointer items-center gap-4 px-4 py-4 text-start transition-colors @sm/preview:px-5 ${expanded ? "bg-[var(--surface-muted)]" : "hover:bg-[var(--surface-strong)]"} ${isHovered ? "ring-2 ring-sky-400/70 ring-inset" : ""} ${isSelected ? "ring-2 ring-[var(--brand-indigo)] ring-inset" : ""}`}
       >
         <span className="flex min-w-0 flex-1 items-center gap-2">
           <h3
             id={headingId}
             className={`truncate text-base font-black @sm/preview:text-lg ${expanded ? "text-[var(--brand-indigo-deep)]" : "text-[var(--on-surface-strong)]"}`}
           >
-            {section.title || "دروس الكورس"}
+            {section.title || copy.chapterFallback}
           </h3>
           <ChevronDown
             className={`size-4 shrink-0 text-[var(--on-surface-muted)] transition-transform motion-reduce:transition-none ${expanded ? "rotate-180" : ""}`}
           />
         </span>
         <span className="shrink-0 text-xs font-medium text-[var(--on-surface-muted)]">
-          {section.lessons.length} دروس · {formatDuration(duration)}
+          {copy.chapterSummary(
+            section.lessons.length,
+            formatDuration(duration, copy)
+          )}
         </span>
       </button>
 
       {expanded && (
-        <div id={contentId} className="overflow-hidden border-t border-[var(--border-strong)]">
+        <div
+          id={contentId}
+          className="overflow-hidden border-t border-[var(--border-strong)]"
+        >
           {section.lessons.map((lesson) => (
             <LessonRow
               key={lesson.id}
               lesson={lesson}
+              chapterId={section.id}
               expanded={expandedLessonId === lesson.id}
               onToggle={() => onToggleLesson(lesson.id)}
-              viewer={viewer}
+              copy={copy}
               selectedNode={selectedNode}
               onSelectNode={onSelectNode}
               showEditAffordance={showEditAffordance}
@@ -427,11 +658,72 @@ function Section({
   )
 }
 
+function ItemPreviewRow({
+  item,
+  chapterId,
+  lessonId,
+  showEditAffordance,
+  selectedNode,
+  onSelectNode,
+  children,
+}: {
+  item: {
+    id: string | number
+    title: string
+    hasVideo: boolean
+    hasDocument: boolean
+    hasExam: boolean
+  }
+  chapterId: string | number
+  lessonId: string | number
+  showEditAffordance: boolean
+  selectedNode: CourseBuilderNode | null
+  onSelectNode: (node: CourseBuilderNode) => void
+  children: React.ReactNode
+}) {
+  const { enabled, hoveredNode, setHoveredNode } = useCourseBuilderBridge()
+  const node: CourseBuilderNode = {
+    type: "item",
+    id: item.id,
+    chapterId,
+    lessonId,
+  }
+  const interactive = showEditAffordance && enabled
+  const isSelected = sameNode(selectedNode, node)
+  const isHovered = sameNode(hoveredNode, node)
+
+  return (
+    <div
+      data-course-preview-node-type="item"
+      data-course-preview-node-id={item.id}
+      className={`group flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-3 text-start transition-colors ${interactive ? "cursor-pointer hover:border-[var(--brand-indigo-border)] hover:bg-[var(--surface-muted)]" : ""} ${isHovered ? "ring-2 ring-sky-400/70 ring-inset" : ""} ${isSelected ? "ring-2 ring-[var(--brand-indigo)] ring-inset" : ""}`}
+      role={interactive ? "button" : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      onMouseEnter={() => interactive && setHoveredNode(node)}
+      onMouseLeave={() => setHoveredNode(null)}
+      onClick={interactive ? () => onSelectNode(node) : undefined}
+      onKeyDown={
+        interactive
+          ? (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault()
+                onSelectNode(node)
+              }
+            }
+          : undefined
+      }
+    >
+      {children}
+    </div>
+  )
+}
+
 function LessonRow({
   lesson,
+  chapterId,
   expanded,
   onToggle,
-  viewer,
+  copy,
   selectedNode,
   onSelectNode,
   showEditAffordance,
@@ -449,31 +741,42 @@ function LessonRow({
       hasExam: boolean
     }[]
   }
+  chapterId: string | number
   expanded: boolean
   onToggle: () => void
-  viewer: "guest" | "subscribed"
+  copy: CoursePreviewCopy
   selectedNode: CourseBuilderNode | null
   onSelectNode: (node: CourseBuilderNode) => void
   showEditAffordance: boolean
 }) {
+  const { enabled, hoveredNode, setHoveredNode } = useCourseBuilderBridge()
+  const node: CourseBuilderNode = {
+    type: "lesson",
+    id: lesson.id,
+    chapterId,
+  }
   const hasVideo = lesson.items.some((i) => i.hasVideo)
   const hasDocument = lesson.items.some((i) => i.hasDocument)
   const hasExam = lesson.items.some((i) => i.hasExam)
   const contentId = `course-preview-lesson-${lesson.id}`
-  const isSelected =
-    selectedNode?.type === "lesson" && selectedNode.id === lesson.id
+  const isSelected = sameNode(selectedNode, node)
+  const isHovered = sameNode(hoveredNode, node)
 
   return (
     <div className="border-b border-[var(--border-subtle)] last:border-b-0">
       <button
         type="button"
         onClick={() => {
-          onSelectNode({ type: "lesson", id: lesson.id })
+          onSelectNode(node)
           onToggle()
         }}
         aria-expanded={expanded}
         aria-controls={contentId}
-        className={`flex min-h-18 w-full cursor-pointer items-center gap-3 px-4 py-3.5 text-start transition-colors hover:bg-[var(--surface-muted)] @sm/preview:px-5 ${isSelected ? "bg-[var(--surface-muted)] ring-2 ring-inset ring-[var(--brand-indigo)]" : ""}`}
+        data-course-preview-node-type="lesson"
+        data-course-preview-node-id={lesson.id}
+        onMouseEnter={() => enabled && setHoveredNode(node)}
+        onMouseLeave={() => setHoveredNode(null)}
+        className={`flex min-h-18 w-full cursor-pointer items-center gap-3 px-4 py-3.5 text-start transition-colors hover:bg-[var(--surface-muted)] @sm/preview:px-5 ${isHovered ? "ring-2 ring-sky-400/70 ring-inset" : ""} ${isSelected ? "bg-[var(--surface-muted)] ring-2 ring-[var(--brand-indigo)] ring-inset" : ""}`}
       >
         <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--surface-muted)] text-[var(--brand-indigo)]">
           {hasVideo ? (
@@ -489,10 +792,10 @@ function LessonRow({
             {lesson.title}
           </strong>
           <span className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-[var(--on-surface-muted)]">
-            <span>{formatDuration(lesson.durationMinutes)}</span>
-            {hasVideo && <span>فيديو</span>}
-            {hasDocument && <span>ملفات</span>}
-            {hasExam && <span>اختبار</span>}
+            <span>{formatDuration(lesson.durationMinutes, copy)}</span>
+            {hasVideo && <span>{copy.video}</span>}
+            {hasDocument && <span>{copy.files}</span>}
+            {hasExam && <span>{copy.exam}</span>}
           </span>
         </span>
         <ChevronLeft
@@ -501,9 +804,18 @@ function LessonRow({
       </button>
 
       {expanded && (
-        <div id={contentId} className="space-y-2 overflow-hidden bg-[var(--surface-strong)] px-4 py-4 @sm/preview:ps-16">
+        <div
+          id={contentId}
+          className="space-y-2 overflow-hidden bg-[var(--surface-strong)] px-4 py-4 @sm/preview:ps-16"
+        >
           {lesson.description && (
-            <p className="pb-2 text-sm leading-6 text-[var(--on-surface-muted)]">
+            <p
+              className="pb-2 text-sm leading-6 text-[var(--on-surface-muted)]"
+              data-course-preview-node-type="lesson"
+              data-course-preview-node-id={lesson.id}
+              onMouseEnter={() => enabled && setHoveredNode(node)}
+              onMouseLeave={() => setHoveredNode(null)}
+            >
               {lesson.description}
             </p>
           )}
@@ -515,34 +827,22 @@ function LessonRow({
                   ? FileText
                   : ClipboardList
               const itemMeta = [
-                item.hasVideo ? "فيديو" : null,
-                item.hasDocument ? "ملف" : null,
-                item.hasExam ? "اختبار" : null,
+                item.hasVideo ? copy.video : null,
+                item.hasDocument ? copy.files : null,
+                item.hasExam ? copy.exam : null,
               ]
                 .filter(Boolean)
                 .join(" · ")
 
               return (
-                <div
+                <ItemPreviewRow
                   key={item.id}
-                  className={`group flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-3 text-start transition-colors ${showEditAffordance ? "cursor-pointer hover:border-[var(--brand-indigo-border)] hover:bg-[var(--surface-muted)]" : ""} ${selectedNode?.type === "item" && selectedNode.id === item.id ? "ring-2 ring-inset ring-[var(--brand-indigo)]" : ""}`}
-                  role={showEditAffordance ? "button" : undefined}
-                  tabIndex={showEditAffordance ? 0 : undefined}
-                  onClick={
-                    showEditAffordance
-                      ? () => onSelectNode({ type: "item", id: item.id })
-                      : undefined
-                  }
-                  onKeyDown={
-                    showEditAffordance
-                      ? (event) => {
-                          if (event.key === "Enter" || event.key === " ") {
-                            event.preventDefault()
-                            onSelectNode({ type: "item", id: item.id })
-                          }
-                        }
-                      : undefined
-                  }
+                  item={item}
+                  chapterId={chapterId}
+                  lessonId={lesson.id}
+                  showEditAffordance={showEditAffordance}
+                  selectedNode={selectedNode}
+                  onSelectNode={onSelectNode}
                 >
                   <ItemIcon className="size-5 shrink-0 text-[var(--on-surface-muted)]" />
                   <span className="min-w-0 flex-1">
@@ -550,22 +850,22 @@ function LessonRow({
                       {item.title}
                     </strong>
                     <span className="text-xs text-[var(--on-surface-muted)]">
-                      {itemMeta || "محتوى الدرس"}
+                      {itemMeta || copy.itemFallback}
                     </span>
                   </span>
                   <span className="inline-flex shrink-0 items-center gap-1 text-xs font-bold text-[var(--on-surface-subtle)]">
-                    {viewer === "guest" && <LockKeyhole className="size-3.5" />}
-                    {viewer === "guest" ? "يتطلب الاشتراك" : "غير متاح حالياً"}
+                    <LockKeyhole className="size-3.5" />
+                    {copy.accessRequired}
                   </span>
                   {showEditAffordance && (
-                    <span className="sr-only">تحديد العنصر للتعديل</span>
+                    <span className="sr-only">{copy.selectItem}</span>
                   )}
-                </div>
+                </ItemPreviewRow>
               )
             })
           ) : (
             <p className="text-sm font-medium text-[var(--on-surface-muted)]">
-              لم تتم إضافة مواد لهذا الدرس بعد.
+              {copy.emptyLesson}
             </p>
           )}
         </div>

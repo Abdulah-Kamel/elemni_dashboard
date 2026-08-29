@@ -67,6 +67,160 @@ describe("ProfileWorkspace", () => {
     expect(screen.getByText("محمد علي")).toBeDefined()
   })
 
+  it("updates the preview experience stat from the editor", () => {
+    render(
+      <ProfileWorkspace
+        profile={mockProfile}
+        courses={mockCourses}
+        locale="en"
+        publicImageUrl={null}
+      />
+    )
+
+    const experienceInput = screen.getByLabelText("Years of experience")
+    expect((experienceInput as HTMLInputElement).value).toBe("5")
+
+    fireEvent.change(experienceInput, { target: { value: "8" } })
+    expect(
+      document.querySelector('[data-profile-preview-field="experience"]')
+        ?.textContent
+    ).toContain("8 years of experience")
+  })
+
+  it("highlights the matching editor field while hovering its preview", () => {
+    render(
+      <ProfileWorkspace
+        profile={mockProfile}
+        courses={mockCourses}
+        locale="ar"
+        publicImageUrl={null}
+      />
+    )
+
+    const previewName = document.querySelector(
+      '[data-profile-preview-field="name"]'
+    )
+    const editorName = document.querySelector(
+      '[data-profile-editor-field="name"]'
+    )
+    const nameInput = document.querySelector(
+      '[data-profile-editor-input="name"]'
+    )
+    expect(previewName).not.toBeNull()
+    expect(editorName).not.toBeNull()
+    expect(nameInput).not.toBeNull()
+
+    fireEvent.mouseEnter(previewName!)
+    expect(editorName!.getAttribute("data-profile-editor-state")).toBe(
+      "hovered"
+    )
+    expect(editorName!.className).not.toContain("ring-primary/30")
+    expect(nameInput!.className).toContain("ring-primary/30")
+
+    fireEvent.mouseLeave(previewName!)
+    expect(editorName!.getAttribute("data-profile-editor-state")).toBe("idle")
+    expect(nameInput!.className).not.toContain("ring-primary/30")
+  })
+
+  it("focuses the matching editor control when a preview field is clicked", () => {
+    render(
+      <ProfileWorkspace
+        profile={mockProfile}
+        courses={mockCourses}
+        locale="ar"
+        publicImageUrl={null}
+      />
+    )
+
+    const bioInput = document.getElementById("profile-bio")
+    expect(bioInput).not.toBeNull()
+
+    // Exercise the compact layout path: the preview tab is visible while the
+    // editor tab is hidden, so activation must reveal the editor first.
+    fireEvent.click(screen.getByRole("tab", { name: "معاينة" }))
+    fireEvent.click(screen.getByRole("button", { name: "تعديل النبذة" }))
+    expect(
+      screen.getByRole("tab", { name: "تعديل" }).getAttribute("aria-selected")
+    ).toBe("true")
+    expect(document.activeElement).toBe(bioInput)
+  })
+
+  it("focuses the avatar drop region from the preview avatar", () => {
+    render(
+      <ProfileWorkspace
+        profile={mockProfile}
+        courses={mockCourses}
+        locale="ar"
+        publicImageUrl={null}
+      />
+    )
+
+    const dropRegion = document.querySelector(
+      '[data-profile-editor-field="avatar"] [data-testid="drop-region"]'
+    )
+    expect(dropRegion).not.toBeNull()
+
+    fireEvent.click(screen.getByRole("button", { name: "تعديل الصورة" }))
+    expect(document.activeElement).toBe(dropRegion)
+  })
+
+  it("focuses the location input from its preview stat", () => {
+    render(
+      <ProfileWorkspace
+        profile={mockProfile}
+        courses={mockCourses}
+        locale="ar"
+        publicImageUrl={null}
+      />
+    )
+
+    const locationInput = document.getElementById("profile-location")
+    expect(locationInput).not.toBeNull()
+
+    fireEvent.click(screen.getByRole("button", { name: "تعديل الموقع" }))
+    expect(document.activeElement).toBe(locationInput)
+  })
+
+  it("lets keyboard focus move through avatar actions without snapping back", () => {
+    render(
+      <ProfileWorkspace
+        profile={mockProfile}
+        courses={mockCourses}
+        locale="en"
+        publicImageUrl={null}
+      />
+    )
+
+    const input = document.getElementById("profile-avatar") as HTMLInputElement
+    fireEvent.change(input, {
+      target: {
+        files: [new File(["data"], "avatar.png", { type: "image/png" })],
+      },
+    })
+
+    const dropRegion = screen.getByTestId("drop-region")
+    const clearButton = screen.getByRole("button", { name: /remove file/i })
+    dropRegion.focus()
+    clearButton.focus()
+
+    expect(document.activeElement).toBe(clearButton)
+  })
+
+  it("removes preview edit affordances while the full-preview dialog is open", () => {
+    render(
+      <ProfileWorkspace
+        profile={mockProfile}
+        courses={mockCourses}
+        locale="ar"
+        publicImageUrl={null}
+      />
+    )
+
+    fireEvent.click(screen.getByRole("button", { name: "معاينة" }))
+    expect(screen.getByRole("dialog")).toBeDefined()
+    expect(screen.queryByRole("button", { name: "تعديل الاسم" })).toBeNull()
+  })
+
   it("shows save button", () => {
     render(
       <ProfileWorkspace
@@ -204,9 +358,7 @@ describe("ProfileWorkspace", () => {
     const input = document.getElementById("profile-avatar") as HTMLInputElement
     fireEvent.change(input, {
       target: {
-        files: [
-          new File(["data"], "new.png", { type: "image/png" }),
-        ],
+        files: [new File(["data"], "new.png", { type: "image/png" })],
       },
     })
 
@@ -218,7 +370,8 @@ describe("ProfileWorkspace", () => {
     const images = screen.getAllByRole("img", { name: "أحمد علي" })
     expect(
       images.some(
-        (img) => img.getAttribute("src") === "https://cdn.example.com/avatar.webp"
+        (img) =>
+          img.getAttribute("src") === "https://cdn.example.com/avatar.webp"
       )
     ).toBe(true)
   })
@@ -235,7 +388,9 @@ describe("ProfileWorkspace", () => {
     // No persisted-avatar remove action should exist without an image.
     const buttons = screen.getAllByRole("button")
     const removeButtons = buttons.filter(
-      (btn) => btn.textContent?.toLowerCase().includes("remove") && !btn.textContent?.toLowerCase().includes("remove file")
+      (btn) =>
+        btn.textContent?.toLowerCase().includes("remove") &&
+        !btn.textContent?.toLowerCase().includes("remove file")
     )
     expect(removeButtons).toHaveLength(0)
   })

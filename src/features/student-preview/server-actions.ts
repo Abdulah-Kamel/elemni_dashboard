@@ -21,10 +21,12 @@ export async function loadCoursePreviewCurriculum(
 
     // This detail request is the authorization boundary: the upstream API only
     // returns courses the current dashboard user is allowed to manage.
-    await getCourse(courseId)
+    // The chapters endpoint intentionally rejects flat courses, so only call it
+    // when the course is configured to use chapters.
+    const course = await getCourse(courseId)
 
     const [chapters, lessons] = await Promise.all([
-      listChapters(courseId),
+      course.use_chapters ? listChapters(courseId) : Promise.resolve([]),
       listLessons(courseId),
     ])
 

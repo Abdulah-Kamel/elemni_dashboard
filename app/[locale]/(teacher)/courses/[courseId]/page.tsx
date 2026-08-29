@@ -212,9 +212,9 @@ async function CourseEditor({
             grades,
             streams,
             sections: previewCurriculum.success ? previewCurriculum.data : [],
+            locale,
           })}
           locale={locale}
-          viewer="guest"
           editorActions={editorActions}
           initialSections={
             previewCurriculum.success ? previewCurriculum.data : []

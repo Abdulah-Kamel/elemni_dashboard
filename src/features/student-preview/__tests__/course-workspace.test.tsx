@@ -22,6 +22,30 @@ const mockModel: StudentCoursePreviewModel = {
   sections: [],
 }
 
+const mockSections: StudentPreviewSection[] = [
+  {
+    id: 1,
+    title: "الوحدة الأولى",
+    lessons: [
+      {
+        id: 2,
+        title: "الدرس الأول",
+        description: "شرح الدرس",
+        durationMinutes: 30,
+        items: [
+          {
+            id: 3,
+            title: "فيديو الدرس",
+            hasVideo: true,
+            hasDocument: false,
+            hasExam: false,
+          },
+        ],
+      },
+    ],
+  },
+]
+
 describe("CourseWorkspace", () => {
   it("renders editor and preview", () => {
     render(<CourseWorkspace model={mockModel} locale="ar" viewer="guest" />)
@@ -54,11 +78,61 @@ describe("CourseWorkspace", () => {
     expect(screen.getByText("كورس رياضيات")).toBeDefined()
   })
 
-  it("toggles viewer mode", () => {
+  it("highlights the matching title control from the preview", () => {
+    render(<CourseWorkspace model={mockModel} locale="en" viewer="guest" />)
+
+    const titleInput = screen.getByLabelText("Title")
+    const previewTitle = document.querySelector(
+      '[data-course-preview-field="title"]'
+    )
+    expect(previewTitle).not.toBeNull()
+
+    fireEvent.mouseEnter(previewTitle!)
+    expect(titleInput.className).toContain("ring-primary/30")
+    expect(previewTitle!.getAttribute("data-course-preview-state")).toBe(
+      "hovered"
+    )
+
+    fireEvent.mouseLeave(previewTitle!)
+    expect(titleInput.className).not.toContain("ring-primary/30")
+  })
+
+  it("focuses the matching editor field when a preview title is clicked", () => {
+    render(<CourseWorkspace model={mockModel} locale="en" viewer="guest" />)
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit course title" }))
+    expect(document.activeElement).toBe(screen.getByLabelText("Title"))
+  })
+
+  it("focuses a curriculum editor node when its preview lesson is clicked", () => {
+    render(
+      <CourseWorkspace
+        model={{ ...mockModel, sections: mockSections }}
+        initialSections={mockSections}
+        locale="en"
+        viewer="guest"
+        curriculum={
+          <div
+            data-builder-node-type="lesson"
+            data-builder-node-id="2"
+            tabIndex={-1}
+          >
+            Lesson editor
+          </div>
+        }
+      />
+    )
+
+    fireEvent.click(screen.getByText("الدرس الأول").closest("button")!)
+    expect(document.activeElement).toBe(
+      document.querySelector('[data-builder-node-type="lesson"]')
+    )
+  })
+
+  it("does not render a guest/subscriber viewer switcher", () => {
     render(<CourseWorkspace model={mockModel} locale="ar" viewer="guest" />)
-    const viewerToggle = screen.getByRole("radio", { name: /مشترك|Subscribed/ })
-    fireEvent.click(viewerToggle)
-    expect(viewerToggle.getAttribute("aria-checked")).toBe("true")
+    expect(screen.queryByRole("radiogroup", { name: /viewer|مشاهد/i })).toBeNull()
+    expect(screen.queryByText(/guest|subscriber|زائر|مشترك/i)).toBeNull()
   })
 
   it("associates editor labels with their controls", () => {
@@ -66,7 +140,7 @@ describe("CourseWorkspace", () => {
     expect(screen.getByLabelText("Title")).toBeDefined()
     expect(screen.getByLabelText("Description")).toBeDefined()
     expect(screen.getByLabelText("Price").getAttribute("type")).toBe("number")
-    expect(screen.getByRole("radiogroup", { name: "Viewer" })).toBeDefined()
+    expect(screen.queryByRole("radiogroup", { name: "Viewer" })).toBeNull()
   })
 
   it("refreshes the curriculum preview on demand", async () => {
