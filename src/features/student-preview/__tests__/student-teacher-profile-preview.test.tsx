@@ -216,4 +216,14 @@ describe("StudentTeacherProfilePreview", () => {
     );
     expect(screen.getByText("القاهرة")).toBeDefined();
   });
+
+  it("uses container-query breakpoints for the emulated device frame", () => {
+    const { container } = render(
+      <StudentTeacherProfilePreview model={baseModel} locale="ar" interactionMode="local-only" />
+    );
+    const courseGrid = Array.from(container.querySelectorAll("div")).find((element) =>
+      element.className.includes("@sm/preview:grid-cols-2")
+    );
+    expect(courseGrid).toBeDefined();
+  });
 });

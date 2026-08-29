@@ -287,6 +287,16 @@ describe("StudentCourseDetailPreview", () => {
     expect(onCommitted).not.toHaveBeenCalled();
   });
 
+  it("uses container-query breakpoints for the emulated device frame", () => {
+    const { container } = render(
+      <StudentCourseDetailPreview model={baseModel} locale="ar" viewer="guest" interactionMode="local-only" />
+    );
+    const heroGrid = Array.from(container.querySelectorAll("div")).find((element) =>
+      element.className.includes("@lg/preview:grid-cols-[1fr_auto]")
+    );
+    expect(heroGrid).toBeDefined();
+  });
+
   it("guest viewer back link shows 'العودة'", () => {
     render(
       <StudentCourseDetailPreview model={baseModel} locale="ar" viewer="guest" interactionMode="local-only" />

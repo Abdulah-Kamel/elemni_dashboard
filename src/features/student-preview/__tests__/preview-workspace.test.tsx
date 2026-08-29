@@ -291,6 +291,13 @@ describe("PreviewWorkspace", () => {
       const { container } = renderWorkspace({ deviceWidth: "mobile" })
       expect(previewFrame(container)?.className).toContain("mx-auto")
     })
+
+    it("uses the emulated frame as a named container for responsive previews", () => {
+      const { container } = renderWorkspace({ deviceWidth: "mobile" })
+      expect(previewFrame(container)?.className).toContain(
+        "@container/preview"
+      )
+    })
   })
 
   describe("full preview", () => {

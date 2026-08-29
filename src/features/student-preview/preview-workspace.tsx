@@ -151,7 +151,7 @@ export function PreviewWorkspace({
   const previewFrame = (
     <div
       data-testid="preview-frame"
-      className="mx-auto w-full"
+      className="@container/preview mx-auto w-full"
       style={{ maxWidth: DEVICE_WIDTHS[deviceWidth] }}
     >
       {preview}
@@ -200,7 +200,9 @@ export function PreviewWorkspace({
       <div
         data-testid="workspace-grid"
         dir="ltr"
-        className={cn("grid grid-cols-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]")}
+        className={cn(
+          "grid grid-cols-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]"
+        )}
       >
         <section
           data-testid="preview-pane"

@@ -68,8 +68,8 @@ export function StudentTeacherProfilePreview({
         />
         <div className="pointer-events-none absolute inset-0 bg-slate-950/80" />
 
-        <div className="relative z-10 mx-auto flex max-w-7xl items-center justify-between px-4 pt-6 sm:px-6 lg:px-8">
-          <span className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-xs font-extrabold text-white backdrop-blur-md sm:text-sm">
+        <div className="relative z-10 mx-auto flex max-w-7xl items-center justify-between px-4 pt-6 @sm/preview:px-6 @lg/preview:px-8">
+          <span className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-xs font-extrabold text-white backdrop-blur-md @sm/preview:text-sm">
             <ArrowRight className="h-4 w-4" />
             <span>كل المدرسين</span>
           </span>
@@ -77,17 +77,17 @@ export function StudentTeacherProfilePreview({
           <button
             disabled
             aria-disabled="true"
-            className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl border border-sky-400/30 bg-sky-500/20 px-4 py-2 text-xs font-extrabold text-sky-200 opacity-60 backdrop-blur-md sm:text-sm"
+            className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl border border-sky-400/30 bg-sky-500/20 px-4 py-2 text-xs font-extrabold text-sky-200 opacity-60 backdrop-blur-md @sm/preview:text-sm"
           >
             <Share2 className="h-4 w-4" />
             <span>مشاركة</span>
           </button>
         </div>
 
-        <div className="relative z-10 mx-auto max-w-7xl px-4 pt-10 pb-16 sm:px-6 sm:pb-20 lg:px-8">
-          <div className="flex flex-col items-center gap-6 text-center sm:gap-8 md:flex-row md:items-end md:text-start">
+        <div className="relative z-10 mx-auto max-w-7xl px-4 pt-10 pb-16 @sm/preview:px-6 @sm/preview:pb-20 @lg/preview:px-8">
+          <div className="flex flex-col items-center gap-6 text-center @sm/preview:gap-8 @md/preview:flex-row @md/preview:items-end @md/preview:text-start">
             <div className="relative shrink-0">
-              <div className="h-52 w-44 rounded-3xl bg-gradient-to-tr from-amber-400/80 via-sky-400/80 to-[var(--brand-indigo)]/80 p-1.5 shadow-2xl sm:h-64 sm:w-56 md:h-72 md:w-64">
+              <div className="h-52 w-44 rounded-3xl bg-gradient-to-tr from-amber-400/80 via-sky-400/80 to-[var(--brand-indigo)]/80 p-1.5 shadow-2xl @sm/preview:h-64 @sm/preview:w-56 @md/preview:h-72 @md/preview:w-64">
                 <div className="relative h-full w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
                   {model.avatarUrl ? (
                     <img
@@ -112,7 +112,7 @@ export function StudentTeacherProfilePreview({
             </div>
 
             <div className="flex-1 space-y-3">
-              <div className="flex flex-wrap items-center justify-center gap-2 md:justify-start">
+              <div className="flex flex-wrap items-center justify-center gap-2 @md/preview:justify-start">
                 <span className="flex items-center gap-1 rounded-full bg-amber-400 px-3 py-1 text-xs font-black text-amber-950 shadow-md">
                   <Sparkles className="h-3.5 w-3.5" />
                   <span>معلم معتمد</span>
@@ -127,14 +127,14 @@ export function StudentTeacherProfilePreview({
                 ))}
               </div>
 
-              <h1 className="line-clamp-1 text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">
+              <h1 className="line-clamp-2 text-3xl font-black tracking-tight text-white @sm/preview:text-4xl @lg/preview:line-clamp-1 @lg/preview:text-5xl">
                 {displayName}
               </h1>
-              <p className="line-clamp-1 max-w-2xl text-sm font-semibold text-slate-300 sm:text-base">
+              <p className="line-clamp-2 max-w-2xl text-sm font-semibold text-slate-300 @sm/preview:text-base @lg/preview:line-clamp-1">
                 {displayTitle}
               </p>
 
-              <div className="flex flex-wrap items-center justify-center gap-3 pt-2 text-xs font-bold text-slate-200 sm:text-sm md:justify-start">
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-2 text-xs font-bold text-slate-200 @sm/preview:text-sm @md/preview:justify-start">
                 <div className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3.5 py-1.5 backdrop-blur-md">
                   <Award className="h-4 w-4 text-sky-400" />
                   <span>{model.experienceYears} سنة خبرة</span>
@@ -151,7 +151,7 @@ export function StudentTeacherProfilePreview({
 
       {/* About section */}
       <section className="border-b border-[var(--border)] bg-[var(--surface)] py-10">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[1.4fr_1fr] lg:px-8">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 @sm/preview:px-6 @lg/preview:grid-cols-[1.4fr_1fr] @lg/preview:px-8">
           <div>
             <p className="mb-2 text-xs font-extrabold text-[var(--brand-indigo)]">
               عن المدرس
@@ -197,21 +197,21 @@ export function StudentTeacherProfilePreview({
       </section>
 
       {/* Courses section */}
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-10 @sm/preview:px-6 @sm/preview:py-14 @lg/preview:px-8">
         <section className="space-y-6">
-          <div className="flex flex-col items-start justify-between gap-4 border-b border-[var(--border)] pb-2 sm:flex-row sm:items-center">
+          <div className="flex flex-col items-start justify-between gap-4 border-b border-[var(--border)] pb-2 @sm/preview:flex-row @sm/preview:items-center">
             <div>
               <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-[var(--brand-indigo-tint)] px-3.5 py-1 text-xs font-extrabold text-[var(--brand-indigo)]">
                 <BookOpen className="h-3.5 w-3.5" />
                 <span>تصفح المحاضرات والاشتراكات</span>
               </div>
-              <h2 className="text-2xl font-black text-[var(--on-surface)] sm:text-3xl">
+              <h2 className="text-2xl font-black text-[var(--on-surface)] @sm/preview:text-3xl">
                 الكورسات المتاحة
               </h2>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 items-stretch gap-6 sm:grid-cols-2">
+          <div className="grid grid-cols-1 items-stretch gap-6 @sm/preview:grid-cols-2">
             {model.courses.slice(0, 2).map((course, index) => {
               const isExpanded = expandedCourses[course.id]
               const thumbnail =
@@ -280,7 +280,7 @@ export function StudentTeacherProfilePreview({
                           type="button"
                           onClick={() => toggleExpand(course.id)}
                           aria-expanded={!!isExpanded}
-                          className="flex cursor-pointer items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-black text-white shadow-md transition-all sm:text-sm"
+                          className="flex cursor-pointer items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-black text-white shadow-md transition-all @sm/preview:text-sm"
                         >
                           <ChevronDown
                             className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-180" : ""}`}
@@ -291,7 +291,7 @@ export function StudentTeacherProfilePreview({
                         <button
                           disabled
                           aria-disabled="true"
-                          className="flex cursor-not-allowed items-center gap-2 rounded-xl bg-[var(--brand-indigo)] px-5 py-2.5 text-xs font-black text-white opacity-60 shadow-md sm:text-sm"
+                          className="flex cursor-not-allowed items-center gap-2 rounded-xl bg-[var(--brand-indigo)] px-5 py-2.5 text-xs font-black text-white opacity-60 shadow-md @sm/preview:text-sm"
                         >
                           <BookOpen className="h-4 w-4" />
                           <span>اشترك الآن</span>

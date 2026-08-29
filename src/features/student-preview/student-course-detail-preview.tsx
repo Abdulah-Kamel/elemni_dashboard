@@ -106,7 +106,7 @@ export function StudentCourseDetailPreview({
 
   return (
     <div dir="rtl" className="student-preview bg-[#FCFCFE] text-[#1B1B24]">
-      <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 sm:py-8 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-7 @sm/preview:px-6 @sm/preview:py-8 @lg/preview:px-8">
         {/* Back link (disabled) */}
         <span className="mb-5 inline-flex cursor-not-allowed items-center gap-2 text-sm font-bold text-[#777587] opacity-60">
           <ChevronLeft className="size-4 rotate-180" />
@@ -114,8 +114,8 @@ export function StudentCourseDetailPreview({
         </span>
 
         {/* Course hero */}
-        <section className="rounded-2xl border border-[#E2E0EF] bg-white p-5 sm:p-7">
-          <div className="grid gap-7 lg:grid-cols-[1fr_auto] lg:items-end">
+        <section className="rounded-2xl border border-[#E2E0EF] bg-white p-5 @sm/preview:p-7">
+          <div className="grid gap-7 @lg/preview:grid-cols-[1fr_auto] @lg/preview:items-end">
             <div>
               <div className="mb-4 flex flex-wrap gap-2">
                 {model.subject && (
@@ -129,7 +129,7 @@ export function StudentCourseDetailPreview({
                   </span>
                 )}
               </div>
-              <h1 className="line-clamp-2 text-3xl leading-tight font-black text-[#1B1B24] sm:text-4xl">
+              <h1 className="line-clamp-2 text-3xl leading-tight font-black text-[#1B1B24] @sm/preview:text-4xl">
                 {model.title}
               </h1>
               {model.teacher && (
@@ -155,14 +155,14 @@ export function StudentCourseDetailPreview({
                   </span>
                 </div>
               )}
-              <p className="mt-5 line-clamp-3 max-w-3xl text-sm leading-7 text-[#464555] sm:text-base">
+              <p className="mt-5 line-clamp-3 max-w-3xl text-sm leading-7 text-[#464555] @sm/preview:text-base">
                 {model.description ||
                   "تابع محتوى الكورس ودروس المدرس من مكان واحد."}
               </p>
             </div>
 
-            <div className="w-full lg:w-auto">
-              <div className="mb-5 grid grid-cols-3 gap-3 text-center text-xs font-bold text-[#464555] sm:flex sm:grid-cols-none sm:justify-end sm:gap-5">
+            <div className="w-full @lg/preview:w-auto">
+              <div className="mb-5 grid grid-cols-3 gap-3 text-center text-xs font-bold text-[#464555] @sm/preview:flex @sm/preview:grid-cols-none @sm/preview:justify-end @sm/preview:gap-5">
                 <span className="grid justify-items-center gap-1">
                   <PlayCircle className="size-5 text-[#0284C7]" />
                   {totalLessons} درس
@@ -181,7 +181,7 @@ export function StudentCourseDetailPreview({
                   type="button"
                   disabled
                   aria-disabled="true"
-                  className="inline-flex h-12 w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-[#0284C7] px-7 text-sm font-black text-white opacity-60 lg:w-auto"
+                  className="inline-flex h-12 w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-[#0284C7] px-7 text-sm font-black text-white opacity-60 @lg/preview:w-auto"
                 >
                   عرض محتوى الكورس
                   <ArrowLeft className="size-4" />
@@ -190,7 +190,7 @@ export function StudentCourseDetailPreview({
                 <button
                   disabled
                   aria-disabled="true"
-                  className="inline-flex h-12 w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-[#0284C7] px-7 text-sm font-black text-white opacity-60 lg:w-auto"
+                  className="inline-flex h-12 w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-[#0284C7] px-7 text-sm font-black text-white opacity-60 @lg/preview:w-auto"
                 >
                   اشترك الآن - {formatPrice(model.price)} ج.م
                   <ArrowLeft className="size-4" />
@@ -232,7 +232,7 @@ export function StudentCourseDetailPreview({
         {/* Content section */}
         <section className="pt-8">
           <div className="mb-5 flex flex-wrap items-end justify-between gap-3 px-1">
-            <h2 className="text-2xl font-black text-[#1B1B24] sm:text-3xl">
+            <h2 className="text-2xl font-black text-[#1B1B24] @sm/preview:text-3xl">
               {enrolled ? "محتوى الكورس" : "خطة الكورس"}
             </h2>
             <p className="text-xs font-bold text-[#777587]">
@@ -296,11 +296,11 @@ function Section({
         type="button"
         onClick={onToggleChapter}
         aria-expanded={expanded}
-        className={`flex min-h-15 w-full cursor-pointer items-center gap-4 px-4 py-4 text-start transition-colors sm:px-5 ${expanded ? "bg-[#F0F9FF]" : "hover:bg-[#FAF9FD]"}`}
+        className={`flex min-h-15 w-full cursor-pointer items-center gap-4 px-4 py-4 text-start transition-colors @sm/preview:px-5 ${expanded ? "bg-[#F0F9FF]" : "hover:bg-[#FAF9FD]"}`}
       >
         <span className="flex min-w-0 flex-1 items-center gap-2">
           <h3
-            className={`truncate text-base font-black sm:text-lg ${expanded ? "text-[#0369A1]" : "text-[#292733]"}`}
+            className={`truncate text-base font-black @sm/preview:text-lg ${expanded ? "text-[#0369A1]" : "text-[#292733]"}`}
           >
             {section.title || "دروس الكورس"}
           </h3>
@@ -362,7 +362,7 @@ function LessonRow({
         type="button"
         onClick={onToggle}
         aria-expanded={expanded}
-        className="flex min-h-18 w-full cursor-pointer items-center gap-3 px-4 py-3.5 text-start transition-colors hover:bg-[#F0F9FF] sm:px-5"
+        className="flex min-h-18 w-full cursor-pointer items-center gap-3 px-4 py-3.5 text-start transition-colors hover:bg-[#F0F9FF] @sm/preview:px-5"
       >
         <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#F0F9FF] text-[#0284C7]">
           {hasVideo ? (
@@ -374,7 +374,7 @@ function LessonRow({
           )}
         </span>
         <span className="min-w-0 flex-1">
-          <strong className="block text-sm leading-6 font-bold text-[#292733] sm:text-base">
+          <strong className="block text-sm leading-6 font-bold text-[#292733] @sm/preview:text-base">
             {lesson.title}
           </strong>
           <span className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-[#777587]">
@@ -390,7 +390,7 @@ function LessonRow({
       </button>
 
       {expanded && (
-        <div className="space-y-2 overflow-hidden bg-[#FAF9FD] px-4 py-4 sm:ps-16">
+        <div className="space-y-2 overflow-hidden bg-[#FAF9FD] px-4 py-4 @sm/preview:ps-16">
           {lesson.description && (
             <p className="pb-2 text-sm leading-6 text-[#777587]">
               {lesson.description}
