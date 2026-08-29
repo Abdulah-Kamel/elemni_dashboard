@@ -1,14 +1,15 @@
 import { setRequestLocale } from "next-intl/server";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
-import { Cairo } from "next/font/google";
+import { Scheherazade_New } from "next/font/google";
 import { HtmlLocale } from "@/components/html-locale";
 import { QueryProvider } from "@/providers/query-provider";
 
-const cairo = Cairo({
+const scheherazade = Scheherazade_New({
   subsets: ["arabic", "latin"],
   variable: "--font-app",
   display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
 
 export const dynamic = "force-dynamic";
@@ -28,7 +29,7 @@ export default async function LocaleLayout({
 
   return (
     <>
-      <HtmlLocale locale={locale} isRtl={isRtl} fontVar={cairo.variable} />
+      <HtmlLocale locale={locale} isRtl={isRtl} fontVar={scheherazade.variable} />
       <NextIntlClientProvider messages={messages}>
         <QueryProvider>{children}</QueryProvider>
       </NextIntlClientProvider>

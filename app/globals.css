@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "../src/styles/student-preview-tokens.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -20,8 +21,8 @@
  * directly. They reference these tokens via Tailwind utilities.
  */
 @theme inline {
-    --font-sans: var(--font-app, "Cairo"), system-ui, -apple-system, "Segoe UI", sans-serif;
-    --font-heading: var(--font-app, "Cairo"), system-ui, sans-serif;
+    --font-sans: var(--font-app, "Scheherazade New"), system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-heading: var(--font-app, "Scheherazade New"), system-ui, sans-serif;
 
     /* Brand ----------------------------------------------------------- */
     --color-brand-indigo: var(--brand-indigo);
@@ -333,4 +334,12 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
   }
+}
+
+/* Full-bleed preview — when the teacher content shell contains a
+   student-preview-workspace, remove the max-width constraint so the
+   preview/editor split can fill the available width. Scoped via :has()
+   so non-preview pages keep the normal max-w-7xl. */
+.teacher-content-shell:has(.student-preview-workspace) {
+  max-width: none;
 }

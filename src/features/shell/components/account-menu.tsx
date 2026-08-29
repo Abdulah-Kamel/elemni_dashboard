@@ -24,6 +24,7 @@ export function AccountMenu({ teacherName }: AccountMenuProps) {
     <DropdownMenu>
       <DropdownMenuTrigger
         nativeButton={false}
+        aria-label={`Account menu: ${teacherName}`}
         render={
           <Avatar className="relative size-10 cursor-pointer border border-outline-variant bg-brand-violet-tint text-label-md font-bold text-brand-violet transition-opacity hover:opacity-80">
             <AvatarFallback>

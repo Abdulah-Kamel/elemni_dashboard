@@ -12,7 +12,9 @@
     "view_analytics": "عرض التحليلات",
     "settings": "الإعدادات",
     "inbox": "الرسائل",
-    "coming_soon": "قريباً"
+    "coming_soon": "قريباً",
+    "collapse": "طي القائمة",
+    "expand": "توسيع القائمة"
   },
   "sidebar": {
     "overview": "نظرة عامة",
@@ -46,7 +48,8 @@
     "page_lessons": "الدروس",
     "page_students": "الطلاب",
     "page_analytics": "التحليلات",
-    "page_billing": "الفوترة"
+    "page_billing": "الفوترة",
+    "no_new_notifications": "لا توجد إشعارات جديدة"
   },
   "placeholder": {
     "loading": "جارٍ التحميل...",
@@ -592,9 +595,9 @@
     "view_course": "عرض الدورة",
     "edit_profile_description": "حدّث المعلومات العامة التي يراها الطلاب في ملفك.",
     "upload_avatar": "رفع صورة",
-    "avatar_hint": "PNG أو JPG أو WEBP بحد أقصى ٥ ميجابايت",
+    "avatar_hint": "PNG أو JPG أو WEBP بحد أقصى ١٠ ميجابايت",
     "avatar_invalid_type": "مسموح فقط بملفات PNG أو JPG أو WEBP",
-    "avatar_too_large": "يجب ألا يزيد حجم الصورة عن ٥ ميجابايت",
+    "avatar_too_large": "يجب ألا يزيد حجم الصورة عن ١٠ ميجابايت",
     "error_upload": "فشل رفع الصورة"
   },
   "admin": {

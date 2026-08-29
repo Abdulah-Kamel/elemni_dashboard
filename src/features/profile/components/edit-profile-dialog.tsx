@@ -26,7 +26,7 @@ import {
 } from "@/features/profile/actions";
 import type { TeacherProfile } from "@/features/profile/schema";
 
-const MAX_AVATAR_SIZE = 5 * 1024 * 1024;
+const MAX_AVATAR_SIZE = 10 * 1024 * 1024;
 const ALLOWED_AVATAR_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 function initials(name: string): string {
