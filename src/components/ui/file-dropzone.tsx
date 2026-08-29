@@ -205,9 +205,6 @@ export function FileDropzone({
                 {formatFileSize(selectedFile!.size)}
               </p>
             </div>
-            <span className="text-xs text-muted-foreground">
-              {copy.replace}
-            </span>
           </div>
         ) : (
           <>

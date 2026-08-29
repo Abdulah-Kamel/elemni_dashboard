@@ -130,9 +130,6 @@ export function StudentTeacherProfilePreview({
               <h1 className="line-clamp-2 text-3xl font-black tracking-tight text-white @sm/preview:text-4xl @lg/preview:line-clamp-1 @lg/preview:text-5xl">
                 {displayName}
               </h1>
-              <p className="line-clamp-2 max-w-2xl text-sm font-semibold text-slate-300 @sm/preview:text-base @lg/preview:line-clamp-1">
-                {displayTitle}
-              </p>
 
               <div className="flex flex-wrap items-center justify-center gap-3 pt-2 text-xs font-bold text-slate-200 @sm/preview:text-sm @md/preview:justify-start">
                 <div className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3.5 py-1.5 backdrop-blur-md">
@@ -144,57 +141,46 @@ export function StudentTeacherProfilePreview({
                   <span>{model.courses.length} كورسات متاحة</span>
                 </div>
               </div>
+              <div className="mx-auto grid max-w-7xl gap-8 @lg/preview:grid-cols-[1.4fr_1fr] ">
+                <div>
+                  <p className="mb-2 text-xs font-extrabold text-sky-300">
+                    عن المدرس
+                  </p>
+                  <h2 className="text-2xl font-black text-white">
+                    خبرة تساعدك تفهم، مش تحفظ
+                  </h2>
+                  <p className="mt-3 line-clamp-4 text-sm leading-7 font-medium text-slate-300">
+                    {displayBio}
+                  </p>
+                </div>
+                <div className="grid h-full grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/15 bg-white/10 backdrop-blur-md">
+                  <div className="bg-white/5 p-4">
+                    <BookOpen className="mb-3 size-5 text-sky-300" />
+                    <strong className="block text-xl font-black text-white">
+                      {model.courses.length}
+                    </strong>
+                    <span className="text-xs text-slate-300">
+                      كورسات منشورة
+                    </span>
+                  </div>
+                  <div className="bg-white/5 p-4">
+                    <MapPin className="mb-3 size-5 text-amber-300" />
+                    <strong className="block truncate text-sm leading-6 font-black text-white">
+                      {model.location ?? "أونلاين"}
+                    </strong>
+                    <span className="text-xs text-slate-300">
+                      مكان التدريس
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* About section */}
-      <section className="border-b border-[var(--border)] bg-[var(--surface)] py-10">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 @sm/preview:px-6 @lg/preview:grid-cols-[1.4fr_1fr] @lg/preview:px-8">
-          <div>
-            <p className="mb-2 text-xs font-extrabold text-[var(--brand-indigo)]">
-              عن المدرس
-            </p>
-            <h2 className="text-2xl font-black text-[var(--on-surface)]">
-              خبرة تساعدك تفهم، مش تحفظ
-            </h2>
-            <p className="mt-3 line-clamp-4 max-w-3xl text-sm leading-7 font-medium text-[var(--on-surface-muted)]">
-              {displayBio}
-            </p>
-            <div className="mt-5 flex flex-wrap gap-2">
-              {model.subjects.map((sub) => (
-                <span
-                  key={sub}
-                  className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-800"
-                >
-                  {sub}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div className="grid h-full grid-cols-2 gap-px overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--border)]">
-            <div className="bg-[var(--page)] p-4">
-              <BookOpen className="mb-3 size-5 text-[var(--brand-indigo)]" />
-              <strong className="block text-xl font-black">
-                {model.courses.length}
-              </strong>
-              <span className="text-xs text-[var(--on-surface-muted)]">
-                كورسات منشورة
-              </span>
-            </div>
-            <div className="bg-[var(--page)] p-4">
-              <MapPin className="mb-3 size-5 text-[var(--brand-amber)]" />
-              <strong className="block truncate text-sm leading-6 font-black">
-                {model.location ?? "أونلاين"}
-              </strong>
-              <span className="text-xs text-[var(--on-surface-muted)]">
-                مكان التدريس
-              </span>
-            </div>
-          </div>
-        </div>
-      </section>
+      <section className="border-b border-[var(--border)] bg-[var(--surface)] py-10"></section>
 
       {/* Courses section */}
       <div className="mx-auto max-w-7xl px-4 py-10 @sm/preview:px-6 @sm/preview:py-14 @lg/preview:px-8">

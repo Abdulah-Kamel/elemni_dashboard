@@ -123,6 +123,46 @@ describe("ProfileWorkspace", () => {
     ).toBe(true)
   })
 
+  it("accepts avatar files up to 10 MB", () => {
+    render(
+      <ProfileWorkspace
+        profile={mockProfile}
+        courses={mockCourses}
+        locale="en"
+        publicImageUrl={null}
+      />
+    )
+    const input = document.getElementById("profile-avatar") as HTMLInputElement
+    const file = new File([new ArrayBuffer(10 * 1024 * 1024)], "avatar.png", {
+      type: "image/png",
+    })
+
+    fireEvent.change(input, { target: { files: [file] } })
+
+    expect(screen.getByText("avatar.png")).toBeDefined()
+  })
+
+  it("rejects avatar files larger than 10 MB", () => {
+    render(
+      <ProfileWorkspace
+        profile={mockProfile}
+        courses={mockCourses}
+        locale="en"
+        publicImageUrl={null}
+      />
+    )
+    const input = document.getElementById("profile-avatar") as HTMLInputElement
+    const file = new File(
+      [new ArrayBuffer(10 * 1024 * 1024 + 1)],
+      "too-large.png",
+      { type: "image/png" }
+    )
+
+    fireEvent.change(input, { target: { files: [file] } })
+
+    expect(screen.queryByText("too-large.png")).toBeNull()
+  })
+
   it("shows a remove button for a persisted avatar when no new file is selected", () => {
     render(
       <ProfileWorkspace

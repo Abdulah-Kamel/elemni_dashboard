@@ -20,7 +20,7 @@ import { buildTeacherPreviewModel } from "./build-teacher-preview-model"
 import { PreviewWorkspace } from "./preview-workspace"
 import { StudentTeacherProfilePreview } from "./student-teacher-profile-preview"
 
-const MAX_AVATAR_SIZE = 5 * 1024 * 1024
+const MAX_AVATAR_SIZE = 10 * 1024 * 1024
 const ALLOWED_AVATAR_TYPES = new Set(["image/jpeg", "image/png", "image/webp"])
 
 interface ProfileWorkspaceProps {
@@ -43,8 +43,8 @@ const COPY = {
     saved: "تم الحفظ",
     error: "حدث خطأ",
     invalidType: "نوع الملف غير صالح",
-    tooLarge: "الملف كبير جداً (الحد الأقصى 5 ميجا)",
-    avatarHint: "PNG أو JPG أو WEBP بحد أقصى ٥ ميجابايت",
+    tooLarge: "الملف كبير جداً (الحد الأقصى ١٠ ميجابايت)",
+    avatarHint: "PNG أو JPG أو WEBP بحد أقصى ١٠ ميجابايت",
   },
   en: {
     edit: "Edit Profile",
@@ -58,8 +58,8 @@ const COPY = {
     saved: "Saved",
     error: "Something went wrong",
     invalidType: "Invalid file type",
-    tooLarge: "File too large (max 5MB)",
-    avatarHint: "PNG, JPG, or WEBP up to 5 MB",
+    tooLarge: "File too large (max 10 MB)",
+    avatarHint: "PNG, JPG, or WEBP up to 10 MB",
   },
 }
 
@@ -270,9 +270,9 @@ export function ProfileWorkspace({
             {publicImageUrl && !avatarFile && avatarUrl && (
               <Button
                 type="button"
-                variant="ghost"
+                variant="destructive"
                 size="sm"
-                className="mt-1.5"
+                className="mt-1.5 min-w-24 bg-destructive px-4 py-4 text-white hover:bg-destructive/90"
                 disabled={saving}
                 onClick={() => {
                   for (const url of objectUrlsRef.current)
