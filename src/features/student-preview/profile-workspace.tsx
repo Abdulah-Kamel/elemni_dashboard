@@ -448,7 +448,7 @@ function ProfileWorkspaceContent({
         type="button"
         disabled={!dirty || saving || !name.trim()}
         onClick={handleSave}
-        className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-50"
+        className="flex ms-auto items-center gap-2 rounded-lg bg-primary px-10 py-3 text-sm font-bold text-primary-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-50"
       >
         {saving && <Loader2 className="h-4 w-4 animate-spin" />}
         {saving ? copy.saving : copy.save}

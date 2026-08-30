@@ -13,7 +13,6 @@ import {
   Clock,
   CheckCircle2,
   Award,
-  Sparkles,
   Share2,
   MapPin,
   ChevronDown,
@@ -44,12 +43,8 @@ type ProfilePreviewCopy = {
   fallbackBio: string
   backToTeachers: string
   share: string
-  trustedTeacher: string
-  certifiedTeacher: string
   experience: (years: number) => string
   availableCourses: (count: number) => string
-  aboutLabel: string
-  aboutHeading: string
   publishedCourses: string
   online: string
   teachingLocation: string
@@ -58,7 +53,6 @@ type ProfilePreviewCopy = {
   courseFallbackTitle: string
   courseFallbackDescription: string
   sessions: (count: number) => string
-  materials: string
   monthlyPrice: string
   courseContent: string
   subscribe: string
@@ -72,12 +66,8 @@ const PROFILE_PREVIEW_COPY: Record<"ar" | "en", ProfilePreviewCopy> = {
     fallbackBio: "نبذة عن المدرس",
     backToTeachers: "كل المدرسين",
     share: "مشاركة",
-    trustedTeacher: "معلم موثوق",
-    certifiedTeacher: "معلم معتمد",
-    experience: (years) => `${years} سنة خبرة`,
+    experience: (years) => `${years} سنوات خبرة`,
     availableCourses: (count) => `${count} كورسات متاحة`,
-    aboutLabel: "عن المدرس",
-    aboutHeading: "خبرة تساعدك تفهم، مش تحفظ",
     publishedCourses: "كورسات منشورة",
     online: "أونلاين",
     teachingLocation: "مكان التدريس",
@@ -86,7 +76,6 @@ const PROFILE_PREVIEW_COPY: Record<"ar" | "en", ProfilePreviewCopy> = {
     courseFallbackTitle: "عنوان الكورس",
     courseFallbackDescription: "وصف الكورس",
     sessions: (count) => `${count} محاضرة`,
-    materials: "اختبارات وملازم",
     monthlyPrice: "ج.م / الشهر",
     courseContent: "محتوى الكورس",
     subscribe: "اشترك الآن",
@@ -98,12 +87,8 @@ const PROFILE_PREVIEW_COPY: Record<"ar" | "en", ProfilePreviewCopy> = {
     fallbackBio: "Teacher bio",
     backToTeachers: "All teachers",
     share: "Share",
-    trustedTeacher: "Trusted teacher",
-    certifiedTeacher: "Certified teacher",
     experience: (years) => `${years} years of experience`,
     availableCourses: (count) => `${count} available courses`,
-    aboutLabel: "About the teacher",
-    aboutHeading: "Experience that helps you understand, not memorize",
     publishedCourses: "Published courses",
     online: "Online",
     teachingLocation: "Teaching location",
@@ -112,7 +97,6 @@ const PROFILE_PREVIEW_COPY: Record<"ar" | "en", ProfilePreviewCopy> = {
     courseFallbackTitle: "Course title",
     courseFallbackDescription: "Course description",
     sessions: (count) => `${count} ${count === 1 ? "session" : "sessions"}`,
-    materials: "Quizzes and resources",
     monthlyPrice: "EGP / month",
     courseContent: "Course content",
     subscribe: "Subscribe now",
@@ -270,23 +254,12 @@ export function StudentTeacherProfilePreview({
                       {displayName.charAt(0)}
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent opacity-60" />
-                  <div className="absolute end-3 bottom-3 flex items-center gap-1.5 rounded-full border-2 border-slate-900 bg-emerald-500 px-2.5 py-1 shadow-lg">
-                    <CheckCircle2 className="h-4 w-4 stroke-[3] text-white" />
-                    <span className="text-xs font-black text-white">
-                      {copy.trustedTeacher}
-                    </span>
-                  </div>
                 </div>
               </div>
             </ProfilePreviewField>
 
             <div className="flex-1 space-y-3">
               <div className="flex flex-wrap items-center justify-center gap-2 @md/preview:justify-start">
-                <span className="flex items-center gap-1 rounded-full bg-amber-400 px-3 py-1 text-xs font-black text-amber-950 shadow-md">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  <span>{copy.certifiedTeacher}</span>
-                </span>
                 {model.subjects.map((sub, idx) => (
                   <span
                     key={idx}
@@ -329,13 +302,7 @@ export function StudentTeacherProfilePreview({
                   ariaLabel={fieldEditLabels.bio}
                   className="rounded-xl"
                 >
-                  <p className="mb-2 text-xs font-extrabold text-sky-300">
-                    {copy.aboutLabel}
-                  </p>
-                  <h2 className="text-2xl font-black text-white">
-                    {copy.aboutHeading}
-                  </h2>
-                  <p className="mt-3 line-clamp-4 text-sm leading-7 font-medium text-slate-300">
+                  <p className="mt-3 line-clamp-4 text-lg leading-10 font-bold">
                     {displayBio}
                   </p>
                 </ProfilePreviewField>
@@ -423,23 +390,13 @@ export function StudentTeacherProfilePreview({
                         </div>
                       )}
                     </div>
-                    <div className="space-y-3 p-5">
-                      <h3 className="line-clamp-2 min-h-13 text-lg leading-snug font-black text-[var(--on-surface)]">
+                    <div className="space-y-1 p-5">
+                      <h3 className="line-clamp-2 text-xl leading-snug font-black text-[var(--on-surface)]">
                         {course.title || copy.courseFallbackTitle}
                       </h3>
-                      <p className="line-clamp-2 text-xs leading-relaxed font-medium text-[var(--on-surface-muted)]">
+                      <p className="text-md line-clamp-2 leading-relaxed font-medium text-[var(--on-surface-muted)]">
                         {course.description || copy.courseFallbackDescription}
                       </p>
-                      <div className="flex items-center justify-between border-t border-[var(--border-subtle)] pt-2 text-xs font-bold text-[var(--on-surface-muted)]">
-                        <div className="flex items-center gap-1.5">
-                          <BookOpen className="h-3.5 w-3.5 text-[var(--brand-indigo)]" />
-                          <span>{copy.sessions(course.sessionsCount)}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-emerald-600">
-                          <CheckCircle2 className="h-3.5 w-3.5" />
-                          <span>{copy.materials}</span>
-                        </div>
-                      </div>
                     </div>
                   </div>
                   <div className="mt-2 p-5 pt-0">
