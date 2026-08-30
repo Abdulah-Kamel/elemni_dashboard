@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
 import { render, screen, waitFor, fireEvent } from "@testing-library/react"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { NextIntlClientProvider } from "next-intl"
 import messages from "@/i18n/messages/en.json"
 import { CourseBuilderBridgeProvider, useCourseBuilderBridge } from "../course-builder-bridge"
@@ -72,20 +73,24 @@ function SelectPreviewItem() {
 
 describe("course builder selection", () => {
   it("opens collapsed chapter and lesson before focusing the selected item", async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    })
+
     render(
       <NextIntlClientProvider locale="en" messages={messages}>
-        <CourseBuilderBridgeProvider>
-          <SelectPreviewItem />
-          <ChapterCard
-            chapter={chapter}
-            courseId={42}
-            initialLessons={[lesson]}
-            lessonsError={null}
-            defaultExpanded={false}
-            onUpdate={vi.fn()}
-            onDelete={vi.fn()}
-          />
-        </CourseBuilderBridgeProvider>
+        <QueryClientProvider client={queryClient}>
+          <CourseBuilderBridgeProvider>
+            <SelectPreviewItem />
+            <ChapterCard
+              chapter={chapter}
+              courseId={42}
+              initialLessons={[lesson]}
+              lessonsError={null}
+              defaultExpanded={false}
+            />
+          </CourseBuilderBridgeProvider>
+          </QueryClientProvider>
       </NextIntlClientProvider>
     )
 

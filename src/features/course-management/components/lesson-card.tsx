@@ -30,21 +30,16 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react"
-import {
-  updateLesson,
-  deleteLesson,
-} from "@/features/course-management/lessons-actions"
 import { ItemList } from "@/features/course-management/components/item-list"
 import type { LessonOut } from "@/features/course-management/lessons-schema"
 import { useCourseBuilderBridge } from "@/features/course-management/course-builder-bridge"
+import { useLessonMutations } from "@/features/course-management/hooks/use-course-management-queries"
 
 export function LessonCard({
   lesson,
   courseId,
   itemCount,
   status,
-  onUpdate,
-  onDelete,
   dragHandleProps,
   nested = false,
 }: {
@@ -52,8 +47,6 @@ export function LessonCard({
   courseId: number
   itemCount?: number
   status?: "ready" | "failed" | "mixed" | null
-  onUpdate: (lesson: LessonOut) => void
-  onDelete: (lessonId: number) => void
   dragHandleProps?: React.HTMLAttributes<HTMLButtonElement>
   nested?: boolean
 }) {
@@ -67,6 +60,10 @@ export function LessonCard({
     clearSelectedNode,
     selectNode,
   } = useCourseBuilderBridge()
+  const { update, remove } = useLessonMutations(
+    courseId,
+    lesson.chapter_id ?? undefined,
+  )
   const [itemsExpanded, setItemsExpanded] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -74,8 +71,8 @@ export function LessonCard({
   const [editDescription, setEditDescription] = useState(
     lesson.description ?? ""
   )
-  const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const submitting = update.isPending || remove.isPending
   const isSelected =
     selectedNode?.type === "lesson" &&
     String(selectedNode.id) === String(lesson.id)
@@ -107,39 +104,34 @@ export function LessonCard({
     const trimmed = editTitle.trim()
     if (!trimmed) return
 
-    setSubmitting(true)
     setError(null)
     try {
-      const result = await updateLesson(courseId, lesson.id, {
-        title: trimmed,
-        description: editDescription.trim() || null,
+      await update.mutateAsync({
+        lessonId: lesson.id,
+        data: {
+          title: trimmed,
+          description: editDescription.trim() || null,
+        },
       })
-      if (result.success) {
-        onUpdate(result.data)
-        setEditOpen(false)
-      } else {
-        setError(result.error.message)
-      }
-    } finally {
-      setSubmitting(false)
+      setEditOpen(false)
+    } catch (mutationError) {
+      setError(
+        mutationError instanceof Error ? mutationError.message : t("error_upstream"),
+      )
     }
-  }, [courseId, lesson.id, editTitle, editDescription, onUpdate])
+  }, [editDescription, editTitle, lesson.id, t, update])
 
   const handleDelete = useCallback(async () => {
-    setSubmitting(true)
     setError(null)
     try {
-      const result = await deleteLesson(courseId, lesson.id)
-      if (result.success) {
-        onDelete(lesson.id)
-        setDeleteOpen(false)
-      } else {
-        setError(result.error.message)
-      }
-    } finally {
-      setSubmitting(false)
+      await remove.mutateAsync(lesson.id)
+      setDeleteOpen(false)
+    } catch (mutationError) {
+      setError(
+        mutationError instanceof Error ? mutationError.message : t("error_upstream"),
+      )
     }
-  }, [courseId, lesson.id, onDelete])
+  }, [lesson.id, remove, t])
 
   let statusBadge = null
   if (status === "ready") {

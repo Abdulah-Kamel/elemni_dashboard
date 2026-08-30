@@ -13,6 +13,7 @@ export const endpoints = {
     requestImageUpload: "/api/v1/teachers/me/request-image-upload",
     analytics: "/api/v1/teachers/me/analytics",
     analyticsTopCourses: "/api/v1/teachers/me/analytics/top-courses",
+    usage: "/api/v1/teachers/me/usage",
     subscriptions: "/api/v1/teachers/me/subscriptions",
     publicDetail: (slug: string) =>
       `/api/v1/teachers/${encodeURIComponent(slug)}`,

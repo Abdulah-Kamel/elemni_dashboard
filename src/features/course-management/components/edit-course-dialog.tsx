@@ -14,13 +14,12 @@ import { Button } from "@/components/ui/button"
 import { CourseForm } from "./course-form"
 import { CourseCoverPicker } from "./course-cover-picker"
 import {
-  getCourseAction,
-  updateCourse,
-  listSubjectsAction,
-  listGradesAction,
-  listStreamsAction,
+  getTeacherCurriculumAction,
 } from "@/features/course-management/actions"
-import { formValuesToCourseUpdate } from "@/features/course-management/schema"
+import {
+  formValuesToCourseUpdate,
+  formatCoursePrice,
+} from "@/features/course-management/schema"
 import { uploadCourseCover } from "@/features/course-management/upload-course-cover"
 import type {
   SubjectOut,
@@ -28,6 +27,11 @@ import type {
   StreamOut,
 } from "@/features/course-management/schema"
 import type { CourseFormValues } from "@/features/course-management/schema"
+import {
+  useCourseMutations,
+  useCourseQuery,
+} from "@/features/course-management/hooks/use-course-management-queries"
+import { getActionError } from "@/lib/query-action"
 
 type DialogState =
   | "idle"
@@ -60,6 +64,8 @@ export function EditCourseDialog({
   const [subjects, setSubjects] = useState<SubjectOut[]>([])
   const [grades, setGrades] = useState<GradeOut[]>([])
   const [streams, setStreams] = useState<StreamOut[]>([])
+  const courseQuery = useCourseQuery(courseId, undefined, false)
+  const { update } = useCourseMutations(teacherProfileId)
 
   const isDirty =
     initialValues !== null &&
@@ -78,20 +84,22 @@ export function EditCourseDialog({
   const loadData = useCallback(async () => {
     setState("loading")
     try {
-      const [course, subs, grds, strms] = await Promise.all([
-        getCourseAction(courseId),
-        listSubjectsAction(),
-        listGradesAction(),
-        listStreamsAction(),
+      const [courseResult, curriculum] = await Promise.all([
+        courseQuery.refetch(),
+        getTeacherCurriculumAction(),
       ])
-      setSubjects(subs)
-      setGrades(grds)
-      setStreams(strms)
+      if (!courseResult.data) {
+        throw courseResult.error ?? new Error(t("error_upstream"))
+      }
+      const course = courseResult.data
+      setSubjects(curriculum.subjects)
+      setGrades(curriculum.grades)
+      setStreams(curriculum.streams)
       setCurrentImageUrl(course.img ?? null)
       const values: CourseFormValues = {
         title: course.title,
         description: course.description,
-        price: String(course.price),
+        price: formatCoursePrice(course.price),
         subjectId: course.subject_id ?? (null as unknown as number),
         gradeId: course.grade_id ?? (null as unknown as number),
         streamId: course.stream_id ?? (null as unknown as number),
@@ -105,7 +113,7 @@ export function EditCourseDialog({
       setState("network-error")
       setNetworkError(t("error_upstream"))
     }
-  }, [courseId, t])
+  }, [courseQuery, t])
 
   const handleSubmit = useCallback(async () => {
     if (!formValues) return
@@ -113,42 +121,40 @@ export function EditCourseDialog({
     setApiErrors({})
     setNetworkError(null)
 
-    const body = formValuesToCourseUpdate(formValues)
     try {
+      const body = formValuesToCourseUpdate(formValues)
       if (coverFile) body.img = await uploadCourseCover(courseId, coverFile)
-    } catch {
-      setState("network-error")
-      setNetworkError(t("error_upload"))
-      return
-    }
-    const result = await updateCourse(courseId, teacherProfileId, body)
 
-    if (result.success) {
+      await update.mutateAsync({ courseId, data: body })
       setOpen(false)
       setState("idle")
       setFormValues(null)
       setCoverFile(null)
-    } else {
-      const err = result.error
-      if (err.type === "Validation") {
+    } catch (err) {
+      const actionError = getActionError(err)
+      if (actionError?.type === "Validation") {
         setState("validation-error")
-        if (err.fields) {
+        if (actionError.fields) {
           const fieldMap: Record<string, string> = {}
-          err.fields.forEach((f) => {
-            const key = f.replace("body.", "")
-            fieldMap[key] = err.message
+          actionError.fields.forEach((field) => {
+            const key = field.replace("body.", "")
+            fieldMap[key] = actionError.message
           })
           setApiErrors(fieldMap)
         }
-      } else if (err.type === "Conflict") {
+      } else if (actionError?.type === "Conflict") {
         setState("conflict")
-        setNetworkError(err.message)
+        setNetworkError(actionError.message)
       } else {
         setState("network-error")
-        setNetworkError(err.message)
+        setNetworkError(
+          actionError?.type === "Upstream"
+            ? t("error_upstream")
+            : actionError?.message ?? t("error_upload")
+        )
       }
     }
-  }, [coverFile, courseId, formValues, t, teacherProfileId])
+  }, [coverFile, courseId, formValues, t, update])
 
   return (
     <Dialog

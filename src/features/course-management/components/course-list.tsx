@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { CourseOut } from "@/features/shell/schema"
+import { useCoursesQuery } from "@/features/course-management/hooks/use-course-management-queries"
 import { CourseCard } from "./course-card"
 import { EmptyState } from "./empty-state"
 
@@ -35,12 +36,19 @@ export function CourseList({
   streamNames?: Record<number, string>
 }) {
   const t = useTranslations("courses")
+  const coursesQuery = useCoursesQuery(teacherProfileId, courses, error)
+  const currentCourses = useMemo(
+    () => coursesQuery.data ?? [],
+    [coursesQuery.data]
+  )
+  const queryError = coursesQuery.error as { message?: string } | null
+  const displayError = error ?? queryError?.message ?? null
   const [search, setSearch] = useState("")
   const [status, setStatus] = useState<StatusFilter>("all")
 
   const filteredCourses = useMemo(() => {
     const term = search.trim().toLocaleLowerCase(locale)
-    return courses.filter((course) => {
+    return currentCourses.filter((course) => {
       const matchesStatus =
         status === "all" ||
         (status === "published" ? course.is_published : !course.is_published)
@@ -55,17 +63,21 @@ export function CourseList({
         streamNames[course.stream_id],
       ].some((value) => value?.toLocaleLowerCase(locale).includes(term))
     })
-  }, [courses, gradeNames, locale, search, status, streamNames])
+  }, [currentCourses, gradeNames, locale, search, status, streamNames])
 
-  if (error) {
+  if (coursesQuery.isPending && !displayError) {
+    return <CourseListSkeleton />
+  }
+
+  if (displayError && !coursesQuery.data) {
     return (
       <Alert variant="destructive">
         <AlertDescription className="flex items-center justify-between gap-4">
-          <span>{error}</span>
+          <span>{displayError}</span>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => window.location.reload()}
+            onClick={() => void coursesQuery.refetch()}
           >
             {t("retry")}
           </Button>
@@ -74,7 +86,7 @@ export function CourseList({
     )
   }
 
-  if (isEmpty) return <EmptyState />
+  if (isEmpty && currentCourses.length === 0) return <EmptyState />
 
   return (
     <div className="space-y-5">

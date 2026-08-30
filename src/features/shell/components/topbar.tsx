@@ -17,10 +17,10 @@ export function Topbar({ teacherName, userRole }: TopbarProps) {
   const tOverview = useTranslations("overview");
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center gap-md border-b border-border bg-surface/90 backdrop-blur-md px-lg">
+    <header className="sticky top-0 z-10 flex h-16 items-center gap-md border-b border-border bg-surface/90 px-lg backdrop-blur-md">
       <div className="relative max-w-md flex-1">
         <Search
-          className="pointer-events-none absolute top-1/2 start-3 size-4 -translate-y-1/2 text-on-surface-muted"
+          className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-on-surface-muted"
           aria-hidden="true"
         />
         <Input
@@ -28,23 +28,14 @@ export function Topbar({ teacherName, userRole }: TopbarProps) {
           name="dashboard-search"
           placeholder={t("search_placeholder")}
           aria-label={t("search_placeholder")}
-          className="h-10 w-full rounded-lg border border-border bg-surface-muted ps-9 pe-3 text-body-md text-body-md--line-height text-foreground placeholder:text-on-surface-muted focus:border-primary focus:bg-surface focus:outline-none focus:ring-3 focus:ring-primary/10"
+          className="h-10 w-full rounded-lg border border-border bg-surface-muted ps-9 pe-3 text-body-md text-body-md--line-height text-foreground placeholder:text-on-surface-muted focus:border-primary focus:bg-surface focus:ring-3 focus:ring-primary/10 focus:outline-none"
         />
       </div>
 
       <div className="ms-auto flex items-center gap-1">
-        {userRole !== "ADMIN" && <Button size="sm" className="gap-1.5">
-          <Plus className="size-4" aria-hidden="true" />
-          <span>{tOverview("create_course")}</span>
-        </Button>}
-
         <LocaleToggle />
         <ThemeToggle />
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={t("help")}
-        >
+        <Button variant="ghost" size="icon" aria-label={t("help")}>
           <HelpCircle className="size-5" aria-hidden="true" />
         </Button>
 
@@ -53,5 +44,5 @@ export function Topbar({ teacherName, userRole }: TopbarProps) {
         <AccountMenu teacherName={teacherName} />
       </div>
     </header>
-  );
+  )
 }

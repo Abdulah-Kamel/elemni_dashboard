@@ -87,8 +87,11 @@ export function StudentsList() {
   })
   const [desktopRowsRef] = useAutoAnimate({ duration: 180 })
   const [mobileRowsRef] = useAutoAnimate({ duration: 180 })
-  const refresh = () =>
-    queryClient.invalidateQueries({ queryKey: adminKeys.all })
+  const refresh = (result: { success: boolean }) => {
+    if (result.success) {
+      return queryClient.invalidateQueries({ queryKey: adminKeys.all })
+    }
+  }
   const create = useMutation({ mutationFn: createStudent, onSuccess: refresh })
   const update = useMutation({
     mutationFn: ({ id, data }: { id: number; data: unknown }) =>

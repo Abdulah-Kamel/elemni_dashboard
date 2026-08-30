@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest"
 import { render, screen } from "@testing-library/react"
 import { NextIntlClientProvider } from "next-intl"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { PublishToggle } from "../components/publish-toggle"
 import { DropdownMenu } from "@/components/ui/dropdown-menu"
 
@@ -12,9 +13,12 @@ const messages = {
 }
 
 function renderWithIntl(ui: React.ReactNode) {
+  const queryClient = new QueryClient()
   return render(
     <NextIntlClientProvider locale="ar" messages={messages}>
-      <DropdownMenu open>{ui}</DropdownMenu>
+      <QueryClientProvider client={queryClient}>
+        <DropdownMenu open>{ui}</DropdownMenu>
+      </QueryClientProvider>
     </NextIntlClientProvider>
   )
 }

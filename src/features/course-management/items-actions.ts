@@ -68,7 +68,7 @@ export async function getItems(
   lessonId: number,
 ): Promise<ItemOut[]> {
   return apiFetch(endpoints.courses.items.list(courseId, lessonId), itemOutSchema.array(), {
-    tags: [`items:${courseId}:${lessonId}`],
+    tags: [`items:${courseId}:${lessonId}`, `items:${courseId}`],
   });
 }
 
@@ -124,7 +124,7 @@ export async function updateItem(
       itemOutSchema,
       { method: "PATCH", body: JSON.stringify(body) },
     );
-    revalidateTag(`items:${courseId}:*`, "default");
+    revalidateTag(`items:${courseId}`, "default");
     const elapsed = Math.round(performance.now() - start);
     logger.actionDone("updateItem", { itemId: item.id }, elapsed);
     return { success: true, data: item };

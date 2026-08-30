@@ -20,7 +20,6 @@ import {
   confirmVideoUpload,
   requestUploadUrl,
   requestVideoUpload,
-  updateItem,
 } from "@/features/course-management/items-actions"
 import { uploadToPresignedUrl } from "@/lib/upload"
 import { uploadVideoToBunnyTus } from "@/lib/tus-upload"
@@ -37,6 +36,7 @@ import { Input } from "@/components/ui/input"
 import { UploadDialog } from "./upload-dialog"
 import type { ItemOut } from "@/features/course-management/items-schema"
 import { useCourseBuilderBridge } from "@/features/course-management/course-builder-bridge"
+import { useItemMutations } from "@/features/course-management/hooks/use-course-management-queries"
 
 function itemType(item: ItemOut): {
   label: string
@@ -93,14 +93,12 @@ export function ItemCard({
   lessonId,
   chapterId,
   onUpdate,
-  onDelete,
 }: {
   item: ItemOut
   courseId: number
   lessonId: number
   chapterId?: number | null
   onUpdate: (item: ItemOut) => void
-  onDelete: (itemId: number) => void
 }) {
   const t = useTranslations("items")
   const {
@@ -112,6 +110,7 @@ export function ItemCard({
     clearSelectedNode,
     selectNode,
   } = useCourseBuilderBridge()
+  const { update, remove } = useItemMutations(courseId, lessonId)
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [editOpen, setEditOpen] = useState(false)
@@ -121,11 +120,16 @@ export function ItemCard({
     "video" | "document"
   >("video")
   const [editTitle, setEditTitle] = useState(item.title)
-  const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const submitting = update.isPending || remove.isPending
 
   const type = itemType(item)
   const status = itemStatus(item)
+  // Once content has been confirmed, hide the upload affordances so the same
+  // item cannot be accidentally submitted again from this editor row.
+  const hasContent = Boolean(
+    item.bunny_stream_id || item.document_path || item.exam_id
+  )
   const isSelected =
     selectedNode?.type === "item" && String(selectedNode.id) === String(item.id)
   const isHovered =
@@ -154,21 +158,29 @@ export function ItemCard({
     return () => window.cancelAnimationFrame(frame)
   }, [enabled, isSelected, item.id])
 
-  const openUploadDialog = useCallback((uploadType: "video" | "document") => {
-    setUploadDialogType(uploadType)
-    setUploadDialogOpen(true)
-  }, [])
+  const openUploadDialog = useCallback(
+    (uploadType: "video" | "document") => {
+      if (hasContent || uploading) return
+      setUploadDialogType(uploadType)
+      setUploadDialogOpen(true)
+    },
+    [hasContent, uploading]
+  )
 
   const handleVideoUpload = useCallback(
-    async (file: File) => {
+    async (file: File, title: string) => {
       setUploading(true)
       setUploadProgress(0)
       try {
+        if (title !== item.title) {
+          await update.mutateAsync({ itemId: item.id, data: { title } })
+        }
+
         const credentialsResult = await requestVideoUpload(
           courseId,
           lessonId,
           item.id,
-          item.title
+          title
         )
         if (!credentialsResult.success) {
           toast.error(credentialsResult.error.message || t("upload_error"))
@@ -201,14 +213,18 @@ export function ItemCard({
         setUploadProgress(0)
       }
     },
-    [courseId, lessonId, item.id, item.title, onUpdate, t]
+    [courseId, lessonId, item.id, item.title, onUpdate, t, update]
   )
 
   const handleDocUpload = useCallback(
-    async (file: File) => {
+    async (file: File, title: string) => {
       setUploading(true)
       setUploadProgress(0)
       try {
+        if (title !== item.title) {
+          await update.mutateAsync({ itemId: item.id, data: { title } })
+        }
+
         const urlResult = await requestUploadUrl(
           courseId,
           lessonId,
@@ -244,46 +260,48 @@ export function ItemCard({
         toast.error(t("upload_error"))
       } finally {
         setUploading(false)
+        setUploadProgress(0)
       }
     },
-    [courseId, lessonId, item.id, onUpdate, t]
+    [courseId, lessonId, item.id, item.title, onUpdate, t, update]
+  )
+
+  const handleUpload = useCallback(
+    (file: File, title: string, uploadType: "video" | "document") => {
+      if (uploadType === "video") {
+        void handleVideoUpload(file, title)
+      } else {
+        void handleDocUpload(file, title)
+      }
+    },
+    [handleDocUpload, handleVideoUpload]
   )
 
   const handleSave = useCallback(async () => {
     const trimmed = editTitle.trim()
     if (!trimmed) return
-    setSubmitting(true)
     setError(null)
     try {
-      const result = await updateItem(courseId, item.id, { title: trimmed })
-      if (result.success) {
-        onUpdate(result.data)
-        setEditOpen(false)
-      } else {
-        setError(result.error.message)
-      }
-    } finally {
-      setSubmitting(false)
+      await update.mutateAsync({ itemId: item.id, data: { title: trimmed } })
+      setEditOpen(false)
+    } catch (mutationError) {
+      setError(
+        mutationError instanceof Error ? mutationError.message : t("upload_error"),
+      )
     }
-  }, [courseId, item.id, editTitle, onUpdate])
+  }, [editTitle, item.id, t, update])
 
   const handleDelete = useCallback(async () => {
-    setSubmitting(true)
     setError(null)
     try {
-      const { deleteItem } =
-        await import("@/features/course-management/items-actions")
-      const result = await deleteItem(courseId, item.id, lessonId)
-      if (result.success) {
-        onDelete(item.id)
-        setDeleteOpen(false)
-      } else {
-        setError(result.error.message)
-      }
-    } finally {
-      setSubmitting(false)
+      await remove.mutateAsync(item.id)
+      setDeleteOpen(false)
+    } catch (mutationError) {
+      setError(
+        mutationError instanceof Error ? mutationError.message : t("upload_error"),
+      )
     }
-  }, [courseId, item.id, lessonId, onDelete])
+  }, [item.id, remove, t])
 
   return (
     <div
@@ -341,31 +359,31 @@ export function ItemCard({
       )}
 
       <div className="flex items-center gap-0.5 transition-opacity md:opacity-0 md:group-focus-within:opacity-100 md:group-hover:opacity-100">
-        {!item.bunny_stream_id && (
-          <Button
-            size="icon"
-            variant="ghost"
-            className="size-6"
-            disabled={uploading}
-            onClick={() => openUploadDialog("video")}
-            aria-label={t("upload_video")}
-            title={t("upload_video")}
-          >
-            <Upload className="size-3.5" />
-          </Button>
-        )}
-        {!item.document_path && (
-          <Button
-            size="icon"
-            variant="ghost"
-            className="size-6"
-            disabled={uploading}
-            onClick={() => openUploadDialog("document")}
-            aria-label={t("upload_document")}
-            title={t("upload_document")}
-          >
-            <FileText className="size-3.5" />
-          </Button>
+        {!hasContent && (
+          <>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="size-6"
+              disabled={uploading}
+              onClick={() => openUploadDialog("video")}
+              aria-label={t("upload_video")}
+              title={t("upload_video")}
+            >
+              <Upload className="size-3.5" />
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="size-6"
+              disabled={uploading}
+              onClick={() => openUploadDialog("document")}
+              aria-label={t("upload_document")}
+              title={t("upload_document")}
+            >
+              <FileText className="size-3.5" />
+            </Button>
+          </>
         )}
         <Button
           size="icon"
@@ -398,11 +416,10 @@ export function ItemCard({
         open={uploadDialogOpen}
         onOpenChange={setUploadDialogOpen}
         type={uploadDialogType}
+        itemTitle={item.title}
         uploading={uploading}
         progress={uploadProgress}
-        onUpload={
-          uploadDialogType === "video" ? handleVideoUpload : handleDocUpload
-        }
+        onUpload={handleUpload}
       />
 
       <Dialog

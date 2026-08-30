@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useCallback, useEffect, useRef } from "react"
-import { useRouter } from "@/i18n/routing"
 import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 import { FileDropzone } from "@/components/ui/file-dropzone"
@@ -14,8 +13,11 @@ import type { PreviewDeviceWidth } from "./types"
 import { uploadToPresignedUrl } from "@/lib/upload"
 import {
   requestProfileImageUpload,
-  updateTeacherProfile,
 } from "@/features/profile/actions"
+import {
+  useProfileMutations,
+  useTeacherProfileQuery,
+} from "@/features/profile/hooks/use-profile-queries"
 import { buildTeacherPreviewModel } from "./build-teacher-preview-model"
 import { PreviewWorkspace } from "./preview-workspace"
 import type { PreviewWorkspaceTab } from "./preview-workspace"
@@ -125,7 +127,10 @@ function ProfileWorkspaceContent({
 }: ProfileWorkspaceContentProps) {
   const lang = locale.startsWith("ar") ? "ar" : "en"
   const copy = COPY[lang]
-  const router = useRouter()
+  const [savedProfile, setSavedProfile] = useState(profile)
+  const profileQuery = useTeacherProfileQuery(profile)
+  const currentProfile = profileQuery.data ?? savedProfile
+  const { update } = useProfileMutations()
 
   const [name, setName] = useState(profile.name)
   const [bio, setBio] = useState(profile.description ?? "")
@@ -244,7 +249,7 @@ function ProfileWorkspaceContent({
 
   const previewModel = buildTeacherPreviewModel({
     profile: {
-      ...profile,
+      ...currentProfile,
       name,
       description: bio,
       location: location_,
@@ -260,7 +265,7 @@ function ProfileWorkspaceContent({
     if (!name.trim()) return
     setSaving(true)
     try {
-      let imagePath = profile.img
+      let imagePath = currentProfile.img
 
       if (avatarFile) {
         const upload = await requestProfileImageUpload(
@@ -281,27 +286,21 @@ function ProfileWorkspaceContent({
           return
         }
         imagePath = upload.data.path
-      } else if (avatarRemoved && profile.img) {
+      } else if (avatarRemoved && currentProfile.img) {
         imagePath = null
       }
 
-      const result = await updateTeacherProfile({
+      const updatedProfile = await update.mutateAsync({
         name: name.trim(),
         description: bio.trim() || null,
         location: location_.trim() || null,
         experience: parseExperience(experience),
         img: imagePath,
       })
-      if (!result.success) {
-        toast.error(
-          result.error.type === "Upstream" ? copy.error : result.error.message
-        )
-        return
-      }
 
+      setSavedProfile((current) => ({ ...current, ...updatedProfile }))
       toast.success(copy.saved)
       setDirty(false)
-      router.refresh()
     } catch {
       toast.error(copy.error)
     } finally {

@@ -16,10 +16,12 @@ export function CourseCardActions({
   courseId,
   isPublished,
   teacherProfileId,
+  showEdit = true,
 }: {
   courseId: number
   isPublished: boolean
   teacherProfileId: number
+  showEdit?: boolean
 }) {
   const t = useTranslations("courses")
 
@@ -37,15 +39,17 @@ export function CourseCardActions({
           }
         />
         <DropdownMenuContent align="end">
-          <EditCourseDialog
-            courseId={courseId}
-            teacherProfileId={teacherProfileId}
-          >
-            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-              <Pencil className="me-2 size-4 rtl:rotate-180" />
-              {t("edit")}
-            </DropdownMenuItem>
-          </EditCourseDialog>
+          {showEdit && (
+            <EditCourseDialog
+              courseId={courseId}
+              teacherProfileId={teacherProfileId}
+            >
+              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                <Pencil className="me-2 size-4 rtl:rotate-180" />
+                {t("edit")}
+              </DropdownMenuItem>
+            </EditCourseDialog>
+          )}
           <PublishToggle
             courseId={courseId}
             teacherProfileId={teacherProfileId}

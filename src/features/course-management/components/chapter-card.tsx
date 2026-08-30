@@ -30,14 +30,11 @@ import {
   Trash2,
   MoreHorizontal,
 } from "lucide-react"
-import {
-  updateChapter,
-  deleteChapter,
-} from "@/features/course-management/chapters-actions"
 import { LessonList } from "./lesson-list"
 import type { ChapterOut } from "@/features/course-management/chapters-schema"
 import type { LessonOut } from "@/features/course-management/lessons-schema"
 import { useCourseBuilderBridge } from "@/features/course-management/course-builder-bridge"
+import { useChapterMutations } from "@/features/course-management/hooks/use-course-management-queries"
 
 export function ChapterCard({
   chapter,
@@ -45,8 +42,6 @@ export function ChapterCard({
   initialLessons,
   lessonsError,
   defaultExpanded = false,
-  onUpdate,
-  onDelete,
   dragHandleProps,
 }: {
   chapter: ChapterOut
@@ -54,8 +49,6 @@ export function ChapterCard({
   initialLessons: LessonOut[]
   lessonsError: string | null
   defaultExpanded?: boolean
-  onUpdate: (chapter: ChapterOut) => void
-  onDelete: (chapterId: number) => void
   dragHandleProps?: React.HTMLAttributes<HTMLButtonElement>
 }) {
   const t = useTranslations("chapters")
@@ -68,13 +61,14 @@ export function ChapterCard({
     clearSelectedNode,
     selectNode,
   } = useCourseBuilderBridge()
+  const { update, remove } = useChapterMutations(courseId)
   const [expanded, setExpanded] = useState(defaultExpanded)
   const [lessonCount, setLessonCount] = useState(initialLessons.length)
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [editTitle, setEditTitle] = useState(chapter.title)
-  const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const submitting = update.isPending || remove.isPending
   const isSelected =
     selectedNode?.type === "chapter" &&
     String(selectedNode.id) === String(chapter.id)
@@ -101,38 +95,31 @@ export function ChapterCard({
   const handleSave = useCallback(async () => {
     const trimmed = editTitle.trim()
     if (!trimmed) return
-    setSubmitting(true)
     setError(null)
     try {
-      const result = await updateChapter(courseId, chapter.id, {
-        title: trimmed,
+      await update.mutateAsync({
+        chapterId: chapter.id,
+        data: { title: trimmed },
       })
-      if (result.success) {
-        onUpdate(result.data)
-        setEditOpen(false)
-      } else {
-        setError(result.error.message)
-      }
-    } finally {
-      setSubmitting(false)
+      setEditOpen(false)
+    } catch (mutationError) {
+      setError(
+        mutationError instanceof Error ? mutationError.message : t("error_upstream"),
+      )
     }
-  }, [courseId, chapter.id, editTitle, onUpdate])
+  }, [chapter.id, editTitle, t, update])
 
   const handleDelete = useCallback(async () => {
-    setSubmitting(true)
     setError(null)
     try {
-      const result = await deleteChapter(courseId, chapter.id)
-      if (result.success) {
-        onDelete(chapter.id)
-        setDeleteOpen(false)
-      } else {
-        setError(result.error.message)
-      }
-    } finally {
-      setSubmitting(false)
+      await remove.mutateAsync(chapter.id)
+      setDeleteOpen(false)
+    } catch (mutationError) {
+      setError(
+        mutationError instanceof Error ? mutationError.message : t("error_upstream"),
+      )
     }
-  }, [courseId, chapter.id, onDelete])
+  }, [chapter.id, remove, t])
 
   return (
     <Collapsible.Root open={expanded} onOpenChange={setExpanded}>

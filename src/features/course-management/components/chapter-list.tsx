@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslations } from "next-intl";
 import {
@@ -33,12 +34,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { PortalDragOverlay } from "@/components/ui/portal-drag-overlay"
 import { ChapterCard } from "./chapter-card";
-import { createChapter, reorderChapters } from "@/features/course-management/chapters-actions";
 import { applyOptimisticReorder, buildReorderPayload, rollbackReorder } from "@/features/course-management/reorder-utils";
 import { toast } from "sonner";
 import type { ChapterOut } from "@/features/course-management/chapters-schema";
 import type { LessonOut } from "@/features/course-management/lessons-schema";
 import { useCourseBuilderBridge } from "@/features/course-management/course-builder-bridge";
+import {
+  useChapterMutations,
+  useChaptersQuery,
+} from "@/features/course-management/hooks/use-course-management-queries";
+import { courseManagementKeys } from "@/features/course-management/query-keys";
+
+const EMPTY_CHAPTERS: ChapterOut[] = [];
 
 function SortableChapterCard({
   chapter,
@@ -46,16 +53,12 @@ function SortableChapterCard({
   initialLessons,
   lessonsError,
   defaultExpanded,
-  onUpdate,
-  onDelete,
 }: {
   chapter: ChapterOut;
   courseId: number;
   initialLessons: LessonOut[];
   lessonsError: string | null;
   defaultExpanded?: boolean;
-  onUpdate: (chapter: ChapterOut) => void;
-  onDelete: (chapterId: number) => void;
 }) {
   const {
     attributes,
@@ -82,8 +85,6 @@ function SortableChapterCard({
         initialLessons={initialLessons}
         lessonsError={lessonsError}
         defaultExpanded={defaultExpanded}
-        onUpdate={onUpdate}
-        onDelete={onDelete}
         dragHandleProps={{
           ...(attributes as React.HTMLAttributes<HTMLButtonElement>),
           ...(listeners as React.HTMLAttributes<HTMLButtonElement>),
@@ -108,11 +109,15 @@ export function ChapterList({
 }) {
   const t = useTranslations("chapters");
   const { notifyCurriculumCommitted } = useCourseBuilderBridge();
-  const [chapters, setChapters] = useState<ChapterOut[]>(initialChapters);
-  const [error, setError] = useState<string | null>(initialError);
+  const queryClient = useQueryClient();
+  const queryKey = courseManagementKeys.chapters(courseId);
+  const chaptersQuery = useChaptersQuery(courseId, initialChapters, initialError);
+  const { refetch: refetchChapters } = chaptersQuery;
+  const chapters = chaptersQuery.data ?? EMPTY_CHAPTERS;
+  const { create, reorder } = useChapterMutations(courseId);
+  const [error, setError] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [createTitle, setCreateTitle] = useState("");
-  const [submitting, setSubmitting] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const previousChaptersRef = useRef<ChapterOut[]>(initialChapters);
   const [parentRef] = useAutoAnimate({ duration: 200 });
@@ -146,44 +151,39 @@ export function ChapterList({
       previousChaptersRef.current = chapters;
       const reordered = applyOptimisticReorder(chapters, oldIndex, newIndex);
       const payload = buildReorderPayload(reordered);
-      setChapters(reordered);
+      queryClient.setQueryData(queryKey, reordered);
 
-      const result = await reorderChapters(courseId, payload);
-      if (result.success) {
+      try {
+        const nextChapters = await reorder.mutateAsync(payload);
+        queryClient.setQueryData(queryKey, nextChapters);
         toast.success(t("reorder_success"));
         void notifyCurriculumCommitted();
-      } else {
-        setChapters(rollbackReorder(previousChaptersRef.current));
-        if (result.error.type === "Conflict") {
+      } catch (mutationError) {
+        queryClient.setQueryData(queryKey, rollbackReorder(previousChaptersRef.current));
+        const errorType =
+          mutationError && typeof mutationError === "object" && "type" in mutationError
+            ? (mutationError as { type?: string }).type
+            : undefined;
+        if (errorType === "Conflict") {
           toast.error(t("reorder_conflict"), {
-            action: { label: "Refresh", onClick: () => window.location.reload() },
+            action: {
+              label: "Refresh",
+              onClick: () => void refetchChapters(),
+            },
           });
         } else {
           toast.error(t("reorder_error"));
         }
       }
     },
-    [chapters, courseId, notifyCurriculumCommitted, t],
+    [chapters, notifyCurriculumCommitted, queryClient, queryKey, refetchChapters, reorder, t],
   );
 
   const handleDragCancel = useCallback(() => {
     setActiveId(null);
   }, []);
 
-  const handleUpdated = useCallback((updated: ChapterOut) => {
-    setChapters((prev) =>
-      prev.map((ch) => (ch.id === updated.id ? updated : ch)),
-    );
-    void notifyCurriculumCommitted();
-  }, [notifyCurriculumCommitted]);
-
-  const handleDeleted = useCallback((chapterId: number) => {
-    setChapters((prev) => prev.filter((ch) => ch.id !== chapterId));
-    void notifyCurriculumCommitted();
-  }, [notifyCurriculumCommitted]);
-
-  const handleCreated = useCallback((chapter: ChapterOut) => {
-    setChapters((prev) => [...prev, chapter]);
+  const handleCreated = useCallback(() => {
     setCreateOpen(false);
     setCreateTitle("");
     void notifyCurriculumCommitted();
@@ -193,26 +193,33 @@ export function ChapterList({
     const trimmed = createTitle.trim();
     if (!trimmed) return;
 
-    setSubmitting(true);
     setError(null);
     try {
-      const result = await createChapter(courseId, { title: trimmed });
-      if (result.success) {
-        handleCreated(result.data);
-        toast.success(t("chapter_created"));
-      } else {
-        setError(result.error.message);
-      }
-    } finally {
-      setSubmitting(false);
+      await create.mutateAsync({ title: trimmed });
+      handleCreated();
+      toast.success(t("chapter_created"));
+    } catch (mutationError) {
+      setError(
+        mutationError instanceof Error ? mutationError.message : t("error_upstream"),
+      );
     }
-  }, [courseId, createTitle, handleCreated, t]);
+  }, [create, createTitle, handleCreated, t]);
 
-  if (error && chapters.length === 0) {
+  const submitting = create.isPending || reorder.isPending;
+  const queryError = chaptersQuery.isError
+    ? chaptersQuery.error instanceof Error
+      ? chaptersQuery.error.message
+      : t("error_upstream")
+    : initialError && chaptersQuery.isPending
+      ? initialError
+      : null;
+  const displayError = error ?? queryError;
+
+  if (displayError && chapters.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-sm text-destructive mb-4">{error}</p>
-        <Button variant="outline" onClick={() => window.location.reload()}>
+        <p className="text-sm text-destructive mb-4">{displayError}</p>
+        <Button variant="outline" onClick={() => void refetchChapters()}>
           {t("retry")}
         </Button>
       </div>
@@ -234,8 +241,6 @@ export function ChapterList({
             initialLessons={initialLessonsByChapter[chapter.id] ?? []}
             lessonsError={lessonErrorsByChapter[chapter.id] ?? null}
             defaultExpanded
-            onUpdate={handleUpdated}
-            onDelete={handleDeleted}
           />
         ))
       ) : (
@@ -255,8 +260,6 @@ export function ChapterList({
                 initialLessons={initialLessonsByChapter[chapter.id] ?? []}
                 lessonsError={lessonErrorsByChapter[chapter.id] ?? null}
                 defaultExpanded={chapter.id === chapters[0]?.id}
-                onUpdate={handleUpdated}
-                onDelete={handleDeleted}
               />
             ))}
           </SortableContext>

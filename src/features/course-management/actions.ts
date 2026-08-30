@@ -12,10 +12,12 @@ import {
 } from "@/features/course-management/schema"
 import {
   getCourse as getCourseQuery,
+  listCourses as listCoursesQuery,
   listSubjects as listSubjectsQuery,
   listGrades as listGradesQuery,
   listStreams as listStreamsQuery,
 } from "@/features/course-management/queries"
+import { getTeacherProfile as getTeacherProfileQuery } from "@/features/profile/queries"
 import type { CourseOut } from "@/features/shell/schema"
 import type {
   CourseCreate,
@@ -95,6 +97,12 @@ export async function getCourseAction(courseId: number): Promise<CourseOut> {
   return getCourseQuery(courseId)
 }
 
+export async function listCoursesAction(
+  teacherProfileId: number
+): Promise<CourseOut[]> {
+  return listCoursesQuery(teacherProfileId)
+}
+
 export async function requestCourseImageUpload(
   courseId: number,
   filename: string
@@ -130,6 +138,24 @@ export async function listGradesAction(): Promise<GradeOut[]> {
 
 export async function listStreamsAction(): Promise<StreamOut[]> {
   return listStreamsQuery()
+}
+
+/**
+ * Curriculum available to the signed-in teacher. Unlike the public catalog
+ * lists, this only includes subjects, grades, and streams assigned to the
+ * teacher profile and therefore matches course-creation authorization.
+ */
+export async function getTeacherCurriculumAction(): Promise<{
+  subjects: SubjectOut[]
+  grades: GradeOut[]
+  streams: StreamOut[]
+}> {
+  const profile = await getTeacherProfileQuery()
+  return {
+    subjects: profile.subjects,
+    grades: profile.grades,
+    streams: profile.streams,
+  }
 }
 
 export async function publishCourse(

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { useQueries, useQueryClient } from "@tanstack/react-query";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslations } from "next-intl";
 import {
@@ -33,8 +34,6 @@ import {
 } from "@/components/ui/dialog";
 import { LessonCard } from "./lesson-card";
 import { PortalDragOverlay } from "@/components/ui/portal-drag-overlay"
-import { createLesson, reorderLessons } from "@/features/course-management/lessons-actions";
-import { listItems } from "@/features/course-management/items-actions";
 import { toast } from "sonner";
 import {
   applyOptimisticReorder,
@@ -43,20 +42,24 @@ import {
 } from "@/features/course-management/reorder-utils";
 import type { LessonOut } from "@/features/course-management/lessons-schema";
 import { useCourseBuilderBridge } from "@/features/course-management/course-builder-bridge";
+import {
+  itemsQueryOptions,
+  useLessonMutations,
+  useLessonsQuery,
+} from "@/features/course-management/hooks/use-course-management-queries";
+import { courseManagementKeys } from "@/features/course-management/query-keys";
+
+const EMPTY_LESSONS: LessonOut[] = [];
 
 function SortableLessonCard({
   lesson,
   courseId,
-  onUpdate,
-  onDelete,
   itemCount,
   status,
   nested,
 }: {
   lesson: LessonOut;
   courseId: number;
-  onUpdate: (lesson: LessonOut) => void;
-  onDelete: (lessonId: number) => void;
   itemCount?: number;
   status?: "ready" | null;
   nested?: boolean;
@@ -81,8 +84,6 @@ function SortableLessonCard({
       <LessonCard
         lesson={lesson}
         courseId={courseId}
-        onUpdate={onUpdate}
-        onDelete={onDelete}
         itemCount={itemCount}
         status={status}
         nested={nested}
@@ -112,15 +113,20 @@ export function LessonList({
 }) {
   const t = useTranslations("lessons");
   const { notifyCurriculumCommitted } = useCourseBuilderBridge();
-  const [lessons, setLessons] = useState(initialLessons);
-  const [error, setError] = useState<string | null>(initialError);
+  const queryClient = useQueryClient();
+  const queryKey = courseManagementKeys.lessons(courseId, chapterId);
+  const lessonsQuery = useLessonsQuery(
+    courseId,
+    chapterId,
+    initialLessons,
+    initialError,
+  );
+  const lessons = lessonsQuery.data ?? EMPTY_LESSONS;
+  const { create, reorder } = useLessonMutations(courseId, chapterId);
+  const [error, setError] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [createTitle, setCreateTitle] = useState("");
-  const [submitting, setSubmitting] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [itemsMap, setItemsMap] = useState<
-    Record<number, { count: number; status: "ready" | null }>
-  >({});
   const previousLessonsRef = useRef(initialLessons);
   const [parentRef] = useAutoAnimate({ duration: 200 });
 
@@ -128,35 +134,35 @@ export function LessonList({
     onCountChange?.(lessons.length);
   }, [lessons.length, onCountChange]);
 
-  useEffect(() => {
-    async function fetchItems() {
-      const results: Record<
-        number,
-        { count: number; status: "ready" | null }
-      > = {};
+  const itemQueries = useQueries({
+    queries: lessons.map((lesson) => itemsQueryOptions(courseId, lesson.id)),
+  });
 
-      await Promise.all(
-        initialLessons.map(async (lesson) => {
-          const result = await listItems(courseId, lesson.id);
-          if (result.success) {
-            const items = result.data;
-            const allReady = items.length > 0 && items.every(
-              (item) =>
-                item.bunny_stream_id !== null ||
-                item.document_path !== null ||
-                item.exam_id !== null,
-            );
-            const status = allReady ? "ready" as const : null;
-            results[lesson.id] = { count: items.length, status };
-          }
-        }),
-      );
+  const itemsMap = useMemo(() => {
+    const results: Record<
+      number,
+      { count: number; status: "ready" | null }
+    > = {};
 
-      setItemsMap(results);
-    }
+    lessons.forEach((lesson, index) => {
+      const items = itemQueries[index]?.data;
+      if (!items) return;
+      const allReady =
+        items.length > 0 &&
+        items.every(
+          (item) =>
+            item.bunny_stream_id !== null ||
+            item.document_path !== null ||
+            item.exam_id !== null,
+        );
+      results[lesson.id] = {
+        count: items.length,
+        status: allReady ? "ready" : null,
+      };
+    });
 
-    fetchItems();
-  }, [courseId, initialLessons]);
+    return results;
+  }, [itemQueries, lessons]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -190,37 +196,28 @@ export function LessonList({
       const reordered = applyOptimisticReorder(lessons, oldIndex, newIndex);
       const payload = buildReorderPayload(reordered);
 
-      setLessons(reordered);
+      queryClient.setQueryData(queryKey, reordered);
 
-      const result = await reorderLessons(courseId, payload, chapterId);
-      if (!result.success) {
-        setLessons(rollbackReorder(previousLessonsRef.current));
-        toast.error(result.error.message);
-      } else {
+      try {
+        await reorder.mutateAsync(payload);
         void notifyCurriculumCommitted();
+      } catch (mutationError) {
+        queryClient.setQueryData(queryKey, rollbackReorder(previousLessonsRef.current));
+        if (mutationError instanceof Error) {
+          toast.error(mutationError.message);
+        } else {
+          toast.error(t("reorder_error"));
+        }
       }
     },
-    [lessons, courseId, chapterId, notifyCurriculumCommitted],
+    [lessons, notifyCurriculumCommitted, queryClient, queryKey, reorder, t],
   );
 
   const handleDragCancel = useCallback(() => {
     setActiveId(null);
   }, []);
 
-  const handleUpdated = useCallback((updated: LessonOut) => {
-    setLessons((prev) =>
-      prev.map((l) => (l.id === updated.id ? updated : l)),
-    );
-    void notifyCurriculumCommitted();
-  }, [notifyCurriculumCommitted]);
-
-  const handleDeleted = useCallback((lessonId: number) => {
-    setLessons((prev) => prev.filter((l) => l.id !== lessonId));
-    void notifyCurriculumCommitted();
-  }, [notifyCurriculumCommitted]);
-
-  const handleCreated = useCallback((lesson: LessonOut) => {
-    setLessons((prev) => [...prev, lesson]);
+  const handleCreated = useCallback(() => {
     setCreateOpen(false);
     setCreateTitle("");
     void notifyCurriculumCommitted();
@@ -230,29 +227,32 @@ export function LessonList({
     const trimmed = createTitle.trim();
     if (!trimmed) return;
 
-    setSubmitting(true);
     setError(null);
     try {
-      const result = await createLesson(
-        courseId,
-        { title: trimmed },
-        chapterId,
+      await create.mutateAsync({ title: trimmed });
+      handleCreated();
+    } catch (mutationError) {
+      setError(
+        mutationError instanceof Error ? mutationError.message : t("error_upstream"),
       );
-      if (result.success) {
-        handleCreated(result.data);
-      } else {
-        setError(result.error.message);
-      }
-    } finally {
-      setSubmitting(false);
     }
-  }, [courseId, chapterId, createTitle, handleCreated]);
+  }, [create, createTitle, handleCreated, t]);
 
-  if (error && lessons.length === 0) {
+  const submitting = create.isPending || reorder.isPending;
+  const queryError = lessonsQuery.isError
+    ? lessonsQuery.error instanceof Error
+      ? lessonsQuery.error.message
+      : t("error_upstream")
+    : initialError && lessonsQuery.isPending
+      ? initialError
+      : null;
+  const displayError = error ?? queryError;
+
+  if (displayError && lessons.length === 0) {
     return (
       <div className="text-center py-4">
-        <p className="text-sm text-destructive mb-3">{error}</p>
-        <Button variant="outline" onClick={() => window.location.reload()}>
+        <p className="text-sm text-destructive mb-3">{displayError}</p>
+        <Button variant="outline" onClick={() => void lessonsQuery.refetch()}>
           {t("retry")}
         </Button>
       </div>
@@ -295,8 +295,6 @@ export function LessonList({
                 key={lesson.id}
                 lesson={lesson}
                 courseId={courseId}
-                onUpdate={handleUpdated}
-                onDelete={handleDeleted}
                 itemCount={itemsMap[lesson.id]?.count}
                 status={itemsMap[lesson.id]?.status ?? null}
                 nested={nested}

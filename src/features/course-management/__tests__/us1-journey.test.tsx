@@ -3,6 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { NextIntlClientProvider } from "next-intl";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { CourseList } from "../components/course-list";
 import { mockCourses } from "./mocks";
 
@@ -49,9 +50,10 @@ afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 
 function renderWithIntl(ui: React.ReactNode) {
+  const queryClient = new QueryClient();
   return render(
     <NextIntlClientProvider locale="ar" messages={messages}>
-      {ui}
+      <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
     </NextIntlClientProvider>
   );
 }

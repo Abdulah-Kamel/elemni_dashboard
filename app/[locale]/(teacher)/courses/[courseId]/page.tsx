@@ -1,11 +1,6 @@
 import { setRequestLocale, getTranslations } from "next-intl/server"
 import { verifySession } from "@/lib/auth/dal"
-import {
-  getCourse,
-  listSubjects,
-  listGrades,
-  listStreams,
-} from "@/features/course-management/queries"
+import { getCourse } from "@/features/course-management/queries"
 import {
   getPublicTeacherProfile,
   getTeacherProfile,
@@ -14,12 +9,10 @@ import { listChapters } from "@/features/course-management/chapters-queries"
 import { listLessons } from "@/features/course-management/lessons-queries"
 import { ChapterList } from "@/features/course-management/components/chapter-list"
 import { LessonList } from "@/features/course-management/components/lesson-list"
-import { EditCourseDialog } from "@/features/course-management/components/edit-course-dialog"
 import { CourseCardActions } from "@/features/course-management/components/course-card-actions"
-import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import Link from "next/link"
-import { ArrowLeft, ArrowRight, Pencil } from "lucide-react"
+import { ArrowLeft, ArrowRight } from "lucide-react"
 import { redirect } from "next/navigation"
 import { Suspense } from "react"
 import type { LessonOut } from "@/features/course-management/lessons-schema"
@@ -29,22 +22,6 @@ import type { CourseFormValues } from "@/features/course-management/schema"
 import { loadCoursePreviewCurriculum } from "@/features/student-preview/server-actions"
 
 export const dynamic = "force-dynamic"
-
-async function getTeacherPreviewIdentity() {
-  const profile = await getTeacherProfile()
-  const publicProfile = await getPublicTeacherProfile(profile.slug).catch(
-    () => null
-  )
-  const publicAvatarUrl = publicProfile?.img
-  return {
-    name: profile.name,
-    avatarUrl:
-      publicAvatarUrl?.startsWith("https://") ||
-      publicAvatarUrl?.startsWith("http://")
-        ? publicAvatarUrl
-        : null,
-  }
-}
 
 async function CourseEditor({
   courseId,
@@ -75,14 +52,28 @@ async function CourseEditor({
     )
   }
 
-  const [subjects, grades, streams, teacherPreview, previewCurriculum] =
-    await Promise.all([
-      listSubjects().catch(() => []),
-      listGrades().catch(() => []),
-      listStreams().catch(() => []),
-      getTeacherPreviewIdentity().catch(() => null),
-      loadCoursePreviewCurriculum(courseId),
-    ])
+  const [teacherProfile, previewCurriculum] = await Promise.all([
+    getTeacherProfile().catch(() => null),
+    loadCoursePreviewCurriculum(courseId),
+  ])
+  const subjects = teacherProfile?.subjects ?? []
+  const grades = teacherProfile?.grades ?? []
+  const streams = teacherProfile?.streams ?? []
+  let teacherPreview: { name: string; avatarUrl: string | null } | null = null
+  if (teacherProfile) {
+    const publicProfile = await getPublicTeacherProfile(
+      teacherProfile.slug
+    ).catch(() => null)
+    const publicAvatarUrl = publicProfile?.img
+    teacherPreview = {
+      name: teacherProfile.name,
+      avatarUrl:
+        publicAvatarUrl?.startsWith("https://") ||
+        publicAvatarUrl?.startsWith("http://")
+          ? publicAvatarUrl
+          : null,
+    }
+  }
 
   let curriculum: React.ReactNode
   if (course.use_chapters) {
@@ -172,19 +163,11 @@ async function CourseEditor({
         className="flex shrink-0 items-center gap-2"
         dir={locale === "ar" ? "rtl" : "ltr"}
       >
-        <EditCourseDialog
-          courseId={course.id}
-          teacherProfileId={course.teacher_profile_id}
-        >
-          <Button variant="outline">
-            <Pencil className="me-2 size-4" />
-            {t("course_settings")}
-          </Button>
-        </EditCourseDialog>
         <CourseCardActions
           courseId={course.id}
           isPublished={course.is_published}
           teacherProfileId={course.teacher_profile_id}
+          showEdit={false}
         />
       </div>
     </div>
@@ -215,6 +198,7 @@ async function CourseEditor({
             locale,
           })}
           locale={locale}
+          teacherProfileId={course.teacher_profile_id}
           editorActions={editorActions}
           initialSections={
             previewCurriculum.success ? previewCurriculum.data : []

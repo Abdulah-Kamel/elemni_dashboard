@@ -15,13 +15,7 @@ import { Plus } from "lucide-react"
 import { toast } from "sonner"
 import { CourseForm } from "./course-form"
 import { CourseCoverPicker } from "./course-cover-picker"
-import {
-  createCourse,
-  listSubjectsAction,
-  listGradesAction,
-  listStreamsAction,
-  updateCourse,
-} from "@/features/course-management/actions"
+import { getTeacherCurriculumAction } from "@/features/course-management/actions"
 import {
   formValuesToCourseCreate,
   courseFormSchema,
@@ -33,6 +27,10 @@ import type {
   StreamOut,
 } from "@/features/course-management/schema"
 import type { CourseFormValues } from "@/features/course-management/schema"
+import {
+  useCourseMutations,
+} from "@/features/course-management/hooks/use-course-management-queries"
+import { getActionError } from "@/lib/query-action"
 
 export function CreateCourseDialog({
   teacherProfileId,
@@ -50,19 +48,16 @@ export function CreateCourseDialog({
   const [subjects, setSubjects] = useState<SubjectOut[]>([])
   const [grades, setGrades] = useState<GradeOut[]>([])
   const [streams, setStreams] = useState<StreamOut[]>([])
+  const { create, update } = useCourseMutations(teacherProfileId)
 
   const loadCurriculum = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const [subs, grds, strms] = await Promise.all([
-        listSubjectsAction(),
-        listGradesAction(),
-        listStreamsAction(),
-      ])
-      setSubjects(subs)
-      setGrades(grds)
-      setStreams(strms)
+      const curriculum = await getTeacherCurriculumAction()
+      setSubjects(curriculum.subjects)
+      setGrades(curriculum.grades)
+      setStreams(curriculum.streams)
     } catch {
       setError(t("curriculum_unavailable"))
     } finally {
@@ -89,50 +84,41 @@ export function CreateCourseDialog({
     setSubmitting(true)
     try {
       const body = formValuesToCourseCreate(parsed.data)
-      const result = await createCourse(teacherProfileId, body)
+      const course = await create.mutateAsync(body)
 
-      if (result.success) {
-        let coverFailed = false
-        if (coverFile) {
-          try {
-            const imagePath = await uploadCourseCover(
-              result.course.id,
-              coverFile
-            )
-            const imageResult = await updateCourse(
-              result.course.id,
-              teacherProfileId,
-              { img: imagePath }
-            )
-            if (!imageResult.success) throw new Error(imageResult.error.message)
-          } catch {
-            coverFailed = true
-            toast.warning(t("course_created_cover_failed"))
-          }
+      let coverFailed = false
+      if (coverFile) {
+        try {
+          const imagePath = await uploadCourseCover(course.id, coverFile)
+          await update.mutateAsync({
+            courseId: course.id,
+            data: { img: imagePath },
+          })
+        } catch {
+          coverFailed = true
+          toast.warning(t("course_created_cover_failed"))
         }
-        if (!coverFailed) toast.success(t("course_created"))
-        setOpen(false)
-        setFormValues(null)
-        setCoverFile(null)
+      }
+
+      if (!coverFailed) toast.success(t("course_created"))
+      setOpen(false)
+      setFormValues(null)
+      setCoverFile(null)
+    } catch (err) {
+      const actionError = getActionError(err)
+      if (actionError?.type === "Validation" && actionError.fields) {
+        const fieldMap: Record<string, string> = {}
+        actionError.fields.forEach((field) => {
+          fieldMap[field.replace("body.", "")] = actionError.message
+        })
+        setApiErrors(fieldMap)
       } else {
-        const err = result.error
-        if (err.type === "Validation") {
-          if (err.fields) {
-            const fieldMap: Record<string, string> = {}
-            err.fields.forEach((f) => {
-              const key = f.replace("body.", "")
-              fieldMap[key] = err.message
-            })
-            setApiErrors(fieldMap)
-          }
-        } else {
-          setError(err.message)
-        }
+        setError(actionError?.message ?? t("error_upstream"))
       }
     } finally {
       setSubmitting(false)
     }
-  }, [coverFile, formValues, t, teacherProfileId])
+  }, [coverFile, create, formValues, t, update])
 
   return (
     <Dialog

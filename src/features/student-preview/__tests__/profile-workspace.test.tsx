@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest"
-import { render, screen, fireEvent } from "@testing-library/react"
+import { render as rtlRender, screen, fireEvent } from "@testing-library/react"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { ProfileWorkspace } from "../profile-workspace"
 import type { TeacherProfile } from "@/features/profile/schema"
 import type { CourseOut } from "@/features/shell/schema"
@@ -15,11 +16,19 @@ vi.mock("sonner", () => ({
 vi.mock("@/features/profile/actions", () => ({
   requestProfileImageUpload: vi.fn(),
   updateTeacherProfile: vi.fn(),
+  getTeacherProfileAction: vi.fn(),
 }))
 
 vi.mock("@/lib/upload", () => ({
   uploadToPresignedUrl: vi.fn(),
 }))
+
+function render(ui: React.ReactNode) {
+  const queryClient = new QueryClient()
+  return rtlRender(
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
+  )
+}
 
 const mockProfile: TeacherProfile = {
   id: 1,

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest"
-import { render, screen, fireEvent, waitFor } from "@testing-library/react"
+import { render as rtlRender, screen, fireEvent, waitFor } from "@testing-library/react"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { CourseWorkspace } from "../course-workspace"
 import type { StudentCoursePreviewModel, StudentPreviewSection } from "../types"
 
@@ -8,6 +9,12 @@ vi.mock("../server-actions", () => ({
 }))
 
 import { loadCoursePreviewCurriculum } from "../server-actions"
+
+function render(ui: React.ReactNode) {
+  return rtlRender(
+    <QueryClientProvider client={new QueryClient()}>{ui}</QueryClientProvider>
+  )
+}
 
 const mockModel: StudentCoursePreviewModel = {
   id: 42,

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslations } from "next-intl";
 import {
@@ -19,24 +20,28 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Plus, GripVertical } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PortalDragOverlay } from "@/components/ui/portal-drag-overlay"
 import { ItemCard } from "./item-card";
-import { listItems, createItem, reorderItems } from "@/features/course-management/items-actions";
+import { UploadDialog, type UploadType } from "./upload-dialog";
+import {
+  confirmUpload,
+  confirmVideoUpload,
+  requestUploadUrl,
+  requestVideoUpload,
+} from "@/features/course-management/items-actions";
+import { uploadToPresignedUrl } from "@/lib/upload";
+import { uploadVideoToBunnyTus } from "@/lib/tus-upload";
 import { applyOptimisticReorder, buildReorderPayload, rollbackReorder } from "@/features/course-management/reorder-utils";
 import { toast } from "sonner";
 import type { ItemOut } from "@/features/course-management/items-schema";
 import { useCourseBuilderBridge } from "@/features/course-management/course-builder-bridge";
+import {
+  useItemMutations,
+  useItemsQuery,
+} from "@/features/course-management/hooks/use-course-management-queries";
+import { courseManagementKeys } from "@/features/course-management/query-keys";
 
 function SortableItemCard({
   item,
@@ -44,14 +49,12 @@ function SortableItemCard({
   lessonId,
   chapterId,
   onUpdate,
-  onDelete,
 }: {
   item: ItemOut;
   courseId: number;
   lessonId: number;
   chapterId?: number | null;
   onUpdate: (item: ItemOut) => void;
-  onDelete: (itemId: number) => void;
 }) {
   const t = useTranslations("items");
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -84,7 +87,6 @@ function SortableItemCard({
             lessonId={lessonId}
             chapterId={chapterId}
             onUpdate={onUpdate}
-            onDelete={onDelete}
           />
         </div>
       </div>
@@ -105,14 +107,24 @@ export function ItemList({
   chapterId?: number | null;
   error: string | null;
 }) {
-  const [items, setItems] = useState<ItemOut[]>(_initialItems ?? []);
-  const [loading, setLoading] = useState(!_initialItems);
-  const [error, setError] = useState<string | null>(initialError);
+  const queryClient = useQueryClient();
+  const queryKey = courseManagementKeys.items(courseId, lessonId);
+  const itemsQuery = useItemsQuery(
+    courseId,
+    lessonId,
+    _initialItems,
+    initialError,
+  );
+  const items = useMemo(() => itemsQuery.data ?? [], [itemsQuery.data]);
+  const { create, update, reorder } = useItemMutations(courseId, lessonId);
+  const [error, setError] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [createTitle, setCreateTitle] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const previousRef = useRef(items);
+  const [createUploadOpen, setCreateUploadOpen] = useState(false);
+  const [createUploadType, setCreateUploadType] = useState<UploadType>("video");
+  const [createUploading, setCreateUploading] = useState(false);
+  const [createUploadProgress, setCreateUploadProgress] = useState(0);
+  const createdUploadItemRef = useRef<ItemOut | null>(null);
+  const previousRef = useRef(_initialItems ?? []);
   const [parentRef] = useAutoAnimate({ duration: 200 });
 
   const t = useTranslations("items");
@@ -123,45 +135,6 @@ export function ItemList({
 
   const itemIds = items.map((i) => String(i.id));
   const activeItem = activeId ? items.find((i) => String(i.id) === activeId) ?? null : null;
-
-  useEffect(() => {
-    if (_initialItems) {
-      return;
-    }
-    listItems(courseId, lessonId)
-      .then((result) => {
-        if (result.success) {
-          setItems(result.data);
-        } else {
-          setError(result.error.message);
-        }
-      })
-      .catch(() => {
-        setError(t("fetch_error"));
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [courseId, lessonId, _initialItems, t]);
-
-  const hasProcessingVideo = items.some(
-    (item) =>
-      item.bunny_stream_id !== null &&
-      item.bunny_stream_status !== "ready" &&
-      item.bunny_stream_status !== "failed",
-  );
-
-  useEffect(() => {
-    if (!hasProcessingVideo) return;
-
-    const interval = window.setInterval(() => {
-      void listItems(courseId, lessonId).then((result) => {
-        if (result.success) setItems(result.data);
-      });
-    }, 10_000);
-
-    return () => window.clearInterval(interval);
-  }, [courseId, lessonId, hasProcessingVideo]);
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveId(String(event.active.id));
@@ -184,54 +157,157 @@ export function ItemList({
       previousRef.current = items;
       const reordered = applyOptimisticReorder(items, oldIndex, newIndex);
       const payload = buildReorderPayload(reordered);
-      setItems(reordered);
+      queryClient.setQueryData(queryKey, reordered);
 
-      const result = await reorderItems(courseId, lessonId, payload);
-      if (!result.success) {
-        setItems(rollbackReorder(previousRef.current));
-        toast.error(t("reorder_error"));
-      } else {
+      try {
+        await reorder.mutateAsync(payload);
         void notifyCurriculumCommitted();
+      } catch (mutationError) {
+        queryClient.setQueryData(queryKey, rollbackReorder(previousRef.current));
+        toast.error(
+          mutationError instanceof Error
+            ? mutationError.message
+            : t("reorder_error"),
+        );
       }
     },
-    [items, courseId, lessonId, notifyCurriculumCommitted, t],
+    [items, notifyCurriculumCommitted, queryClient, queryKey, reorder, t],
   );
 
   const handleUpdated = useCallback((updated: ItemOut) => {
-    setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+    queryClient.setQueryData<ItemOut[]>(queryKey, (current) =>
+      current?.map((item) => (item.id === updated.id ? updated : item)),
+    );
     void notifyCurriculumCommitted();
-  }, [notifyCurriculumCommitted]);
+  }, [notifyCurriculumCommitted, queryClient, queryKey]);
 
-  const handleDeleted = useCallback((itemId: number) => {
-    setItems((prev) => prev.filter((i) => i.id !== itemId));
-    void notifyCurriculumCommitted();
-  }, [notifyCurriculumCommitted]);
-
-  const handleCreated = useCallback((item: ItemOut) => {
-    setItems((prev) => [...prev, item]);
-    setCreateOpen(false);
-    setCreateTitle("");
-    void notifyCurriculumCommitted();
-  }, [notifyCurriculumCommitted]);
-
-  const handleCreate = useCallback(async () => {
-    const trimmed = createTitle.trim();
-    if (!trimmed) return;
-    setSubmitting(true);
+  const openCreateUpload = useCallback(() => {
     setError(null);
-    try {
-      const result = await createItem(courseId, lessonId, { title: trimmed });
-      if (result.success) {
-        handleCreated(result.data);
-      } else {
-        setError(result.error.message);
-      }
-    } finally {
-      setSubmitting(false);
-    }
-  }, [courseId, lessonId, createTitle, handleCreated]);
+    createdUploadItemRef.current = null;
+    setCreateUploadType("video");
+    setCreateUploadOpen(true);
+  }, []);
 
-  if (loading) {
+  const handleCreateUpload = useCallback(
+    async (file: File, title: string, uploadType: UploadType) => {
+      if (createUploading) return;
+
+      setCreateUploading(true);
+      setCreateUploadProgress(0);
+      setError(null);
+
+      try {
+        let item = createdUploadItemRef.current;
+
+        if (!item) {
+          item = await create.mutateAsync({ title });
+          createdUploadItemRef.current = item;
+          void notifyCurriculumCommitted();
+        } else if (item.title !== title) {
+          item = await update.mutateAsync({ itemId: item.id, data: { title } });
+          createdUploadItemRef.current = item;
+        }
+
+        if (uploadType === "video") {
+          const credentialsResult = await requestVideoUpload(
+            courseId,
+            lessonId,
+            item.id,
+            title,
+          );
+          if (!credentialsResult.success) {
+            throw new Error(credentialsResult.error.message || t("upload_error"));
+          }
+
+          await uploadVideoToBunnyTus(
+            file,
+            credentialsResult.data,
+            setCreateUploadProgress,
+          );
+          const confirmResult = await confirmVideoUpload(
+            courseId,
+            lessonId,
+            item.id,
+            credentialsResult.data.video_id,
+          );
+          if (!confirmResult.success) {
+            throw new Error(confirmResult.error.message || t("upload_error"));
+          }
+          item = confirmResult.data;
+        } else {
+          const urlResult = await requestUploadUrl(
+            courseId,
+            lessonId,
+            item.id,
+            file.name,
+          );
+          if (!urlResult.success) {
+            throw new Error(urlResult.error.message || t("upload_error"));
+          }
+          const uploadResponse = await uploadToPresignedUrl(
+            urlResult.data.upload_url,
+            file,
+          );
+          if (!uploadResponse.ok) {
+            throw new Error(t("upload_error"));
+          }
+          const confirmResult = await confirmUpload(
+            courseId,
+            lessonId,
+            item.id,
+            urlResult.data.key,
+          );
+          if (!confirmResult.success) {
+            throw new Error(confirmResult.error.message || t("upload_error"));
+          }
+          item = confirmResult.data;
+        }
+
+        queryClient.setQueryData<ItemOut[]>(queryKey, (current) =>
+          current?.map((candidate) =>
+            candidate.id === item.id ? item : candidate,
+          ),
+        );
+        createdUploadItemRef.current = null;
+        setCreateUploadOpen(false);
+        void notifyCurriculumCommitted();
+        toast.success(
+          uploadType === "video"
+            ? t("upload_success_processing")
+            : t("upload_success"),
+        );
+      } catch (uploadError) {
+        toast.error(
+          uploadError instanceof Error ? uploadError.message : t("upload_error"),
+        );
+      } finally {
+        setCreateUploading(false);
+        setCreateUploadProgress(0);
+      }
+    },
+    [
+      courseId,
+      create,
+      createUploading,
+      lessonId,
+      notifyCurriculumCommitted,
+      queryClient,
+      queryKey,
+      t,
+      update,
+    ],
+  );
+
+  const queryError = itemsQuery.isError
+    ? itemsQuery.error instanceof Error
+      ? itemsQuery.error.message
+      : t("fetch_error")
+    : initialError && itemsQuery.isPending
+      ? initialError
+      : null;
+  const displayError = error ?? queryError;
+
+  if (itemsQuery.isPending) {
     return (
       <div className="space-y-2 py-2">
         {Array.from({ length: 3 }).map((_, i) => (
@@ -241,110 +317,85 @@ export function ItemList({
     );
   }
 
-  if (error && items.length === 0) {
-    return <p className="text-xs text-destructive py-2">{error}</p>;
-  }
-
-  if (items.length === 0) {
-    return (
-      <div className="space-y-4 py-2">
-        <p className="text-xs text-muted-foreground text-center">{t("empty")}</p>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full text-xs text-muted-foreground h-7"
-          onClick={() => { setCreateTitle(""); setError(null); setCreateOpen(true); }}
-        >
-          <Plus className="me-1 size-3" />
-          {t("create")}
-        </Button>
-        <Dialog open={createOpen} onOpenChange={(val) => { setCreateOpen(val); if (!val) setError(null); }}>
-          <DialogContent>
-            <DialogHeader><DialogTitle>{t("create")}</DialogTitle></DialogHeader>
-            <Input
-              value={createTitle}
-              onChange={(e) => setCreateTitle(e.target.value)}
-              placeholder={t("create_placeholder")}
-              aria-label={t("create_placeholder")}
-              disabled={submitting}
-              autoFocus
-              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleCreate(); } }}
-            />
-            {error && <p className="text-sm text-destructive">{error}</p>}
-            <DialogFooter>
-              <DialogClose render={<Button variant="outline" disabled={submitting}>{t("cancel")}</Button>} />
-              <Button onClick={handleCreate} disabled={submitting || !createTitle.trim()}>
-                {submitting ? t("saving") : t("create")}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-    );
+  if (displayError && items.length === 0) {
+    return <p className="text-xs text-destructive py-2">{displayError}</p>;
   }
 
   return (
-    <div ref={parentRef} className="space-y-1.5">
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-        onDragCancel={handleDragCancel}
-      >
-        <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
-          {items.map((item) => (
-            <SortableItemCard
-              key={item.id}
-              item={item}
-              courseId={courseId}
-              lessonId={lessonId}
-              chapterId={chapterId}
-              onUpdate={handleUpdated}
-              onDelete={handleDeleted}
-            />
-          ))}
-        </SortableContext>
-        <PortalDragOverlay>
-          {activeItem ? (
-            <div className="opacity-90 shadow-lg px-4 py-2 bg-surface-raised">
-              <p className="text-sm font-medium">{activeItem.title}</p>
-            </div>
-          ) : null}
-        </PortalDragOverlay>
-      </DndContext>
+    <div
+      ref={parentRef}
+      className={items.length === 0 ? "space-y-4 py-2" : "space-y-1.5"}
+    >
+      {items.length === 0 ? (
+        <>
+          <p className="text-center text-xs text-muted-foreground">{t("empty")}</p>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-full text-xs text-muted-foreground"
+            onClick={openCreateUpload}
+          >
+            <Plus className="me-1 size-3" />
+            {t("create")}
+          </Button>
+        </>
+      ) : (
+        <>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onDragCancel={handleDragCancel}
+          >
+            <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
+              {items.map((item) => (
+                <SortableItemCard
+                  key={item.id}
+                  item={item}
+                  courseId={courseId}
+                  lessonId={lessonId}
+                  chapterId={chapterId}
+                  onUpdate={handleUpdated}
+                />
+              ))}
+            </SortableContext>
+            <PortalDragOverlay>
+              {activeItem ? (
+                <div className="bg-surface-raised px-4 py-2 opacity-90 shadow-lg">
+                  <p className="text-sm font-medium">{activeItem.title}</p>
+                </div>
+              ) : null}
+            </PortalDragOverlay>
+          </DndContext>
 
-      <Button
-        variant="ghost"
-        size="sm"
-        className="w-full text-xs text-muted-foreground h-7"
-        onClick={() => { setCreateTitle(""); setError(null); setCreateOpen(true); }}
-      >
-        <Plus className="me-1 size-3" />
-        {t("create")}
-      </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-full text-xs text-muted-foreground"
+            onClick={openCreateUpload}
+          >
+            <Plus className="me-1 size-3" />
+            {t("create")}
+          </Button>
+        </>
+      )}
 
-      <Dialog open={createOpen} onOpenChange={(val) => { setCreateOpen(val); if (!val) setError(null); }}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>{t("create")}</DialogTitle></DialogHeader>
-          <Input
-            value={createTitle}
-            onChange={(e) => setCreateTitle(e.target.value)}
-            placeholder={t("create_placeholder")}
-            aria-label={t("create_placeholder")}
-            disabled={submitting}
-            autoFocus
-            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleCreate(); } }}
-          />
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          <DialogFooter>
-            <DialogClose render={<Button variant="outline" disabled={submitting}>{t("cancel")}</Button>} />
-            <Button onClick={handleCreate} disabled={submitting || !createTitle.trim()}>
-              {submitting ? t("saving") : t("create")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <UploadDialog
+        open={createUploadOpen}
+        onOpenChange={(nextOpen) => {
+          setCreateUploadOpen(nextOpen);
+          if (!nextOpen) {
+            createdUploadItemRef.current = null;
+            setError(null);
+          }
+        }}
+        type={createUploadType}
+        itemTitle=""
+        uploading={createUploading}
+        progress={createUploadProgress}
+        onUpload={handleCreateUpload}
+      />
     </div>
   );
 }

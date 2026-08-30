@@ -18,12 +18,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useRouter } from "@/i18n/routing";
 import { uploadToPresignedUrl } from "@/lib/upload";
 import {
   requestProfileImageUpload,
-  updateTeacherProfile,
 } from "@/features/profile/actions";
+import {
+  useProfileMutations,
+  useTeacherProfileQuery,
+} from "@/features/profile/hooks/use-profile-queries";
 import type { TeacherProfile } from "@/features/profile/schema";
 
 const MAX_AVATAR_SIZE = 10 * 1024 * 1024;
@@ -42,14 +44,17 @@ export function EditProfileDialog({
   publicImageUrl: string | null;
 }) {
   const t = useTranslations("profile");
-  const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState(profile.name);
-  const [description, setDescription] = useState(profile.description ?? "");
+  const [currentProfile, setCurrentProfile] = useState(profile);
+  const profileQuery = useTeacherProfileQuery(profile);
+  const profileSnapshot = profileQuery.data ?? currentProfile;
+  const [name, setName] = useState(profileSnapshot.name);
+  const [description, setDescription] = useState(profileSnapshot.description ?? "");
   const [avatar, setAvatar] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const { update } = useProfileMutations();
 
   useEffect(() => {
     return () => {
@@ -58,8 +63,8 @@ export function EditProfileDialog({
   }, [previewUrl]);
 
   function reset() {
-    setName(profile.name);
-    setDescription(profile.description ?? "");
+    setName(profileSnapshot.name);
+    setDescription(profileSnapshot.description ?? "");
     setAvatar(null);
     setPreviewUrl(null);
   }
@@ -87,7 +92,7 @@ export function EditProfileDialog({
   async function handleSave() {
     setSaving(true);
     try {
-      let imagePath = profile.img;
+      let imagePath = profileSnapshot.img;
 
       if (avatar) {
         const upload = await requestProfileImageUpload(`avatar-${Date.now()}.${avatar.name.split(".").pop() ?? "jpg"}`);
@@ -104,19 +109,15 @@ export function EditProfileDialog({
         imagePath = upload.data.path;
       }
 
-      const result = await updateTeacherProfile({
+      const updatedProfile = await update.mutateAsync({
         name: name.trim(),
         description: description.trim() || null,
         img: imagePath,
       });
-      if (!result.success) {
-        toast.error(result.error.type === "Upstream" ? t("error_upstream") : result.error.message);
-        return;
-      }
 
+      setCurrentProfile((current) => ({ ...current, ...updatedProfile }));
       toast.success(t("saved"));
       setOpen(false);
-      router.refresh();
     } catch {
       toast.error(t("error_upstream"));
     } finally {
@@ -188,11 +189,11 @@ export function EditProfileDialog({
           <div className="grid gap-md sm:grid-cols-2">
             <div className="space-y-2">
               <Label>{t("email")}</Label>
-              <Input value={profile.email} disabled />
+              <Input value={profileSnapshot.email} disabled />
             </div>
             <div className="space-y-2">
               <Label>{t("phone")}</Label>
-              <Input value={profile.phone_number ?? "—"} disabled />
+              <Input value={profileSnapshot.phone_number ?? "—"} disabled />
             </div>
           </div>
           <p className="text-label-sm text-on-surface-muted">{t("email_helper")}</p>

@@ -2,12 +2,39 @@ import { z } from "zod"
 
 export type { CourseOut } from "@/features/shell/schema"
 
-const priceRegex = /^\d{1,8}\.\d{2}$/
+const priceRegex = /^(?:\d{1,8}(?:\.\d{0,2})?|\.\d{1,2})$/
+const priceErrorMessage =
+  "السعر يجب أن يكون رقمًا موجبًا بحد أقصى منزلتين عشريتين (مثال: 100 أو 100.00)"
+
+/** Keep the API price contract stable while allowing users to enter `50`. */
+export function formatCoursePrice(value: string | number | null | undefined) {
+  const raw = String(value ?? "").trim()
+  if (!raw) return "0.00"
+
+  const numericValue = Number(raw)
+  return Number.isFinite(numericValue) && numericValue >= 0
+    ? numericValue.toFixed(2)
+    : raw
+}
+
+const priceValueSchema = z
+  .union([
+    z.number().finite().nonnegative(),
+    z
+      .string()
+      .trim()
+      .refine(
+        (value) => value === "" || priceRegex.test(value),
+        priceErrorMessage
+      ),
+  ])
+  .transform((value) => formatCoursePrice(value))
+  .default("0.00")
 
 export const courseCreateSchema = z.object({
   title: z.string().min(1).max(150),
   description: z.string().max(500).nullable().optional(),
-  price: z.union([z.number(), z.string().regex(priceRegex)]).default("0.00"),
+  price: priceValueSchema,
   subject_id: z.number().int(),
   grade_id: z.number().int(),
   stream_id: z.number().int(),
@@ -38,13 +65,7 @@ export const courseFormSchema = z.object({
     .min(1, "عنوان الدورة مطلوب")
     .max(150, "العنوان لا يزيد عن 150 حرفًا"),
   description: z.string().max(500).nullable().optional(),
-  price: z
-    .string()
-    .regex(
-      /^\d{0,8}\.\d{2}$/,
-      "السعر يجب أن يكون رقمًا بمنزلتين عشريتين (مثال: 100.00)"
-    )
-    .default("0.00"),
+  price: priceValueSchema,
   subjectId: z.number().int({ message: "المادة مطلوبة" }),
   gradeId: z.number().int({ message: "الصف مطلوب" }),
   streamId: z.number().int({ message: "الشعبة مطلوبة" }),
@@ -82,7 +103,7 @@ export function formValuesToCourseCreate(
   return {
     title: values.title,
     description: values.description ?? null,
-    price: values.price || "0.00",
+    price: formatCoursePrice(values.price),
     subject_id: values.subjectId,
     grade_id: values.gradeId,
     stream_id: values.streamId,
@@ -98,7 +119,7 @@ export function formValuesToCourseUpdate(
   if (values.title) update.title = values.title
   if (values.description !== undefined)
     update.description = values.description ?? null
-  if (values.price) update.price = values.price
+  if (values.price) update.price = formatCoursePrice(values.price)
   if (values.isPublished !== undefined) update.is_published = values.isPublished
   if (values.useChapters !== undefined) update.use_chapters = values.useChapters
   return update

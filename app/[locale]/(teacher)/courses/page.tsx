@@ -2,9 +2,8 @@ import { setRequestLocale, getTranslations } from "next-intl/server"
 import { verifySession } from "@/lib/auth/dal"
 import {
   listCourses,
-  listGrades,
-  listStreams,
 } from "@/features/course-management/queries"
+import { getTeacherProfile } from "@/features/profile/queries"
 import {
   CourseList,
   CourseListSkeleton,
@@ -30,19 +29,19 @@ async function CourseListContent({
   let streamNames: Record<number, string> = {}
 
   try {
-    courses = await listCourses(teacherProfileId)
-    const [gradesResult, streamsResult] = await Promise.allSettled([
-      listGrades(),
-      listStreams(),
+    const [coursesResult, profileResult] = await Promise.allSettled([
+      listCourses(teacherProfileId),
+      getTeacherProfile(),
     ])
-    if (gradesResult.status === "fulfilled") {
+    if (coursesResult.status === "rejected") throw coursesResult.reason
+    courses = coursesResult.value
+
+    if (profileResult.status === "fulfilled") {
       gradeNames = Object.fromEntries(
-        gradesResult.value.map((grade) => [grade.id, grade.name])
+        profileResult.value.grades.map((grade) => [grade.id, grade.name])
       )
-    }
-    if (streamsResult.status === "fulfilled") {
       streamNames = Object.fromEntries(
-        streamsResult.value.map((stream) => [stream.id, stream.name])
+        profileResult.value.streams.map((stream) => [stream.id, stream.name])
       )
     }
   } catch (err: unknown) {

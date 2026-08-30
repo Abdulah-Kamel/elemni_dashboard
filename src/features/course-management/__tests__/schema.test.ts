@@ -81,6 +81,11 @@ describe("courseCreateSchema (contracts/openapi.json)", () => {
     const result = courseCreateSchema.parse(rest);
     expect(result.price).toBe("0.00");
   });
+
+  it("normalizes a whole-number price to two decimals", () => {
+    const result = courseCreateSchema.parse({ ...validBody, price: "50" });
+    expect(result.price).toBe("50.00");
+  });
 });
 
 describe("courseUpdateSchema (contracts/openapi.json)", () => {
@@ -188,10 +193,9 @@ describe("courseFormSchema (camelCase, Arabic validation)", () => {
     ).toThrow();
   });
 
-  it("rejects price without decimal places", () => {
-    expect(() =>
-      courseFormSchema.parse({ ...validForm, price: "100" })
-    ).toThrow();
+  it("accepts price without decimal places and normalizes it", () => {
+    const result = courseFormSchema.parse({ ...validForm, price: "100" });
+    expect(result.price).toBe("100.00");
   });
 });
 

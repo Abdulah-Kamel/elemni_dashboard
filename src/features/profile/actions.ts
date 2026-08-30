@@ -9,8 +9,10 @@ import {
   updateProfileRequestSchema,
   type ProfileImageUpload,
   type TeacherProfileOut,
+  type TeacherProfile,
   type UpdateProfileRequest,
 } from "@/features/profile/schema";
+import { getTeacherProfile as getTeacherProfileQuery } from "@/features/profile/queries";
 
 type ProfileActionResult<T> =
   | { success: true; data: T }
@@ -50,4 +52,8 @@ export async function requestProfileImageUpload(
   } catch (error) {
     return actionError(error);
   }
+}
+
+export async function getTeacherProfileAction(): Promise<TeacherProfile> {
+  return getTeacherProfileQuery();
 }

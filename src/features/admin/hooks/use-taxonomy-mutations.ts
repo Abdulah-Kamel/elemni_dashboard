@@ -8,22 +8,26 @@ type TaxonomyKind = "grades" | "streams" | "subjects";
 
 export function useTaxonomyMutations(kind: TaxonomyKind) {
   const qc = useQueryClient();
-  const invalidate = () => qc.invalidateQueries({ queryKey: adminKeys.taxonomy(kind) });
+  const invalidateOnSuccess = (result: { success: boolean }) => {
+    if (result.success) {
+      return qc.invalidateQueries({ queryKey: adminKeys.taxonomy(kind) });
+    }
+  };
 
   const create = useMutation({
     mutationFn: (data: Record<string, unknown>) => createTaxonomyItem(kind, data),
-    onSuccess: invalidate,
+    onSuccess: invalidateOnSuccess,
   });
 
   const update = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Record<string, unknown> }) =>
       updateTaxonomyItem(kind, id, data),
-    onSuccess: invalidate,
+    onSuccess: invalidateOnSuccess,
   });
 
   const remove = useMutation({
     mutationFn: (id: number) => deleteTaxonomyItem(kind, id),
-    onSuccess: invalidate,
+    onSuccess: invalidateOnSuccess,
   });
 
   return { create, update, remove };

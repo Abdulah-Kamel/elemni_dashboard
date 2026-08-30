@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest"
 import { render, screen } from "@testing-library/react"
 import { NextIntlClientProvider } from "next-intl"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { CourseCardActions } from "../components/course-card-actions"
 
 const messages = {
@@ -13,9 +14,10 @@ const messages = {
 }
 
 function renderWithIntl(ui: React.ReactNode) {
+  const queryClient = new QueryClient()
   return render(
     <NextIntlClientProvider locale="ar" messages={messages}>
-      {ui}
+      <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
     </NextIntlClientProvider>
   )
 }

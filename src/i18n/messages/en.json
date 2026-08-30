@@ -49,6 +49,7 @@
     "page_students": "Students",
     "page_analytics": "Analytics",
     "page_billing": "Billing",
+    "page_earnings": "Earnings",
     "no_new_notifications": "No new notifications"
   },
   "placeholder": {
@@ -164,6 +165,70 @@
       }
     }
   },
+  "earnings": {
+    "eyebrow": "Usage ledger",
+    "title": "Earnings, without the guesswork",
+    "subtitle": "A transparent view of delivery usage and the balance it creates. Course-sale earnings remain in Analytics; this ledger covers CDN bandwidth and storage charges.",
+    "pending_dues": "Current balance due",
+    "pending_dues_hint": "This is the live amount recorded on your teacher profile. Filters below only change the usage period.",
+    "summary_title": "Usage summary",
+    "summary": {
+      "filtered_cost": "Filtered usage cost",
+      "bandwidth_cost": "Bandwidth charges",
+      "storage_cost": "Storage charges",
+      "storage_now": "Storage right now"
+    },
+    "chart": {
+      "title": "Daily charge signal",
+      "subtitle": "The latest logged days in the current result set, ordered chronologically.",
+      "badge": "Actual logs",
+      "label": "Daily usage cost chart",
+      "cost": "Cost"
+    },
+    "filters": {
+      "start": "From",
+      "end": "To",
+      "min_cost": "Minimum cost",
+      "max_cost": "Maximum cost",
+      "sort": "Sort by",
+      "order": "Order",
+      "sort_date": "Date",
+      "sort_cost": "Total cost",
+      "sort_bandwidth": "Bandwidth",
+      "sort_storage": "Storage",
+      "desc": "Newest first",
+      "asc": "Oldest first",
+      "apply": "Apply filters",
+      "reset": "Reset"
+    },
+    "ledger": {
+      "title": "Usage ledger",
+      "subtitle": "One row per daily usage log. Costs are calculated from the rate snapshot stored for that day.",
+      "entries": "{count, plural, =0 {No entries} one {# entry} other {# entries}}",
+      "caption": "Daily bandwidth and storage usage charges",
+      "date": "Date",
+      "bandwidth": "Bandwidth",
+      "storage": "Storage",
+      "bandwidth_cost": "Bandwidth cost",
+      "storage_cost": "Storage cost",
+      "total": "Total",
+      "showing": "Showing {from}–{to} of {total}",
+      "pagination": "Usage ledger pages",
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "empty": {
+      "title": "No usage logs in this range",
+      "note": "Try widening the dates or removing the cost limits. New daily logs will appear here after usage is aggregated."
+    },
+    "not_available": "Not available",
+    "units": {
+      "bytes": "B",
+      "kb": "KB",
+      "mb": "MB",
+      "gb": "GB"
+    }
+  },
   "lessons": {
     "course_count": "You have {count} courses"
   },
@@ -236,6 +301,15 @@
     "uploading": "Uploading...",
     "uploading_progress": "Uploading file... {progress}%",
     "upload": "Upload",
+    "upload_content": "Add lesson content",
+    "upload_step_count": "Step {step} of 3",
+    "upload_step_name": "Name your item",
+    "upload_step_name_desc": "Give this lesson item a clear name.",
+    "upload_step_type": "Choose content type",
+    "upload_step_type_desc": "Choose whether this item is a video or a document.",
+    "upload_step_file": "Choose a file",
+    "back": "Back",
+    "next": "Next",
     "upload_success": "Upload complete",
     "upload_success_processing": "Video uploaded and is now processing",
     "upload_error": "Upload failed",
@@ -462,7 +536,7 @@
     "curriculum_unavailable": "Curriculum data is currently unavailable",
     "free": "Free",
     "egp": "EGP",
-    "price_hint": "Enter price in EGP (e.g. 100.00)",
+    "price_hint": "Enter a price in EGP (decimals are optional; e.g. 100 or 100.00)",
     "saving": "Saving...",
     "cover_label": "Course cover",
     "cover_upload": "Upload cover",

@@ -1,7 +1,14 @@
 "use client"
 
-import { useId, useState, useCallback, type ReactNode } from "react"
-import { BookOpen, Loader2, RefreshCw } from "lucide-react"
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react"
+import { BookOpen, Check, Loader2, RefreshCw, Save } from "lucide-react"
 import type {
   StudentCoursePreviewModel,
   StudentPreviewSection,
@@ -16,11 +23,20 @@ import {
   type CourseBuilderField,
   useCourseBuilderBridge,
 } from "@/features/course-management/course-builder-bridge"
+import { CourseCoverPicker } from "@/features/course-management/components/course-cover-picker"
+import { useCourseMutations } from "@/features/course-management/hooks/use-course-management-queries"
+import { uploadCourseCover } from "@/features/course-management/upload-course-cover"
+import {
+  formatCoursePrice,
+  type CourseUpdate,
+} from "@/features/course-management/schema"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 interface CourseWorkspaceProps {
   model: StudentCoursePreviewModel
   locale: string
+  teacherProfileId?: number
   /** @deprecated The preview now uses one public student view. */
   viewer?: "guest" | "subscribed"
   initialSections?: StudentPreviewSection[]
@@ -39,6 +55,10 @@ const COPY = {
     subject: "المادة",
     grade: "المرحلة",
     stream: "الشعبة",
+    save: "حفظ التغييرات",
+    saving: "جاري الحفظ...",
+    saved: "تم حفظ التغييرات",
+    saveError: "تعذر حفظ التغييرات. حاول مرة أخرى.",
     refresh: "تحديث محتوى المعاينة",
     refreshing: "جاري تحديث المحتوى",
     loadError: "تعذر تحديث محتوى المعاينة. حاول مرة أخرى.",
@@ -51,6 +71,10 @@ const COPY = {
     subject: "Subject",
     grade: "Grade",
     stream: "Stream",
+    save: "Save changes",
+    saving: "Saving...",
+    saved: "Changes saved",
+    saveError: "Could not save the changes. Try again.",
     refresh: "Refresh preview content",
     refreshing: "Refreshing content",
     loadError: "Could not refresh the preview content. Try again.",
@@ -87,6 +111,7 @@ function CourseWorkspaceContent({
   curriculum,
   curriculumTitle,
   curriculumHint,
+  teacherProfileId,
   activeTab,
   fullPreviewOpen,
   onActiveTabChange,
@@ -99,18 +124,97 @@ function CourseWorkspaceContent({
   const [title, setTitle] = useState(model.title)
   const [description, setDescription] = useState(model.description)
   const [price, setPrice] = useState(model.price)
+  const [savedCoverUrl, setSavedCoverUrl] = useState(model.coverUrl)
+  const [coverFile, setCoverFile] = useState<File | null>(null)
   const [sections, setSections] = useState<StudentPreviewSection[]>(
     initialSections ?? model.sections
   )
   const [deviceWidth, setDeviceWidth] = useState<PreviewDeviceWidth>("full")
   const [refreshing, setRefreshing] = useState(false)
   const [loadError, setLoadError] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle")
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const { update } = useCourseMutations(teacherProfileId ?? 0)
+
+  const coverPreviewUrl = useMemo(
+    () => (coverFile ? URL.createObjectURL(coverFile) : null),
+    [coverFile]
+  )
+
+  useEffect(() => {
+    return () => {
+      if (coverPreviewUrl) URL.revokeObjectURL(coverPreviewUrl)
+    }
+  }, [coverPreviewUrl])
+
+  const courseId = Number(model.id)
+  const canSave = Number.isInteger(courseId) && teacherProfileId != null
+
+  const markDirty = useCallback(() => {
+    setSaveStatus("idle")
+    setSaveError(null)
+  }, [])
+
+  const handleSave = useCallback(async () => {
+    if (!canSave || teacherProfileId == null) {
+      setSaveStatus("error")
+      setSaveError(copy.saveError)
+      return
+    }
+
+    const trimmedTitle = title.trim()
+    if (!trimmedTitle) {
+      setSaveStatus("error")
+      setSaveError(
+        lang === "ar" ? "عنوان الكورس مطلوب." : "A course title is required."
+      )
+      return
+    }
+
+    setSaveStatus("saving")
+    setSaveError(null)
+
+    try {
+      const body: CourseUpdate = {
+        title: trimmedTitle,
+        description: description.trim() || null,
+        price: formatCoursePrice(price),
+      }
+
+      if (coverFile) {
+        body.img = await uploadCourseCover(courseId, coverFile)
+      }
+
+      const updatedCourse = await update.mutateAsync({ courseId, data: body })
+      setSavedCoverUrl(updatedCourse.img ?? savedCoverUrl)
+      setCoverFile(null)
+      setSaveStatus("saved")
+    } catch {
+      setSaveStatus("error")
+      setSaveError(copy.saveError)
+    }
+  }, [
+    canSave,
+    copy.saveError,
+    courseId,
+    coverFile,
+    description,
+    lang,
+    price,
+    savedCoverUrl,
+    teacherProfileId,
+    title,
+    update,
+  ])
 
   const previewModel: StudentCoursePreviewModel = {
     ...model,
     title,
     description,
     price,
+    coverUrl: coverPreviewUrl ?? savedCoverUrl,
     sections,
   }
   const curriculumKey = sections
@@ -172,7 +276,10 @@ function CourseWorkspaceContent({
                 data-builder-field-input="title"
                 type="text"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => {
+                  setTitle(e.target.value)
+                  markDirty()
+                }}
                 className={cn(
                   "w-full rounded-lg border border-border px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none",
                   controlClassName
@@ -194,7 +301,10 @@ function CourseWorkspaceContent({
                 id={`${id}-description`}
                 data-builder-field-input="description"
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(e) => {
+                  setDescription(e.target.value)
+                  markDirty()
+                }}
                 className={cn(
                   "w-full rounded-lg border border-border px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none",
                   controlClassName
@@ -220,7 +330,10 @@ function CourseWorkspaceContent({
                 min="0"
                 step="0.01"
                 value={price}
-                onChange={(e) => setPrice(e.target.value)}
+                onChange={(e) => {
+                  setPrice(e.target.value)
+                  markDirty()
+                }}
                 className={cn(
                   "w-full rounded-lg border border-border px-3 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none",
                   controlClassName
@@ -229,6 +342,19 @@ function CourseWorkspaceContent({
             </>
           )}
         </CourseEditorField>
+        {teacherProfileId != null && (
+          <div className="space-y-2 border-t border-border pt-4">
+            <CourseCoverPicker
+              currentImageUrl={savedCoverUrl}
+              file={coverFile}
+              onChange={(file) => {
+                setCoverFile(file)
+                markDirty()
+              }}
+              disabled={saveStatus === "saving"}
+            />
+          </div>
+        )}
         <div>
           <label
             htmlFor={`${id}-subject`}
@@ -267,6 +393,37 @@ function CourseWorkspaceContent({
             readOnly
             className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-muted-foreground"
           />
+        </div>
+        <div className="space-y-2 border-t border-border pt-4">
+          <Button
+            type="button"
+            className="w-full"
+            onClick={() => void handleSave()}
+            disabled={!canSave || saveStatus === "saving"}
+          >
+            {saveStatus === "saving" ? (
+              <Loader2
+                className="me-2 size-4 animate-spin"
+                aria-hidden="true"
+              />
+            ) : saveStatus === "saved" ? (
+              <Check className="me-2 size-4" aria-hidden="true" />
+            ) : (
+              <Save className="me-2 size-4" aria-hidden="true" />
+            )}
+            {saveStatus === "saving"
+              ? copy.saving
+              : saveStatus === "saved"
+                ? copy.saved
+                : copy.save}
+          </Button>
+          <div aria-live="polite" className="min-h-5 text-sm">
+            {saveStatus === "error" && saveError && (
+              <p role="alert" className="text-destructive">
+                {saveError}
+              </p>
+            )}
+          </div>
         </div>
         <div className="space-y-2 border-t border-border pt-4">
           <button

@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { publishCourse, unpublishCourse } from "@/features/course-management/actions";
+import { useCourseMutations } from "@/features/course-management/hooks/use-course-management-queries";
 
 type ToggleState = "idle" | "submitting" | "success" | "rejected" | "network-error";
 
@@ -18,24 +18,23 @@ export function PublishToggle({
 }) {
   const t = useTranslations("courses");
   const [state, setState] = useState<ToggleState>("idle");
+  const { publish, unpublish } = useCourseMutations(teacherProfileId);
 
   const handleClick = useCallback(async () => {
     setState("submitting");
 
-    const action = isPublished ? unpublishCourse : publishCourse;
-    const result = await action(courseId, teacherProfileId);
-
-    if (result.success) {
+    try {
+      const mutation = isPublished ? unpublish : publish;
+      await mutation.mutateAsync(courseId);
       setState("success");
-    } else {
-      const err = result.error;
-      if (err.type === "Validation") {
-        setState("rejected");
-      } else {
-        setState("network-error");
-      }
+    } catch (error) {
+      const type =
+        error && typeof error === "object" && "type" in error
+          ? error.type
+          : null;
+      setState(type === "Validation" ? "rejected" : "network-error");
     }
-  }, [courseId, teacherProfileId, isPublished]);
+  }, [courseId, isPublished, publish, unpublish]);
 
   return (
     <DropdownMenuItem onClick={handleClick} disabled={state === "submitting"}>

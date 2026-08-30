@@ -1,14 +1,16 @@
 import { describe, it, expect } from "vitest"
 import { fireEvent, render, screen } from "@testing-library/react"
 import { NextIntlClientProvider } from "next-intl"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { CourseList, CourseListSkeleton } from "../components/course-list"
 import { mockCourses } from "./mocks"
 import messages from "@/i18n/messages/ar.json"
 
 function renderWithIntl(ui: React.ReactNode) {
+  const queryClient = new QueryClient()
   return render(
     <NextIntlClientProvider locale="ar" messages={messages}>
-      {ui}
+      <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
     </NextIntlClientProvider>
   )
 }
