@@ -5,7 +5,6 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslations } from "next-intl";
 import {
   DndContext,
-  DragOverlay,
   closestCenter,
   KeyboardSensor,
   PointerSensor,
@@ -32,6 +31,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { PortalDragOverlay } from "@/components/ui/portal-drag-overlay"
 import { ChapterCard } from "./chapter-card";
 import { createChapter, reorderChapters } from "@/features/course-management/chapters-actions";
 import { applyOptimisticReorder, buildReorderPayload, rollbackReorder } from "@/features/course-management/reorder-utils";
@@ -261,7 +261,7 @@ export function ChapterList({
             ))}
           </SortableContext>
 
-          <DragOverlay>
+          <PortalDragOverlay>
             {activeChapter ? (
               <div className="flex min-h-16 items-center gap-3 rounded-xl border bg-card px-4 opacity-95 shadow-lg">
                 <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -275,7 +275,7 @@ export function ChapterList({
                 </div>
               </div>
             ) : null}
-          </DragOverlay>
+          </PortalDragOverlay>
         </DndContext>
       )}
 

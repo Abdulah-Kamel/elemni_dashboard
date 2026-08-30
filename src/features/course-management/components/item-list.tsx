@@ -5,7 +5,6 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslations } from "next-intl";
 import {
   DndContext,
-  DragOverlay,
   closestCenter,
   PointerSensor,
   useSensor,
@@ -31,6 +30,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PortalDragOverlay } from "@/components/ui/portal-drag-overlay"
 import { ItemCard } from "./item-card";
 import { listItems, createItem, reorderItems } from "@/features/course-management/items-actions";
 import { applyOptimisticReorder, buildReorderPayload, rollbackReorder } from "@/features/course-management/reorder-utils";
@@ -69,6 +69,7 @@ function SortableItemCard({
     <div ref={setNodeRef} style={style}>
       <div className="flex items-center gap-2 px-2">
         <button
+          type="button"
           className="cursor-grab active:cursor-grabbing touch-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           {...attributes}
           {...listeners}
@@ -164,6 +165,10 @@ export function ItemList({
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveId(String(event.active.id));
+  }, []);
+
+  const handleDragCancel = useCallback(() => {
+    setActiveId(null);
   }, []);
 
   const handleDragEnd = useCallback(
@@ -285,6 +290,7 @@ export function ItemList({
         collisionDetection={closestCenter}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
       >
         <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
           {items.map((item) => (
@@ -299,13 +305,13 @@ export function ItemList({
             />
           ))}
         </SortableContext>
-        <DragOverlay>
+        <PortalDragOverlay>
           {activeItem ? (
             <div className="opacity-90 shadow-lg px-4 py-2 bg-surface-raised">
               <p className="text-sm font-medium">{activeItem.title}</p>
             </div>
           ) : null}
-        </DragOverlay>
+        </PortalDragOverlay>
       </DndContext>
 
       <Button

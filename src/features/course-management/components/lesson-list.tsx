@@ -5,7 +5,6 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslations } from "next-intl";
 import {
   DndContext,
-  DragOverlay,
   closestCenter,
   KeyboardSensor,
   PointerSensor,
@@ -33,6 +32,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { LessonCard } from "./lesson-card";
+import { PortalDragOverlay } from "@/components/ui/portal-drag-overlay"
 import { createLesson, reorderLessons } from "@/features/course-management/lessons-actions";
 import { listItems } from "@/features/course-management/items-actions";
 import { toast } from "sonner";
@@ -304,7 +304,7 @@ export function LessonList({
             ))}
           </SortableContext>
 
-          <DragOverlay>
+          <PortalDragOverlay>
             {activeLesson ? (
               <div className="opacity-90 shadow-lg px-4 py-2.5 bg-surface-raised rounded-lg">
                 <span className="text-sm font-medium">
@@ -312,7 +312,7 @@ export function LessonList({
                 </span>
               </div>
             ) : null}
-          </DragOverlay>
+          </PortalDragOverlay>
         </DndContext>
       )}
 

@@ -198,6 +198,7 @@ export function LessonCard({
       >
         <div className="flex min-h-14 items-center gap-2 px-3 py-2.5 sm:px-4">
           <button
+            type="button"
             className="flex size-7 shrink-0 cursor-grab touch-none items-center justify-center rounded-md hover:bg-surface-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:cursor-grabbing"
             aria-label={t("drag_handle_label")}
             {...(dragHandleProps ?? {})}
