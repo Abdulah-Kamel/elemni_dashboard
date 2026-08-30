@@ -70,7 +70,7 @@ const COURSE_PREVIEW_COPY: Record<"ar" | "en", CoursePreviewCopy> = {
     subscribeCta: (price) => `اشترك الآن - ${price} ج.م`,
     sectionCount: (count) => `${count} ${count === 1 ? "وحدة" : "وحدات"}`,
     navLabel: "أقسام الكورس",
-    tabs: ["المحتوى", "الاختبارات", "الملفات", "المناقشات", "التقدم"],
+    tabs: ["المحتوى", "الاختبارات"],
     comingSoon: (tab) => `${tab} - قريباً`,
     contentTitle: "خطة الكورس",
     contentSummary: (lessons, duration) => `${lessons} درس · ${duration}`,

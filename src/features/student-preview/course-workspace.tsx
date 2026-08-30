@@ -157,9 +157,6 @@ function CourseWorkspaceContent({
           <h2 id={`${id}-settings-title`} className="text-lg font-bold">
             {copy.edit}
           </h2>
-          <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary-deep">
-            {lang === "ar" ? "معاينة مباشرة" : "Live preview"}
-          </span>
         </div>
         <CourseEditorField field="title">
           {(controlClassName) => (
