@@ -2,6 +2,7 @@ import { setRequestLocale } from "next-intl/server"
 import { getTranslations } from "next-intl/server"
 import { Placeholder } from "@/features/shell/components/placeholder"
 import { verifySession } from "@/lib/auth/dal"
+import { redirectToAuth } from "@/lib/auth/redirect"
 import { apiFetch } from "@/lib/api/client"
 import { courseOutSchema } from "@/features/shell/schema"
 
@@ -19,12 +20,7 @@ export default async function LessonsPage({
   const user = await verifySession()
 
   if (!user) {
-    return (
-      <Placeholder
-        state="error"
-        error={{ type: "Unauthorized", status: 401, message: "No session" }}
-      />
-    )
+    return redirectToAuth(locale, `/${locale}/lessons`)
   }
 
   let coursesCount = 0
@@ -35,6 +31,9 @@ export default async function LessonsPage({
   } catch (err) {
     const errorType =
       (err as Error)?.name?.replace("ApiError:", "") ?? "Upstream"
+    if (errorType === "Unauthorized") {
+      return redirectToAuth(locale, `/${locale}/lessons`)
+    }
     return (
       <Placeholder
         state="error"

@@ -1,6 +1,7 @@
 import { setRequestLocale } from "next-intl/server"
 import { Placeholder } from "@/features/shell/components/placeholder"
 import { verifySession } from "@/lib/auth/dal"
+import { redirectToAuth } from "@/lib/auth/redirect"
 import {
   getTeacherUsage,
   type TeacherUsageFilters,
@@ -22,18 +23,7 @@ export default async function EarningsPage({
 
   const user = await verifySession()
   if (!user) {
-    return (
-      <Placeholder
-        state="error"
-        error={
-          {
-            type: "Unauthorized",
-            status: 401,
-            message: "No session",
-          } satisfies ApiError
-        }
-      />
-    )
+    return redirectToAuth(locale, `/${locale}/earnings`)
   }
 
   const query = await searchParams
@@ -43,6 +33,9 @@ export default async function EarningsPage({
   try {
     data = await getTeacherUsage(filters)
   } catch (err) {
+    if ((err as { type?: string }).type === "Unauthorized") {
+      return redirectToAuth(locale, `/${locale}/earnings`)
+    }
     return <Placeholder state="error" error={toPageError(err)} />
   }
 

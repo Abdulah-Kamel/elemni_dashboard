@@ -289,7 +289,8 @@
     "error_validation": "Please check the form for errors.",
     "notice_registered": "Your account was created. Signing you in automatically.",
     "notice_reset": "Your password was changed. You can sign in now.",
-    "notice_role": "You are signed in, but this account is not a teacher. Use a teacher account."
+    "notice_role": "You are signed in, but this account is not a teacher. Use a teacher account.",
+    "notice_expired": "Your session expired. Please sign in again."
   },
   "items": {
     "title": "Items",

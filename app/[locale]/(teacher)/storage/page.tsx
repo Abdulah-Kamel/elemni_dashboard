@@ -1,6 +1,7 @@
 import { setRequestLocale } from "next-intl/server"
 import { Placeholder } from "@/features/shell/components/placeholder"
 import { verifySession } from "@/lib/auth/dal"
+import { redirectToAuth } from "@/lib/auth/redirect"
 import { StorageDashboard } from "@/features/storage/components/storage-dashboard"
 import { getUsageDashboard } from "@/features/storage/queries"
 import type { ApiError } from "@/lib/api/errors"
@@ -37,23 +38,15 @@ export default async function StoragePage({
   const user = await verifySession()
 
   if (!user) {
-    return (
-      <Placeholder
-        state="error"
-        error={
-          {
-            type: "Unauthorized",
-            status: 401,
-            message: "No session",
-          } satisfies ApiError
-        }
-      />
-    )
+    return redirectToAuth(locale, `/${locale}/storage`)
   }
 
   const result = await loadUsageData(user.id)
 
   if (result.kind === "error") {
+    if (result.error.type === "Unauthorized") {
+      return redirectToAuth(locale, `/${locale}/storage`)
+    }
     return <Placeholder state="error" error={result.error} />
   }
 

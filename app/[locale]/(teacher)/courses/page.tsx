@@ -1,8 +1,6 @@
 import { setRequestLocale, getTranslations } from "next-intl/server"
 import { verifySession } from "@/lib/auth/dal"
-import {
-  listCourses,
-} from "@/features/course-management/queries"
+import { listCourses } from "@/features/course-management/queries"
 import { getTeacherProfile } from "@/features/profile/queries"
 import {
   CourseList,
@@ -11,6 +9,7 @@ import {
 import { CreateCourseDialog } from "@/features/course-management/components/create-course-dialog"
 import type { CourseOut } from "@/features/shell/schema"
 import { Suspense } from "react"
+import { redirectToAuth } from "@/lib/auth/redirect"
 
 export const dynamic = "force-dynamic"
 
@@ -46,6 +45,9 @@ async function CourseListContent({
     }
   } catch (err: unknown) {
     const apiErr = err as { type?: string; message?: string }
+    if (apiErr.type === "Unauthorized") {
+      return redirectToAuth(locale, `/${locale}/courses`)
+    }
     const errorKey: Record<string, string> = {
       Unauthorized: "error_unauthorized",
       Forbidden: "error_forbidden",
@@ -81,6 +83,9 @@ export default async function CoursesPage({
   setRequestLocale(locale)
   const t = await getTranslations({ locale, namespace: "courses" })
   const session = await verifySession()
+  if (!session) {
+    return redirectToAuth(locale, `/${locale}/courses`)
+  }
   const teacherProfileId = session?.id ?? 0
 
   return (

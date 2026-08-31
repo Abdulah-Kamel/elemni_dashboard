@@ -1,6 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server"
 import { Placeholder } from "@/features/shell/components/placeholder"
 import { verifySession } from "@/lib/auth/dal"
+import { redirectToAuth } from "@/lib/auth/redirect"
 import { StudentRoster } from "@/features/students/components/student-roster"
 import { listTeacherSubscriptions } from "@/features/students/queries"
 import { listCourses } from "@/features/course-management/queries"
@@ -48,23 +49,15 @@ export default async function StudentsPage({
   const user = await verifySession()
 
   if (!user) {
-    return (
-      <Placeholder
-        state="error"
-        error={
-          {
-            type: "Unauthorized",
-            status: 401,
-            message: "No session",
-          } satisfies ApiError
-        }
-      />
-    )
+    return redirectToAuth(locale, `/${locale}/students`)
   }
 
   const result = await loadStudentsData(user.id)
 
   if (result.kind === "error") {
+    if (result.error.type === "Unauthorized") {
+      return redirectToAuth(locale, `/${locale}/students`)
+    }
     return <Placeholder state="error" error={result.error} />
   }
 

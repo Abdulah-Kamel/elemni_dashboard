@@ -11,7 +11,7 @@ export async function loadCoursePreviewCurriculum(
   courseId: number
 ): Promise<PreviewActionResult<StudentPreviewSection[]>> {
   try {
-    const session = await verifySession()
+    const session = await verifySession({ allowRefresh: true })
     if (!session) {
       return {
         success: false,

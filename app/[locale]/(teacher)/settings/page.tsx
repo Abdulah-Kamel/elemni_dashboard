@@ -1,29 +1,23 @@
-import { setRequestLocale } from "next-intl/server";
-import { verifySession } from "@/lib/auth/dal";
-import { Placeholder } from "@/features/shell/components/placeholder";
-import { SettingsDashboard } from "@/features/settings/components/settings-dashboard";
-import type { ApiError } from "@/lib/api/errors";
+import { setRequestLocale } from "next-intl/server"
+import { verifySession } from "@/lib/auth/dal"
+import { redirectToAuth } from "@/lib/auth/redirect"
+import { SettingsDashboard } from "@/features/settings/components/settings-dashboard"
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic"
 
 export default async function SettingsPage({
   params,
 }: {
-  params: Promise<{ locale: string }>;
+  params: Promise<{ locale: string }>
 }) {
-  const { locale } = await params;
-  setRequestLocale(locale);
+  const { locale } = await params
+  setRequestLocale(locale)
 
-  const user = await verifySession();
+  const user = await verifySession()
 
   if (!user) {
-    return (
-      <Placeholder
-        state="error"
-        error={{ type: "Unauthorized", status: 401, message: "No session" } satisfies ApiError}
-      />
-    );
+    return redirectToAuth(locale, `/${locale}/settings`)
   }
 
-  return <SettingsDashboard />;
+  return <SettingsDashboard />
 }

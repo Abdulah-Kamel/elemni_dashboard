@@ -1,8 +1,7 @@
-"use server";
-import { redirect } from "next/navigation";
-import { headers } from "next/headers";
-import { apiFetch } from "@/lib/api/client";
-import { z } from "zod";
+"use server"
+import { headers } from "next/headers"
+import { apiFetch } from "@/lib/api/client"
+import { z } from "zod"
 import {
   adminCreateTeacherRequestSchema,
   adminCreateTeacherResponseSchema,
@@ -18,96 +17,164 @@ import {
   gradeCreateSchema,
   streamCreateSchema,
   subjectCreateSchema,
-} from "@/features/admin/schema";
-import type { AdminStudentCreateResponse, AdminTeacherPage } from "@/features/admin/schema";
+} from "@/features/admin/schema"
+import type {
+  AdminStudentCreateResponse,
+  AdminTeacherPage,
+} from "@/features/admin/schema"
 import {
   listAdminStudents,
   listAdminSubscriptions,
   listAdminTeachers as listTeachersQuery,
   type PageParams,
-} from "@/features/admin/queries";
-import { gradeOutSchema, streamOutSchema, subjectOutSchema } from "@/features/course-management/schema";
-import { logger } from "@/lib/logger";
+} from "@/features/admin/queries"
+import {
+  gradeOutSchema,
+  streamOutSchema,
+  subjectOutSchema,
+} from "@/features/course-management/schema"
+import { logger } from "@/lib/logger"
+import { redirectToAuth as redirectToAuthRoute } from "@/lib/auth/redirect"
 
 type ActionResult<T> =
   | { success: true; data: T }
-  | { success: false; error: { type: string; message: string } };
+  | { success: false; error: { type: string; message: string } }
 
 async function redirectToSignIn(nextPath: string): Promise<never> {
-  const h = await headers();
-  const locale = h.get("Accept-Language")?.startsWith("en") ? "en" : "ar";
-  redirect(`/${locale}/sign-out?next=${encodeURIComponent(nextPath)}`);
+  const h = await headers()
+  const locale = h.get("Accept-Language")?.startsWith("en") ? "en" : "ar"
+  return redirectToAuthRoute(locale, nextPath)
 }
 
-function handleActionResultErr(err: unknown, elapsed: number, action: string): { success: false; error: { type: string; message: string } } {
+async function redirectToAuth(nextPath: string): Promise<never> {
+  const h = await headers()
+  const locale = h.get("Accept-Language")?.startsWith("en") ? "en" : "ar"
+  return redirectToAuthRoute(locale, nextPath)
+}
+
+async function handleActionResultErr(
+  err: unknown,
+  elapsed: number,
+  action: string
+): Promise<{ success: false; error: { type: string; message: string } }> {
   if (err && typeof err === "object" && "type" in err) {
-    const apiErr = err as { type: string; message: string };
-    logger.actionError(action, apiErr, elapsed);
+    const apiErr = err as { type: string; message: string }
+    logger.actionError(action, apiErr, elapsed)
     if (apiErr.type === "Unauthorized") {
-      return { success: false, error: apiErr };
+      await redirectToSignIn("/admin")
     }
-    return { success: false, error: apiErr };
+    return { success: false, error: apiErr }
   }
-  logger.actionError(action, err, elapsed);
-  return { success: false, error: { type: "Upstream", message: "Network error" } };
+  logger.actionError(action, err, elapsed)
+  return {
+    success: false,
+    error: { type: "Upstream", message: "Network error" },
+  }
 }
 
 export async function createTeacher(data: unknown): Promise<
-  ActionResult<{ id: number; name: string; slug: string; email: string; invitation_sent: boolean }>
+  ActionResult<{
+    id: number
+    name: string
+    slug: string
+    email: string
+    invitation_sent: boolean
+  }>
 > {
-  const start = performance.now();
-  logger.action("createTeacher", { name: (data as Record<string, unknown>)?.name });
+  const start = performance.now()
+  logger.action("createTeacher", {
+    name: (data as Record<string, unknown>)?.name,
+  })
   try {
-    const parsed = adminCreateTeacherRequestSchema.parse(data);
-    const result = await apiFetch("/api/v1/admin/teachers", adminCreateTeacherResponseSchema, {
-      method: "POST",
-      body: JSON.stringify(parsed),
-    });
-    const elapsed = Math.round(performance.now() - start);
-    logger.actionDone("createTeacher", { id: result.id }, elapsed);
-    return { success: true, data: { id: result.id, name: result.name, slug: result.slug, email: result.email, invitation_sent: result.invitation_sent } };
+    const parsed = adminCreateTeacherRequestSchema.parse(data)
+    const result = await apiFetch(
+      "/api/v1/admin/teachers",
+      adminCreateTeacherResponseSchema,
+      {
+        method: "POST",
+        body: JSON.stringify(parsed),
+      }
+    )
+    const elapsed = Math.round(performance.now() - start)
+    logger.actionDone("createTeacher", { id: result.id }, elapsed)
+    return {
+      success: true,
+      data: {
+        id: result.id,
+        name: result.name,
+        slug: result.slug,
+        email: result.email,
+        invitation_sent: result.invitation_sent,
+      },
+    }
   } catch (err: unknown) {
-    const elapsed = Math.round(performance.now() - start);
+    const elapsed = Math.round(performance.now() - start)
     if (err && typeof err === "object" && "type" in err) {
-      const apiErr = err as { type: string; message: string };
+      const apiErr = err as { type: string; message: string }
       if (apiErr.type === "Unauthorized") {
-        logger.actionDone("createTeacher", { unauthorized: true }, elapsed);
-        await redirectToSignIn("/admin/teachers");
+        logger.actionDone("createTeacher", { unauthorized: true }, elapsed)
+        await redirectToSignIn("/admin/teachers")
       }
     }
-    return handleActionResultErr(err, elapsed, "createTeacher");
+    return handleActionResultErr(err, elapsed, "createTeacher")
   }
 }
 
-export async function sendSetPasswordEmail(userId: number): Promise<
-  ActionResult<{ detail: string }>
-> {
-  const start = performance.now();
-  logger.action("sendSetPasswordEmail", { userId });
+export async function sendSetPasswordEmail(
+  userId: number
+): Promise<ActionResult<{ detail: string }>> {
+  const start = performance.now()
+  logger.action("sendSetPasswordEmail", { userId })
   try {
-    const result = await apiFetch(`/api/v1/admin/teachers/${userId}/set-password`, setPasswordResponseSchema, {
-      method: "POST",
-    });
-    const elapsed = Math.round(performance.now() - start);
-    logger.actionDone("sendSetPasswordEmail", { userId }, elapsed);
-    return { success: true, data: result };
+    const result = await apiFetch(
+      `/api/v1/admin/teachers/${userId}/set-password`,
+      setPasswordResponseSchema,
+      {
+        method: "POST",
+      }
+    )
+    const elapsed = Math.round(performance.now() - start)
+    logger.actionDone("sendSetPasswordEmail", { userId }, elapsed)
+    return { success: true, data: result }
   } catch (err: unknown) {
-    const elapsed = Math.round(performance.now() - start);
-    return handleActionResultErr(err, elapsed, "sendSetPasswordEmail");
+    const elapsed = Math.round(performance.now() - start)
+    return handleActionResultErr(err, elapsed, "sendSetPasswordEmail")
   }
 }
 
-export async function listTeachersAction(params: PageParams = {}): Promise<AdminTeacherPage> {
-  return listTeachersQuery(params);
+export async function listTeachersAction(
+  params: PageParams = {}
+): Promise<AdminTeacherPage> {
+  try {
+    return await listTeachersQuery(params)
+  } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "type" in error &&
+      error.type === "Unauthorized"
+    ) {
+      const page = params.page ?? 1
+      await redirectToAuth(`/admin/teachers?page=${page}`)
+    }
+    throw error
+  }
 }
 
-export async function updateTeacher(id: number, data: unknown): Promise<ActionResult<unknown>> {
+export async function updateTeacher(
+  id: number,
+  data: unknown
+): Promise<ActionResult<unknown>> {
   try {
     const parsed = adminUpdateTeacherSchema.parse(data)
-    const result = await apiFetch(`/api/v1/admin/teachers/${id}`, adminTeacherListItemSchema, {
-      method: "PATCH",
-      body: JSON.stringify(parsed),
-    })
+    const result = await apiFetch(
+      `/api/v1/admin/teachers/${id}`,
+      adminTeacherListItemSchema,
+      {
+        method: "PATCH",
+        body: JSON.stringify(parsed),
+      }
+    )
     return { success: true, data: result }
   } catch (err) {
     return handleActionResultErr(err, 0, "updateTeacher")
@@ -115,33 +182,70 @@ export async function updateTeacher(id: number, data: unknown): Promise<ActionRe
 }
 
 export async function listStudentsAction(params: PageParams = {}) {
-  return listAdminStudents(params)
+  try {
+    return await listAdminStudents(params)
+  } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "type" in error &&
+      error.type === "Unauthorized"
+    ) {
+      await redirectToAuth("/admin/students")
+    }
+    throw error
+  }
 }
 
 export async function listSubscriptionsAction(params: PageParams = {}) {
-  return listAdminSubscriptions(params)
+  try {
+    return await listAdminSubscriptions(params)
+  } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "type" in error &&
+      error.type === "Unauthorized"
+    ) {
+      await redirectToAuth("/admin/subscriptions")
+    }
+    throw error
+  }
 }
 
-export async function createStudent(data: unknown): Promise<ActionResult<AdminStudentCreateResponse>> {
+export async function createStudent(
+  data: unknown
+): Promise<ActionResult<AdminStudentCreateResponse>> {
   try {
     const parsed = adminStudentCreateSchema.parse(data)
-    const result = await apiFetch("/api/v1/admin/students", adminStudentCreateResponseSchema, {
-      method: "POST",
-      body: JSON.stringify(parsed),
-    })
+    const result = await apiFetch(
+      "/api/v1/admin/students",
+      adminStudentCreateResponseSchema,
+      {
+        method: "POST",
+        body: JSON.stringify(parsed),
+      }
+    )
     return { success: true, data: result }
   } catch (err) {
     return handleActionResultErr(err, 0, "createStudent")
   }
 }
 
-export async function updateStudent(id: number, data: unknown): Promise<ActionResult<unknown>> {
+export async function updateStudent(
+  id: number,
+  data: unknown
+): Promise<ActionResult<unknown>> {
   try {
     const parsed = adminStudentUpdateSchema.parse(data)
-    const result = await apiFetch(`/api/v1/admin/students/${id}`, adminStudentSchema, {
-      method: "PATCH",
-      body: JSON.stringify(parsed),
-    })
+    const result = await apiFetch(
+      `/api/v1/admin/students/${id}`,
+      adminStudentSchema,
+      {
+        method: "PATCH",
+        body: JSON.stringify(parsed),
+      }
+    )
     return { success: true, data: result }
   } catch (err) {
     return handleActionResultErr(err, 0, "updateStudent")
@@ -150,84 +254,126 @@ export async function updateStudent(id: number, data: unknown): Promise<ActionRe
 
 export async function deleteStudent(id: number): Promise<ActionResult<void>> {
   try {
-    await apiFetch(`/api/v1/admin/students/${id}`, z.void(), { method: "DELETE" })
+    await apiFetch(`/api/v1/admin/students/${id}`, z.void(), {
+      method: "DELETE",
+    })
     return { success: true, data: undefined }
   } catch (err) {
     return handleActionResultErr(err, 0, "deleteStudent")
   }
 }
 
-export async function createTeacherLibrary(id: number): Promise<ActionResult<{ detail: string }>> {
+export async function createTeacherLibrary(
+  id: number
+): Promise<ActionResult<{ detail: string }>> {
   try {
-    const result = await apiFetch(`/api/v1/admin/teachers/${id}/library`, setPasswordResponseSchema, { method: "POST" })
+    const result = await apiFetch(
+      `/api/v1/admin/teachers/${id}/library`,
+      setPasswordResponseSchema,
+      { method: "POST" }
+    )
     return { success: true, data: result }
   } catch (err) {
     return handleActionResultErr(err, 0, "createTeacherLibrary")
   }
 }
 
-export async function updateTeacherLibrarySettings(id: number, data: unknown): Promise<ActionResult<{ detail: string }>> {
+export async function updateTeacherLibrarySettings(
+  id: number,
+  data: unknown
+): Promise<ActionResult<{ detail: string }>> {
   try {
     const parsed = adminLibrarySettingsSchema.parse(data)
-    const result = await apiFetch(`/api/v1/admin/teachers/${id}/library/settings`, setPasswordResponseSchema, { method: "PATCH", body: JSON.stringify(parsed) })
+    const result = await apiFetch(
+      `/api/v1/admin/teachers/${id}/library/settings`,
+      setPasswordResponseSchema,
+      { method: "PATCH", body: JSON.stringify(parsed) }
+    )
     return { success: true, data: result }
   } catch (err) {
     return handleActionResultErr(err, 0, "updateTeacherLibrarySettings")
   }
 }
 
-type TaxonomyKind = "grades" | "streams" | "subjects";
+type TaxonomyKind = "grades" | "streams" | "subjects"
 
 function taxonomyOutSchema(kind: TaxonomyKind): z.ZodType<unknown> {
-  if (kind === "grades") return gradeOutSchema;
-  if (kind === "streams") return streamOutSchema;
-  return subjectOutSchema;
+  if (kind === "grades") return gradeOutSchema
+  if (kind === "streams") return streamOutSchema
+  return subjectOutSchema
 }
 
 function taxonomyPath(kind: TaxonomyKind): string {
-  return `/api/v1/admin/${kind}`;
+  return `/api/v1/admin/${kind}`
 }
 
-export async function createTaxonomyItem(kind: TaxonomyKind, data: unknown): Promise<ActionResult<unknown>> {
-  const start = performance.now();
-  logger.action("createTaxonomyItem", { kind, name: (data as Record<string, unknown>)?.name });
+export async function createTaxonomyItem(
+  kind: TaxonomyKind,
+  data: unknown
+): Promise<ActionResult<unknown>> {
+  const start = performance.now()
+  logger.action("createTaxonomyItem", {
+    kind,
+    name: (data as Record<string, unknown>)?.name,
+  })
   try {
-    const parsed = kind === "grades" ? gradeCreateSchema.parse(data) : kind === "streams" ? streamCreateSchema.parse(data) : subjectCreateSchema.parse(data);
-    const result = await apiFetch(taxonomyPath(kind), taxonomyOutSchema(kind), { method: "POST", body: JSON.stringify(parsed) });
-    const elapsed = Math.round(performance.now() - start);
-    logger.actionDone("createTaxonomyItem", { kind }, elapsed);
-    return { success: true, data: result };
+    const parsed =
+      kind === "grades"
+        ? gradeCreateSchema.parse(data)
+        : kind === "streams"
+          ? streamCreateSchema.parse(data)
+          : subjectCreateSchema.parse(data)
+    const result = await apiFetch(taxonomyPath(kind), taxonomyOutSchema(kind), {
+      method: "POST",
+      body: JSON.stringify(parsed),
+    })
+    const elapsed = Math.round(performance.now() - start)
+    logger.actionDone("createTaxonomyItem", { kind }, elapsed)
+    return { success: true, data: result }
   } catch (err: unknown) {
-    const elapsed = Math.round(performance.now() - start);
-    return handleActionResultErr(err, elapsed, "createTaxonomyItem");
+    const elapsed = Math.round(performance.now() - start)
+    return handleActionResultErr(err, elapsed, "createTaxonomyItem")
   }
 }
 
-export async function updateTaxonomyItem(kind: TaxonomyKind, id: number, data: unknown): Promise<ActionResult<unknown>> {
-  const start = performance.now();
-  logger.action("updateTaxonomyItem", { kind, id });
+export async function updateTaxonomyItem(
+  kind: TaxonomyKind,
+  id: number,
+  data: unknown
+): Promise<ActionResult<unknown>> {
+  const start = performance.now()
+  logger.action("updateTaxonomyItem", { kind, id })
   try {
-    const parsed = taxonomyUpdateSchema.parse(data);
-    const result = await apiFetch(`${taxonomyPath(kind)}/${id}`, taxonomyOutSchema(kind), { method: "PATCH", body: JSON.stringify(parsed) });
-    const elapsed = Math.round(performance.now() - start);
-    logger.actionDone("updateTaxonomyItem", { kind, id }, elapsed);
-    return { success: true, data: result };
+    const parsed = taxonomyUpdateSchema.parse(data)
+    const result = await apiFetch(
+      `${taxonomyPath(kind)}/${id}`,
+      taxonomyOutSchema(kind),
+      { method: "PATCH", body: JSON.stringify(parsed) }
+    )
+    const elapsed = Math.round(performance.now() - start)
+    logger.actionDone("updateTaxonomyItem", { kind, id }, elapsed)
+    return { success: true, data: result }
   } catch (err: unknown) {
-    const elapsed = Math.round(performance.now() - start);
-    return handleActionResultErr(err, elapsed, "updateTaxonomyItem");
+    const elapsed = Math.round(performance.now() - start)
+    return handleActionResultErr(err, elapsed, "updateTaxonomyItem")
   }
 }
 
-export async function deleteTaxonomyItem(kind: TaxonomyKind, id: number): Promise<ActionResult<void>> {
-  const start = performance.now();
-  logger.action("deleteTaxonomyItem", { kind, id });
+export async function deleteTaxonomyItem(
+  kind: TaxonomyKind,
+  id: number
+): Promise<ActionResult<void>> {
+  const start = performance.now()
+  logger.action("deleteTaxonomyItem", { kind, id })
   try {
-    await apiFetch(`${taxonomyPath(kind)}/${id}`, z.void(), { method: "DELETE" });
-    const elapsed = Math.round(performance.now() - start);
-    logger.actionDone("deleteTaxonomyItem", { kind, id }, elapsed);
-    return { success: true, data: undefined };
+    await apiFetch(`${taxonomyPath(kind)}/${id}`, z.void(), {
+      method: "DELETE",
+    })
+    const elapsed = Math.round(performance.now() - start)
+    logger.actionDone("deleteTaxonomyItem", { kind, id }, elapsed)
+    return { success: true, data: undefined }
   } catch (err: unknown) {
-    const elapsed = Math.round(performance.now() - start);
-    return handleActionResultErr(err, elapsed, "deleteTaxonomyItem");
+    const elapsed = Math.round(performance.now() - start)
+    return handleActionResultErr(err, elapsed, "deleteTaxonomyItem")
   }
 }

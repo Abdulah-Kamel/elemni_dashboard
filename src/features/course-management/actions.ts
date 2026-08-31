@@ -2,7 +2,6 @@
 import { revalidateTag } from "next/cache"
 import { apiFetch } from "@/lib/api/client"
 import { endpoints } from "@/lib/api/endpoints"
-import { redirect } from "next/navigation"
 import { headers } from "next/headers"
 import { courseOutSchema } from "@/features/shell/schema"
 import {
@@ -30,11 +29,12 @@ import type {
   StreamOut,
 } from "@/features/course-management/schema"
 import { logger } from "@/lib/logger"
+import { redirectToAuth as redirectToAuthRoute } from "@/lib/auth/redirect"
 
 async function redirectToSignIn(nextPath: string): Promise<never> {
   const h = await headers()
   const locale = h.get("Accept-Language")?.startsWith("en") ? "en" : "ar"
-  redirect(`/${locale}/sign-out?next=${encodeURIComponent(nextPath)}`)
+  return redirectToAuthRoute(locale, nextPath)
 }
 
 export async function createCourse(
@@ -94,13 +94,37 @@ export async function createCourse(
 }
 
 export async function getCourseAction(courseId: number): Promise<CourseOut> {
-  return getCourseQuery(courseId)
+  try {
+    return await getCourseQuery(courseId)
+  } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "type" in error &&
+      error.type === "Unauthorized"
+    ) {
+      await redirectToSignIn(`/courses/${courseId}`)
+    }
+    throw error
+  }
 }
 
 export async function listCoursesAction(
   teacherProfileId: number
 ): Promise<CourseOut[]> {
-  return listCoursesQuery(teacherProfileId)
+  try {
+    return await listCoursesQuery(teacherProfileId)
+  } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "type" in error &&
+      error.type === "Unauthorized"
+    ) {
+      await redirectToSignIn(`/courses`)
+    }
+    throw error
+  }
 }
 
 export async function requestCourseImageUpload(
@@ -129,15 +153,51 @@ export async function requestCourseImageUpload(
 }
 
 export async function listSubjectsAction(): Promise<SubjectOut[]> {
-  return listSubjectsQuery()
+  try {
+    return await listSubjectsQuery()
+  } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "type" in error &&
+      error.type === "Unauthorized"
+    ) {
+      await redirectToSignIn(`/courses`)
+    }
+    throw error
+  }
 }
 
 export async function listGradesAction(): Promise<GradeOut[]> {
-  return listGradesQuery()
+  try {
+    return await listGradesQuery()
+  } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "type" in error &&
+      error.type === "Unauthorized"
+    ) {
+      await redirectToSignIn(`/courses`)
+    }
+    throw error
+  }
 }
 
 export async function listStreamsAction(): Promise<StreamOut[]> {
-  return listStreamsQuery()
+  try {
+    return await listStreamsQuery()
+  } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "type" in error &&
+      error.type === "Unauthorized"
+    ) {
+      await redirectToSignIn(`/courses`)
+    }
+    throw error
+  }
 }
 
 /**

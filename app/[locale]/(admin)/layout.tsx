@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { setRequestLocale, getTranslations } from "next-intl/server"
 import { DirectionProvider } from "@base-ui/react/direction-provider"
 import { verifySession } from "@/lib/auth/dal"
+import { redirectToAuth } from "@/lib/auth/redirect"
 import { Sidebar } from "@/features/shell/components/sidebar"
 import { Topbar } from "@/features/shell/components/topbar"
 import { MobileBottomNav } from "@/features/shell/components/mobile-bottom-nav"
@@ -22,7 +23,7 @@ export default async function AdminLayout({
 
   if (!user) {
     const path = `/${locale}/admin`
-    redirect(`/${locale}/sign-out?next=${encodeURIComponent(path)}`)
+    return redirectToAuth(locale, path)
   }
 
   if (user.role === "TEACHER") {

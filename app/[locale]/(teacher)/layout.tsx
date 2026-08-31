@@ -3,6 +3,7 @@ import { setRequestLocale } from "next-intl/server"
 import { getTranslations } from "next-intl/server"
 import { DirectionProvider } from "@base-ui/react/direction-provider"
 import { verifySession } from "@/lib/auth/dal"
+import { redirectToAuth } from "@/lib/auth/redirect"
 import { Sidebar } from "@/features/shell/components/sidebar"
 import { Topbar } from "@/features/shell/components/topbar"
 import { MobileBottomNav } from "@/features/shell/components/mobile-bottom-nav"
@@ -24,7 +25,7 @@ export default async function TeacherLayout({
 
   if (!user) {
     const path = `/${locale}/dashboard`
-    redirect(`/${locale}/sign-out?next=${encodeURIComponent(path)}`)
+    return redirectToAuth(locale, path)
   }
 
   if (user.role === "ADMIN") {

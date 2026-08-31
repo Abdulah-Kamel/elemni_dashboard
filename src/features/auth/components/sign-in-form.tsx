@@ -1,44 +1,44 @@
-"use client";
+"use client"
 
-import { useActionState, useEffect } from "react";
-import { useTranslations } from "next-intl";
-import { useFormStatus } from "react-dom";
-import { toast } from "sonner";
-import { Link } from "@/i18n/routing";
-import { Button } from "@/components/ui/button";
-import { signInAction } from "@/features/auth/actions";
-import { INITIAL_AUTH_STATE, type AuthFormState } from "@/features/auth/state";
-import { AuthError } from "@/features/auth/components/auth-error";
-import { AuthField } from "@/features/auth/components/auth-field";
+import { useActionState, useEffect } from "react"
+import { useTranslations } from "next-intl"
+import { useFormStatus } from "react-dom"
+import { toast } from "sonner"
+import { Link } from "@/i18n/routing"
+import { Button } from "@/components/ui/button"
+import { signInAction } from "@/features/auth/actions"
+import { INITIAL_AUTH_STATE, type AuthFormState } from "@/features/auth/state"
+import { AuthError } from "@/features/auth/components/auth-error"
+import { AuthField } from "@/features/auth/components/auth-field"
 
 type SignInFormProps = {
-  locale: string;
-  next?: string;
+  locale: string
+  next?: string
   /** When true, the user just registered or reset their password — fire a toast. */
-  notice?: "registered" | "reset" | "role";
-};
+  notice?: "registered" | "reset" | "role" | "expired"
+}
 
 export function SignInForm({ locale, next, notice }: SignInFormProps) {
-  const t = useTranslations("sign_in");
-  const tAuth = useTranslations("auth");
+  const t = useTranslations("sign_in")
+  const tAuth = useTranslations("auth")
   const [state, formAction] = useActionState<AuthFormState, FormData>(
     signInAction,
-    INITIAL_AUTH_STATE,
-  );
+    INITIAL_AUTH_STATE
+  )
 
   // Surface transient notices (role mismatch, just-registered, just-reset)
   // via a toast rather than an inline banner — they're one-time messages
   // that don't belong to the form's action state.
   useEffect(() => {
-    if (!notice) return;
-    const messageKey = `notice_${notice}`;
-    const message = tAuth(messageKey);
+    if (!notice) return
+    const messageKey = `notice_${notice}`
+    const message = tAuth(messageKey)
     if (notice === "role") {
-      toast.error(message);
+      toast.error(message)
     } else {
-      toast.success(message);
+      toast.success(message)
     }
-  }, [notice, tAuth]);
+  }, [notice, tAuth])
 
   return (
     <form action={formAction} className="space-y-4" noValidate>
@@ -79,19 +79,14 @@ export function SignInForm({ locale, next, notice }: SignInFormProps) {
 
       <SubmitButton label={t("button")} />
     </form>
-  );
+  )
 }
 
 function SubmitButton({ label }: { label: string }) {
-  const { pending } = useFormStatus();
+  const { pending } = useFormStatus()
   return (
-    <Button
-      type="submit"
-      size="lg"
-      disabled={pending}
-      className="w-full"
-    >
+    <Button type="submit" size="lg" disabled={pending} className="w-full">
       {pending ? "…" : label}
     </Button>
-  );
+  )
 }

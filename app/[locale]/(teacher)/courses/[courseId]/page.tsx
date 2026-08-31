@@ -13,8 +13,8 @@ import { CourseCardActions } from "@/features/course-management/components/cours
 import { Skeleton } from "@/components/ui/skeleton"
 import Link from "next/link"
 import { ArrowLeft, ArrowRight } from "lucide-react"
-import { redirect } from "next/navigation"
 import { Suspense } from "react"
+import { redirectToAuth } from "@/lib/auth/redirect"
 import type { LessonOut } from "@/features/course-management/lessons-schema"
 import { CourseWorkspace } from "@/features/student-preview/course-workspace"
 import { buildCoursePreviewModel } from "@/features/student-preview/build-course-preview-model"
@@ -40,9 +40,7 @@ async function CourseEditor({
   } catch (error: unknown) {
     const apiError = error as { type?: string }
     if (apiError.type === "Unauthorized") {
-      redirect(
-        `/${locale}/sign-out?next=${encodeURIComponent(`/courses/${courseId}`)}`
-      )
+      return redirectToAuth(locale, `/${locale}/courses/${courseId}`)
     }
 
     return (
@@ -85,9 +83,7 @@ async function CourseEditor({
     } catch (error: unknown) {
       const apiError = error as { type?: string }
       if (apiError.type === "Unauthorized") {
-        redirect(
-          `/${locale}/sign-out?next=${encodeURIComponent(`/courses/${courseId}`)}`
-        )
+        return redirectToAuth(locale, `/${locale}/courses/${courseId}`)
       }
       chaptersError = ct("error_upstream")
     }
@@ -125,9 +121,7 @@ async function CourseEditor({
     } catch (error: unknown) {
       const apiError = error as { type?: string }
       if (apiError.type === "Unauthorized") {
-        redirect(
-          `/${locale}/sign-out?next=${encodeURIComponent(`/courses/${courseId}`)}`
-        )
+        return redirectToAuth(locale, `/${locale}/courses/${courseId}`)
       }
       lessonsError = lt("error_upstream")
     }
@@ -142,14 +136,11 @@ async function CourseEditor({
   }
 
   const editorActions = (
-    <div
-      dir="ltr"
-      className="flex items-center justify-between gap-3"
-    >
+    <div dir="ltr" className="flex items-center justify-between gap-3">
       <Link
         href={`/${locale}/courses`}
         dir={locale === "ar" ? "rtl" : "ltr"}
-        className="inline-flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        className="inline-flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none"
       >
         {locale === "ar" ? (
           <ArrowRight className="size-4" aria-hidden="true" />
@@ -175,7 +166,7 @@ async function CourseEditor({
 
   return (
     <div className="space-y-6">
-      <section className="animate-slide-up animate-stagger-2 rounded-2xl border border-border bg-card p-4 shadow-xs sm:p-6">
+      <section className="animate-slide-up rounded-2xl border border-border bg-card p-4 shadow-xs animate-stagger-2 sm:p-6">
         <CourseWorkspace
           model={buildCoursePreviewModel({
             courseId: course.id,
@@ -242,7 +233,7 @@ export default async function CourseDetailPage({
   const session = await verifySession()
   if (!session) {
     const path = `/${locale}/courses/${courseId}`
-    redirect(`/${locale}/sign-out?next=${encodeURIComponent(path)}`)
+    return redirectToAuth(locale, path)
   }
 
   return (

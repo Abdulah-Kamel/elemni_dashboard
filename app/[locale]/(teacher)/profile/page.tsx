@@ -1,55 +1,63 @@
-import { getTranslations, setRequestLocale } from "next-intl/server";
-import { redirect } from "next/navigation";
-import { verifySession } from "@/lib/auth/dal";
-import { listCourses } from "@/features/course-management/queries";
-import { ProfileWorkspace } from "@/features/student-preview/profile-workspace";
+import { getTranslations, setRequestLocale } from "next-intl/server"
+import { verifySession } from "@/lib/auth/dal"
+import { redirectToAuth } from "@/lib/auth/redirect"
+import { listCourses } from "@/features/course-management/queries"
+import { ProfileWorkspace } from "@/features/student-preview/profile-workspace"
 import {
   getPublicTeacherProfile,
   getTeacherProfile,
-} from "@/features/profile/queries";
-import { Placeholder } from "@/features/shell/components/placeholder";
-import type { ApiError } from "@/lib/api/errors";
+} from "@/features/profile/queries"
+import { Placeholder } from "@/features/shell/components/placeholder"
+import type { ApiError } from "@/lib/api/errors"
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic"
 
 export default async function ProfilePage({
   params,
 }: {
-  params: Promise<{ locale: string }>;
+  params: Promise<{ locale: string }>
 }) {
-  const { locale } = await params;
-  setRequestLocale(locale);
+  const { locale } = await params
+  setRequestLocale(locale)
 
-  const user = await verifySession();
+  const user = await verifySession()
   if (!user) {
-    redirect(`/${locale}/sign-out?next=${encodeURIComponent(`/${locale}/profile`)}`);
+    return redirectToAuth(locale, `/${locale}/profile`)
   }
 
   const [profileResult, coursesResult] = await Promise.allSettled([
     getTeacherProfile(),
     listCourses(user.id),
-  ]);
+  ])
 
-  const t = await getTranslations({ locale, namespace: "profile" });
+  const t = await getTranslations({ locale, namespace: "profile" })
 
-  if (profileResult.status === "rejected" || coursesResult.status === "rejected") {
-    let reason: unknown;
+  if (
+    profileResult.status === "rejected" ||
+    coursesResult.status === "rejected"
+  ) {
+    let reason: unknown
     if (profileResult.status === "rejected") {
-      reason = profileResult.reason;
+      reason = profileResult.reason
     } else if (coursesResult.status === "rejected") {
-      reason = coursesResult.reason;
+      reason = coursesResult.reason
     }
-    const error = reason as Error & { type?: ApiError["type"]; status?: number };
+    const error = reason as Error & { type?: ApiError["type"]; status?: number }
+    if (error.type === "Unauthorized") {
+      return redirectToAuth(locale, `/${locale}/profile`)
+    }
     return (
       <Placeholder
         state="error"
-        error={{
-          type: error.type ?? "Upstream",
-          status: error.status ?? 0,
-          message: error.message || t("error_upstream"),
-        } as ApiError}
+        error={
+          {
+            type: error.type ?? "Upstream",
+            status: error.status ?? 0,
+            message: error.message || t("error_upstream"),
+          } as ApiError
+        }
       />
-    );
+    )
   }
 
   // The private endpoint deliberately returns the stored image key. The
@@ -57,15 +65,16 @@ export default async function ProfilePage({
   // what students will actually receive.
   const publicProfileResult = await Promise.allSettled([
     getPublicTeacherProfile(profileResult.value.slug),
-  ]);
+  ])
   const publicImageCandidate =
     publicProfileResult[0].status === "fulfilled"
       ? publicProfileResult[0].value.img
-      : null;
+      : null
   const publicImageUrl =
-    publicImageCandidate?.startsWith("http://") || publicImageCandidate?.startsWith("https://")
+    publicImageCandidate?.startsWith("http://") ||
+    publicImageCandidate?.startsWith("https://")
       ? publicImageCandidate
-      : null;
+      : null
 
   return (
     <ProfileWorkspace
@@ -74,5 +83,5 @@ export default async function ProfilePage({
       publicImageUrl={publicImageUrl}
       locale={locale}
     />
-  );
+  )
 }
