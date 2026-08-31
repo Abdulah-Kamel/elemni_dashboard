@@ -25,6 +25,14 @@ type Props = {
     end?: string
   }
   basePath: string
+  startParam?: string
+  endParam?: string
+  hiddenFields?: Record<string, string | number | undefined>
+  className?: string
+  triggerClassName?: string
+  triggerId?: string
+  onApply?: (range: { start?: string; end?: string }) => void
+  onReset?: () => void
   labels: {
     range: string
     allTime: string
@@ -37,7 +45,19 @@ type Props = {
   }
 }
 
-export function DateRangeFilterForm({ filters, basePath, labels }: Props) {
+export function DateRangeFilterForm({
+  filters,
+  basePath,
+  startParam = "start",
+  endParam = "end",
+  hiddenFields,
+  className,
+  triggerClassName,
+  triggerId,
+  onApply,
+  onReset,
+  labels,
+}: Props) {
   const locale = useLocale()
   const appliedRange = React.useMemo(
     () => parseDateRange(filters.start, filters.end),
@@ -73,16 +93,36 @@ export function DateRangeFilterForm({ filters, basePath, labels }: Props) {
       : labels.choose
   const isCompleteRange = Boolean(draftRange?.from && draftRange?.to)
 
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    if (!onApply) return
+
+    event.preventDefault()
+    onApply({
+      start: draftRange?.from ? formatDateValue(draftRange.from) : undefined,
+      end: draftRange?.to ? formatDateValue(draftRange.to) : undefined,
+    })
+    setOpen(false)
+  }
+
   return (
-    <div className="flex flex-wrap items-center gap-3 xl:justify-end">
+    <div
+      className={cn(
+        "flex flex-wrap items-center gap-3 xl:justify-end",
+        className
+      )}
+    >
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogTrigger
           render={
             <Button
               type="button"
+              id={triggerId}
               variant="outline"
               size="lg"
-              className="w-full justify-between bg-surface sm:w-auto sm:min-w-72"
+              className={cn(
+                "w-full justify-between bg-surface sm:w-auto sm:min-w-72",
+                triggerClassName
+              )}
             />
           }
         >
@@ -100,19 +140,30 @@ export function DateRangeFilterForm({ filters, basePath, labels }: Props) {
         </DialogTrigger>
 
         <DialogContent className="sm:max-w-[48rem]">
-          <form method="get" className="space-y-5">
+          <form method="get" className="space-y-5" onSubmit={handleSubmit}>
             <input
               type="hidden"
-              name="start"
+              name={startParam}
               value={draftRange?.from ? formatDateValue(draftRange.from) : ""}
               readOnly
             />
             <input
               type="hidden"
-              name="end"
+              name={endParam}
               value={draftRange?.to ? formatDateValue(draftRange.to) : ""}
               readOnly
             />
+            {Object.entries(hiddenFields ?? {}).map(([name, value]) =>
+              value == null || value === "" ? null : (
+                <input
+                  key={name}
+                  type="hidden"
+                  name={name}
+                  value={String(value)}
+                  readOnly
+                />
+              )
+            )}
 
             <DialogHeader>
               <DialogTitle>{labels.dialogTitle}</DialogTitle>
@@ -151,12 +202,25 @@ export function DateRangeFilterForm({ filters, basePath, labels }: Props) {
             </div>
 
             <DialogFooter>
-              <Link
-                href={basePath}
-                className="inline-flex h-8 items-center justify-center rounded-lg border border-border px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-              >
-                {labels.reset}
-              </Link>
+              {onReset ? (
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => {
+                    onReset()
+                    setOpen(false)
+                  }}
+                >
+                  {labels.reset}
+                </Button>
+              ) : (
+                <Link
+                  href={basePath}
+                  className="inline-flex h-8 items-center justify-center rounded-lg border border-border px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                >
+                  {labels.reset}
+                </Link>
+              )}
               <DialogClose render={<Button variant="outline" type="button" />}>
                 {labels.cancel}
               </DialogClose>
