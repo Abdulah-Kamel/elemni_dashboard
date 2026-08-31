@@ -1,3 +1,7 @@
+"use client"
+
+import { useMemo, useState, type FormEvent } from "react"
+import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import {
   Activity,
   ArrowDown,
@@ -8,17 +12,52 @@ import {
   ReceiptText,
   WalletCards,
 } from "lucide-react"
-import { getTranslations } from "next-intl/server"
+import { useTranslations } from "next-intl"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Skeleton } from "@/components/ui/skeleton"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { getTeacherUsageAction } from "@/features/earnings/actions"
+import { DateRangeFilterForm } from "@/features/analytics/components/date-range-filter-form"
 import type {
   PaginatedTeacherUsageLogs,
   TeacherUsageLog,
 } from "@/features/earnings/schema"
 import type { TeacherUsageFilters } from "@/features/earnings/queries"
 import {
+  EarningsPageSizeSelect,
+  type EarningsPageSize,
+} from "./earnings-page-size-select"
+import {
   EarningsCostChart,
   type EarningsChartPoint,
 } from "./earnings-cost-chart"
-import styles from "./earnings-view.module.css"
+import { cn } from "@/lib/utils"
 
 type EarningsViewProps = {
   data: PaginatedTeacherUsageLogs
@@ -26,12 +65,44 @@ type EarningsViewProps = {
   locale: string
 }
 
-export async function EarningsView({
-  data,
-  filters,
-  locale,
-}: EarningsViewProps) {
-  const t = await getTranslations({ locale, namespace: "earnings" })
+type EarningsTranslator = ReturnType<typeof useTranslations>
+
+type EarningsClientFilters = {
+  startDate?: string
+  endDate?: string
+  minCost?: string
+  maxCost?: string
+  sortBy: NonNullable<TeacherUsageFilters["sortBy"]>
+  sortOrder: NonNullable<TeacherUsageFilters["sortOrder"]>
+}
+
+export function EarningsView({ data, filters, locale }: EarningsViewProps) {
+  const t = useTranslations("earnings")
+  const initialPageSize = resolvePageSize(filters.limit)
+  const [activeFilters, setActiveFilters] = useState<EarningsClientFilters>(
+    () => createInitialFilters(filters)
+  )
+  const [pageSize, setPageSize] = useState<EarningsPageSize>(initialPageSize)
+  const [page, setPage] = useState(() => getPageNumber(data))
+  const [filterFormKey, setFilterFormKey] = useState(0)
+  const requestFilters = useMemo(
+    () => ({
+      ...activeFilters,
+      skip: pageSize === "all" ? 0 : Math.max(0, (page - 1) * pageSize),
+      limit: pageSize,
+    }),
+    [activeFilters, page, pageSize]
+  )
+  const requestKey = JSON.stringify(requestFilters)
+  const [initialRequestKey] = useState(requestKey)
+  const usageQuery = useQuery({
+    queryKey: ["teacher-usage", requestFilters],
+    queryFn: () => getTeacherUsageAction(requestFilters),
+    initialData: initialRequestKey === requestKey ? data : undefined,
+    placeholderData: keepPreviousData,
+  })
+  const displayedData = usageQuery.data ?? data
+  const isLoadingData = usageQuery.isPending || usageQuery.isFetching
   const currency = new Intl.NumberFormat(locale, {
     style: "currency",
     currency: "EGP",
@@ -39,9 +110,11 @@ export async function EarningsView({
     maximumFractionDigits: 2,
   })
   const number = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 })
-  const pageNumber = Math.floor(data.skip / data.limit) + 1
-  const pageCount = Math.max(1, Math.ceil(data.total / data.limit))
-  const chartItems = [...data.items]
+  const pageCount = Math.max(
+    1,
+    Math.ceil(displayedData.total / displayedData.limit)
+  )
+  const chartItems = [...displayedData.items]
     .sort((left, right) => left.date.localeCompare(right.date))
     .slice(-12)
   const chartData: EarningsChartPoint[] = chartItems.map((item) => ({
@@ -50,30 +123,83 @@ export async function EarningsView({
     cost: item.cost_amount,
   }))
 
+  function handleDateRangeApply(range: { start?: string; end?: string }) {
+    setActiveFilters((current) => ({
+      ...current,
+      startDate: range.start,
+      endDate: range.end,
+    }))
+    setPage(1)
+  }
+
+  function handleDateRangeReset() {
+    setActiveFilters((current) => ({
+      ...current,
+      startDate: undefined,
+      endDate: undefined,
+    }))
+    setPage(1)
+  }
+
+  function handleFilterSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const formData = new FormData(event.currentTarget)
+
+    setActiveFilters((current) => ({
+      ...current,
+      minCost: normalizeMoneyInput(readFormValue(formData, "min_cost")),
+      maxCost: normalizeMoneyInput(readFormValue(formData, "max_cost")),
+      sortBy: parseSortBy(readFormValue(formData, "sort_by")),
+      sortOrder: parseSortOrder(readFormValue(formData, "sort_order")),
+    }))
+    setPage(1)
+  }
+
+  function handleFilterReset() {
+    setActiveFilters(createResetFilters())
+    setPage(1)
+    setFilterFormKey((key) => key + 1)
+  }
+
   return (
-    <div className={`${styles.page} flex flex-col gap-5 p-1 sm:gap-6`}>
-      <header className={styles.hero}>
-        <div className={styles.heroGrid}>
-          <div className={styles.heroCopy}>
-            <span className={styles.eyebrow}>
+    <div className="flex flex-col gap-xl">
+      <Card className="relative animate-slide-up overflow-hidden rounded-2xl border-primary-deep bg-primary text-primary-foreground shadow-xs">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -end-20 -top-20 size-64 rounded-full border border-primary-foreground/10"
+        />
+        <CardContent className="relative grid gap-6 p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_minmax(17rem,0.7fr)] lg:gap-8 lg:p-10">
+          <div className="self-center">
+            <Badge
+              variant="secondary"
+              className="gap-1.5 bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/15"
+            >
               <Activity className="size-3.5" aria-hidden="true" />
               {t("eyebrow")}
-            </span>
-            <h1 className={styles.heroTitle}>{t("title")}</h1>
-            <p className={styles.heroDescription}>{t("subtitle")}</p>
-          </div>
-          <div className={styles.balance}>
-            <p className={styles.balanceLabel}>{t("pending_dues")}</p>
-            <p className={styles.balanceValue}>
-              {formatCurrency(data.summary.pending_dues, currency)}
+            </Badge>
+            <h1 className="mt-4 max-w-[14ch] font-heading text-display-lg leading-[1.2] font-bold text-balance text-primary-foreground sm:text-4xl">
+              {t("title")}
+            </h1>
+            <p className="mt-4 text-base leading-7 text-primary-foreground/80">
+              {t("subtitle")}
             </p>
-            <p className={styles.balanceHint}>{t("pending_dues_hint")}</p>
           </div>
-        </div>
-      </header>
+          <div className="self-end rounded-xl border border-primary-foreground/15 bg-primary-foreground/10 p-5">
+            <p className="text-label-md leading-5 font-medium text-primary-foreground/75">
+              {t("pending_dues")}
+            </p>
+            <p className="mt-2 font-heading text-display-lg leading-tight font-bold text-primary-foreground tabular-nums">
+              {formatCurrency(displayedData.summary.pending_dues, currency)}
+            </p>
+            <p className="mt-3 text-sm leading-6 text-primary-foreground/75">
+              {t("pending_dues_hint")}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       <section
-        className={styles.signalStrip}
+        className="grid overflow-hidden rounded-2xl border border-border bg-surface shadow-xs sm:grid-cols-2 xl:grid-cols-4"
         aria-labelledby="earnings-summary-title"
       >
         <h2 id="earnings-summary-title" className="sr-only">
@@ -81,47 +207,70 @@ export async function EarningsView({
         </h2>
         <SummaryCell
           label={t("summary.filtered_cost")}
-          value={formatCurrency(data.summary.total_cost, currency)}
+          value={formatCurrency(displayedData.summary.total_cost, currency)}
           icon={CircleDollarSign}
-          primary
+          className="bg-primary-tint"
+          loading={isLoadingData}
         />
         <SummaryCell
           label={t("summary.bandwidth_cost")}
-          value={formatCurrency(data.summary.total_bandwidth_cost, currency)}
+          value={formatCurrency(
+            displayedData.summary.total_bandwidth_cost,
+            currency
+          )}
           icon={Activity}
+          className="border-s border-border"
+          loading={isLoadingData}
         />
         <SummaryCell
           label={t("summary.storage_cost")}
-          value={formatCurrency(data.summary.total_storage_cost, currency)}
+          value={formatCurrency(
+            displayedData.summary.total_storage_cost,
+            currency
+          )}
           icon={Database}
+          className="border-t border-border sm:border-s xl:border-t-0"
+          loading={isLoadingData}
         />
         <SummaryCell
           label={t("summary.storage_now")}
           value={
-            data.summary.storage_used_mb == null
+            displayedData.summary.storage_used_mb == null
               ? t("not_available")
-              : `${number.format(data.summary.storage_used_mb)} ${t("units.mb")}`
+              : `${number.format(displayedData.summary.storage_used_mb)} ${t("units.mb")}`
           }
           icon={WalletCards}
+          className="border-s border-t border-border sm:border-s xl:border-t-0"
+          loading={isLoadingData}
         />
       </section>
 
-      <section
-        className={styles.section}
+      <Card
+        className="animate-slide-up overflow-hidden rounded-2xl border-border shadow-xs"
         aria-labelledby="earnings-chart-title"
+        aria-busy={isLoadingData}
       >
-        <div className={styles.sectionHeader}>
-          <div>
-            <h2 id="earnings-chart-title" className={styles.sectionTitle}>
-              {t("chart.title")}
-            </h2>
-            <p className={styles.sectionNote}>{t("chart.subtitle")}</p>
+        <CardHeader className="border-b border-border px-5 py-4 sm:px-6">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <CardTitle
+                id="earnings-chart-title"
+                className="font-heading text-headline-sm leading-7 font-semibold"
+              >
+                {t("chart.title")}
+              </CardTitle>
+              <CardDescription className="mt-1 text-body-lg leading-6">
+                {t("chart.subtitle")}
+              </CardDescription>
+            </div>
+            <Badge variant="outline" className="hidden shrink-0 sm:inline-flex">
+              {t("chart.badge")}
+            </Badge>
           </div>
-          <span className={`${styles.eyebrow} hidden sm:inline-flex`}>
-            {t("chart.badge")}
-          </span>
-        </div>
-        {chartData.length > 0 ? (
+        </CardHeader>
+        {isLoadingData ? (
+          <ChartSkeleton label={t("ledger.refreshing")} />
+        ) : chartData.length > 0 ? (
           <EarningsCostChart
             data={chartData}
             ariaLabel={t("chart.label")}
@@ -135,121 +284,212 @@ export async function EarningsView({
             note={t("empty.note")}
           />
         )}
-      </section>
+      </Card>
 
-      <section
-        className={styles.section}
+      <Card
+        className="animate-slide-up overflow-hidden rounded-2xl border-border shadow-xs"
         aria-labelledby="earnings-ledger-title"
+        aria-busy={isLoadingData}
       >
-        <div className={styles.sectionHeader}>
-          <div>
-            <h2 id="earnings-ledger-title" className={styles.sectionTitle}>
-              {t("ledger.title")}
-            </h2>
-            <p className={styles.sectionNote}>{t("ledger.subtitle")}</p>
+        <CardHeader className="border-b border-border px-5 py-4 sm:px-6">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <CardTitle
+                id="earnings-ledger-title"
+                className="font-heading text-headline-sm leading-7 font-semibold"
+              >
+                {t("ledger.title")}
+              </CardTitle>
+              <CardDescription className="mt-1 text-body-lg leading-6">
+                {t("ledger.subtitle")}
+              </CardDescription>
+            </div>
+            <Badge variant="secondary" className="shrink-0 gap-1.5">
+              <ReceiptText className="size-3.5" aria-hidden="true" />
+              {t("ledger.entries", { count: displayedData.total })}
+            </Badge>
           </div>
-          <span className="flex items-center gap-1.5 text-xs font-bold text-[var(--earnings-muted)]">
-            <ReceiptText className="size-4" aria-hidden="true" />
-            {t("ledger.entries", { count: data.total })}
-          </span>
+        </CardHeader>
+
+        <div className="grid gap-3 border-b border-border p-4 sm:grid-cols-2 xl:grid-cols-[minmax(15rem,1.3fr)_repeat(4,minmax(0,1fr))_auto]">
+          <div className="grid min-w-0 gap-1.5">
+            <Label
+              htmlFor="earnings-date-range"
+              className="text-label-md text-label-md--line-height font-medium text-on-surface-muted"
+            >
+              {t("filters.range")}
+            </Label>
+            <DateRangeFilterForm
+              filters={{
+                start: activeFilters.startDate,
+                end: activeFilters.endDate,
+              }}
+              basePath="/earnings"
+              startParam="start_date"
+              endParam="end_date"
+              hiddenFields={{
+                min_cost: activeFilters.minCost,
+                max_cost: activeFilters.maxCost,
+                sort_by: activeFilters.sortBy,
+                sort_order: activeFilters.sortOrder,
+                limit: pageSize,
+              }}
+              className="min-w-0"
+              triggerId="earnings-date-range"
+              triggerClassName="h-9 min-w-0 px-3 text-body-md text-body-md--line-height sm:w-full sm:min-w-0"
+              onApply={handleDateRangeApply}
+              onReset={handleDateRangeReset}
+              labels={{
+                range: t("filters.range"),
+                allTime: t("filters.all_time"),
+                choose: t("filters.choose"),
+                dialogTitle: t("filters.dialog_title"),
+                dialogDescription: t("filters.dialog_description"),
+                apply: t("filters.apply"),
+                reset: t("filters.reset"),
+                cancel: t("filters.cancel"),
+              }}
+            />
+          </div>
+
+          <form
+            key={filterFormKey}
+            className="contents"
+            method="get"
+            onSubmit={handleFilterSubmit}
+          >
+            <Input
+              type="hidden"
+              name="start_date"
+              value={activeFilters.startDate ?? ""}
+              readOnly
+            />
+            <Input
+              type="hidden"
+              name="end_date"
+              value={activeFilters.endDate ?? ""}
+              readOnly
+            />
+            <FilterField id="earnings-min-cost" label={t("filters.min_cost")}>
+              <Input
+                id="earnings-min-cost"
+                className="text-body-sm--line-height h-9 bg-surface text-body-md"
+                type="number"
+                name="min_cost"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                defaultValue={activeFilters.minCost}
+              />
+            </FilterField>
+            <FilterField id="earnings-max-cost" label={t("filters.max_cost")}>
+              <Input
+                id="earnings-max-cost"
+                className="text-body-sm--line-height h-9 bg-surface text-body-md"
+                type="number"
+                name="max_cost"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                defaultValue={activeFilters.maxCost}
+              />
+            </FilterField>
+            <FilterSelect
+              id="earnings-sort"
+              label={t("filters.sort")}
+              name="sort_by"
+              defaultValue={activeFilters.sortBy}
+              options={[
+                { value: "date", label: t("filters.sort_date") },
+                { value: "cost_amount", label: t("filters.sort_cost") },
+                {
+                  value: "bandwidth_bytes",
+                  label: t("filters.sort_bandwidth"),
+                },
+                { value: "storage_bytes", label: t("filters.sort_storage") },
+              ]}
+            />
+            <FilterSelect
+              id="earnings-order"
+              label={t("filters.order")}
+              name="sort_order"
+              defaultValue={activeFilters.sortOrder}
+              options={[
+                { value: "desc", label: t("filters.desc") },
+                { value: "asc", label: t("filters.asc") },
+              ]}
+            />
+            <Input type="hidden" name="limit" value={String(pageSize)} />
+            <div className="flex items-end gap-2 sm:col-span-2 xl:col-span-1">
+              <Button type="submit" size="sm" className="flex-1 xl:flex-none">
+                {t("filters.apply")}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                type="button"
+                onClick={handleFilterReset}
+                className="flex-1 xl:flex-none"
+              >
+                {t("filters.reset")}
+              </Button>
+            </div>
+          </form>
         </div>
 
-        <form className={styles.filters} method="get">
-          <label className={styles.field}>
-            <span className={styles.fieldLabel}>{t("filters.start")}</span>
-            <input
-              className={styles.control}
-              type="date"
-              name="start_date"
-              defaultValue={filters.startDate}
-            />
-          </label>
-          <label className={styles.field}>
-            <span className={styles.fieldLabel}>{t("filters.end")}</span>
-            <input
-              className={styles.control}
-              type="date"
-              name="end_date"
-              defaultValue={filters.endDate}
-            />
-          </label>
-          <label className={styles.field}>
-            <span className={styles.fieldLabel}>{t("filters.min_cost")}</span>
-            <input
-              className={styles.control}
-              type="number"
-              name="min_cost"
-              min="0"
-              step="0.01"
-              placeholder="0.00"
-              defaultValue={filters.minCost}
-            />
-          </label>
-          <label className={styles.field}>
-            <span className={styles.fieldLabel}>{t("filters.max_cost")}</span>
-            <input
-              className={styles.control}
-              type="number"
-              name="max_cost"
-              min="0"
-              step="0.01"
-              placeholder="0.00"
-              defaultValue={filters.maxCost}
-            />
-          </label>
-          <label className={styles.field}>
-            <span className={styles.fieldLabel}>{t("filters.sort")}</span>
-            <select
-              className={styles.control}
-              name="sort_by"
-              defaultValue={filters.sortBy ?? "date"}
+        {usageQuery.isError ? (
+          <div
+            className="mx-4 mt-3 flex items-center justify-between gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-body-md font-medium text-destructive sm:mx-5"
+            role="alert"
+          >
+            <span>{t("ledger.refresh_error")}</span>
+            <Button
+              variant="outline"
+              size="xs"
+              type="button"
+              onClick={() => void usageQuery.refetch()}
+              disabled={usageQuery.isFetching}
             >
-              <option value="date">{t("filters.sort_date")}</option>
-              <option value="cost_amount">{t("filters.sort_cost")}</option>
-              <option value="bandwidth_bytes">
-                {t("filters.sort_bandwidth")}
-              </option>
-              <option value="storage_bytes">{t("filters.sort_storage")}</option>
-            </select>
-          </label>
-          <label className={styles.field}>
-            <span className={styles.fieldLabel}>{t("filters.order")}</span>
-            <select
-              className={styles.control}
-              name="sort_order"
-              defaultValue={filters.sortOrder ?? "desc"}
-            >
-              <option value="desc">{t("filters.desc")}</option>
-              <option value="asc">{t("filters.asc")}</option>
-            </select>
-          </label>
-          <input type="hidden" name="limit" value={data.limit} />
-          <div className={styles.filterActions}>
-            <button className={styles.filterButton} type="submit">
-              {t("filters.apply")}
-            </button>
-            <a className={styles.resetButton} href="?">
-              {t("filters.reset")}
-            </a>
+              {t("ledger.retry")}
+            </Button>
           </div>
-        </form>
+        ) : null}
 
-        {data.items.length > 0 ? (
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <caption className="sr-only">{t("ledger.caption")}</caption>
-              <thead>
-                <tr>
-                  <th scope="col">{t("ledger.date")}</th>
-                  <th scope="col">{t("ledger.bandwidth")}</th>
-                  <th scope="col">{t("ledger.storage")}</th>
-                  <th scope="col">{t("ledger.bandwidth_cost")}</th>
-                  <th scope="col">{t("ledger.storage_cost")}</th>
-                  <th scope="col">{t("ledger.total")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.items.map((item) => (
+        <div className="transition-opacity" aria-busy={isLoadingData}>
+          {isLoadingData ? (
+            <LedgerSkeleton
+              label={t("ledger.refreshing")}
+              rows={pageSize === "all" ? 7 : Math.min(pageSize, 7)}
+            />
+          ) : displayedData.items.length > 0 ? (
+            <Table className="min-w-[42rem]">
+              <TableCaption className="px-5 pb-3 text-start text-label-sm leading-5 text-on-surface-muted">
+                {t("ledger.caption")}
+              </TableCaption>
+              <TableHeader className="bg-surface-muted">
+                <TableRow>
+                  <TableHead className="px-5 py-3 text-label-md leading-5 font-semibold text-on-surface-muted">
+                    {t("ledger.date")}
+                  </TableHead>
+                  <TableHead className="px-5 py-3 text-label-md leading-5 font-semibold text-on-surface-muted">
+                    {t("ledger.bandwidth")}
+                  </TableHead>
+                  <TableHead className="px-5 py-3 text-label-md leading-5 font-semibold text-on-surface-muted">
+                    {t("ledger.storage")}
+                  </TableHead>
+                  <TableHead className="px-5 py-3 text-label-md leading-5 font-semibold text-on-surface-muted">
+                    {t("ledger.bandwidth_cost")}
+                  </TableHead>
+                  <TableHead className="px-5 py-3 text-label-md leading-5 font-semibold text-on-surface-muted">
+                    {t("ledger.storage_cost")}
+                  </TableHead>
+                  <TableHead className="px-5 py-3 text-label-md leading-5 font-semibold text-on-surface-muted">
+                    {t("ledger.total")}
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {displayedData.items.map((item) => (
                   <UsageRow
                     key={item.id}
                     item={item}
@@ -258,25 +498,95 @@ export async function EarningsView({
                     t={t}
                   />
                 ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <EmptyState
-            icon={CalendarDays}
-            title={t("empty.title")}
-            note={t("empty.note")}
-          />
-        )}
+              </TableBody>
+            </Table>
+          ) : (
+            <EmptyState
+              icon={CalendarDays}
+              title={t("empty.title")}
+              note={t("empty.note")}
+            />
+          )}
 
-        <Pagination
-          page={pageNumber}
-          pages={pageCount}
-          total={data.total}
-          filters={filters}
-          t={t}
-        />
-      </section>
+          <Pagination
+            page={page}
+            pages={pageCount}
+            total={displayedData.total}
+            pageSize={pageSize}
+            loading={isLoadingData}
+            onPageChange={setPage}
+            onPageSizeChange={(nextPageSize) => {
+              setPageSize(nextPageSize)
+              setPage(1)
+            }}
+            t={t}
+          />
+        </div>
+      </Card>
+    </div>
+  )
+}
+
+function FilterField({
+  id,
+  label,
+  children,
+}: {
+  id: string
+  label: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="grid min-w-0 gap-1.5">
+      <Label
+        htmlFor={id}
+        className="text-label-md text-label-md--line-height font-medium text-on-surface-muted"
+      >
+        {label}
+      </Label>
+      {children}
+    </div>
+  )
+}
+
+function FilterSelect({
+  id,
+  label,
+  name,
+  defaultValue,
+  options,
+}: {
+  id: string
+  label: string
+  name: string
+  defaultValue: string
+  options: { value: string; label: string }[]
+}) {
+  return (
+    <div className="grid min-w-0 gap-1.5">
+      <Label
+        htmlFor={id}
+        className="text-label-md text-label-md--line-height font-medium text-on-surface-muted"
+      >
+        {label}
+      </Label>
+      <Select name={name} defaultValue={defaultValue} items={options}>
+        <SelectTrigger
+          id={id}
+          className="h-9 w-full bg-surface text-body-md text-body-md--line-height"
+        >
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            {options.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
     </div>
   )
 }
@@ -285,23 +595,105 @@ function SummaryCell({
   label,
   value,
   icon: Icon,
-  primary = false,
+  className,
+  loading = false,
 }: {
   label: string
   value: string
   icon: typeof Activity
-  primary?: boolean
+  className?: string
+  loading?: boolean
 }) {
   return (
+    <div className={cn("min-w-0 p-5", className)}>
+      <div className="flex size-9 items-center justify-center rounded-xl bg-primary-tint text-primary">
+        <Icon className="size-4" aria-hidden="true" />
+      </div>
+      {loading ? (
+        <div className="mt-4 space-y-2" aria-hidden="true">
+          <Skeleton className="h-3 w-24 motion-reduce:animate-none" />
+          <Skeleton className="h-7 w-32 motion-reduce:animate-none" />
+        </div>
+      ) : (
+        <>
+          <p className="mt-4 text-label-md text-label-md--line-height font-medium text-on-surface-muted">
+            {label}
+          </p>
+          <p className="mt-1 font-heading text-headline-sm text-headline-sm--line-height font-semibold text-foreground tabular-nums">
+            {value}
+          </p>
+        </>
+      )}
+    </div>
+  )
+}
+
+function ChartSkeleton({ label }: { label: string }) {
+  const barHeights = [
+    "h-16",
+    "h-24",
+    "h-20",
+    "h-32",
+    "h-28",
+    "h-36",
+    "h-24",
+    "h-30",
+  ]
+
+  return (
     <div
-      className={`${styles.signalCell} ${primary ? styles.signalCellPrimary : ""}`}
+      className="h-72 min-h-64 w-full p-5 sm:h-80"
+      role="status"
+      aria-label={label}
     >
-      <Icon
-        className="size-4 text-[var(--earnings-signal)]"
+      <span className="sr-only">{label}</span>
+      <div
+        className="flex h-full items-end gap-3 rounded-xl border border-border/60 bg-surface-muted/40 px-4 pt-4 pb-8"
         aria-hidden="true"
-      />
-      <p className={`${styles.signalLabel} mt-3`}>{label}</p>
-      <p className={styles.signalValue}>{value}</p>
+      >
+        {barHeights.map((height, index) => (
+          <Skeleton
+            key={`${height}-${index}`}
+            className={cn(
+              "w-full rounded-t-md rounded-b-none motion-reduce:animate-none",
+              height
+            )}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function LedgerSkeleton({ label, rows }: { label: string; rows: number }) {
+  return (
+    <div className="overflow-x-auto" role="status" aria-label={label}>
+      <span className="sr-only">{label}</span>
+      <div className="min-w-[42rem] p-5" aria-hidden="true">
+        <div className="grid grid-cols-6 gap-4 border-b border-border pb-3">
+          {Array.from({ length: 6 }, (_, index) => (
+            <Skeleton
+              key={`header-${index}`}
+              className="h-3 w-20 motion-reduce:animate-none"
+            />
+          ))}
+        </div>
+        <div className="space-y-3 pt-3">
+          {Array.from({ length: rows }, (_, rowIndex) => (
+            <div key={`row-${rowIndex}`} className="grid grid-cols-6 gap-4">
+              {Array.from({ length: 6 }, (_, columnIndex) => (
+                <Skeleton
+                  key={`cell-${rowIndex}-${columnIndex}`}
+                  className={cn(
+                    "h-4 motion-reduce:animate-none",
+                    columnIndex === 0 ? "w-24" : "w-20"
+                  )}
+                />
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
@@ -315,23 +707,29 @@ function UsageRow({
   item: TeacherUsageLog
   locale: string
   currency: Intl.NumberFormat
-  t: Awaited<ReturnType<typeof getTranslations>>
+  t: EarningsTranslator
 }) {
   return (
-    <tr>
-      <td className={styles.dateCell}>{formatDate(item.date, locale)}</td>
-      <td className={styles.mutedCell}>
+    <TableRow>
+      <TableCell className="px-5 py-3 text-body-md text-body-md--line-height font-medium tabular-nums">
+        {formatDate(item.date, locale)}
+      </TableCell>
+      <TableCell className="px-5 py-3 text-body-md text-body-md--line-height text-on-surface-muted tabular-nums">
         {formatBytes(item.bandwidth_bytes, locale, t)}
-      </td>
-      <td className={styles.mutedCell}>
+      </TableCell>
+      <TableCell className="px-5 py-3 text-body-md text-body-md--line-height text-on-surface-muted tabular-nums">
         {formatBytes(item.storage_bytes, locale, t)}
-      </td>
-      <td>{formatCurrency(item.bandwidth_cost_amount, currency)}</td>
-      <td>{formatCurrency(item.storage_cost_amount, currency)}</td>
-      <td className={styles.costCell}>
+      </TableCell>
+      <TableCell className="px-5 py-3 text-body-md text-body-md--line-height tabular-nums">
+        {formatCurrency(item.bandwidth_cost_amount, currency)}
+      </TableCell>
+      <TableCell className="px-5 py-3 text-body-md text-body-md--line-height tabular-nums">
+        {formatCurrency(item.storage_cost_amount, currency)}
+      </TableCell>
+      <TableCell className="px-5 py-3 text-body-md text-body-md--line-height font-semibold text-primary tabular-nums">
         {formatCurrency(item.cost_amount, currency)}
-      </td>
-    </tr>
+      </TableCell>
+    </TableRow>
   )
 }
 
@@ -345,13 +743,17 @@ function EmptyState({
   note: string
 }) {
   return (
-    <div className={styles.empty}>
-      <div>
-        <span className={styles.emptyIcon}>
+    <div className="flex min-h-60 items-center justify-center p-8 text-center">
+      <div className="max-w-md">
+        <div className="mx-auto flex size-11 items-center justify-center rounded-xl bg-primary-tint text-primary">
           <Icon className="size-5" aria-hidden="true" />
-        </span>
-        <p className={styles.emptyTitle}>{title}</p>
-        <p className={styles.emptyNote}>{note}</p>
+        </div>
+        <p className="mt-3 text-title-md text-title-md--line-height font-semibold text-foreground">
+          {title}
+        </p>
+        <p className="mt-1 text-body-md text-body-md--line-height text-on-surface-muted">
+          {note}
+        </p>
       </div>
     </div>
   )
@@ -361,70 +763,145 @@ function Pagination({
   page,
   pages,
   total,
-  filters,
+  pageSize,
+  loading,
+  onPageChange,
+  onPageSizeChange,
   t,
 }: {
   page: number
   pages: number
   total: number
-  filters: TeacherUsageFilters
-  t: Awaited<ReturnType<typeof getTranslations>>
+  pageSize: EarningsPageSize
+  loading: boolean
+  onPageChange: (page: number) => void
+  onPageSizeChange: (pageSize: EarningsPageSize) => void
+  t: EarningsTranslator
 }) {
-  const from = total === 0 ? 0 : (page - 1) * (filters.limit ?? 20) + 1
-  const to = Math.min(page * (filters.limit ?? 20), total)
-  const previous = buildPaginationHref(
-    filters,
-    Math.max(0, (page - 2) * (filters.limit ?? 20))
-  )
-  const next = buildPaginationHref(filters, page * (filters.limit ?? 20))
+  const rowsPerPage = pageSize === "all" ? Math.max(total, 1) : pageSize
+  const from = total === 0 ? 0 : (page - 1) * rowsPerPage + 1
+  const to = Math.min(page * rowsPerPage, total)
 
   return (
-    <div className={styles.pagination}>
-      <p className={styles.paginationMeta}>
-        {t("ledger.showing", { from, to, total })}
-      </p>
-      <nav className={styles.paginationNav} aria-label={t("ledger.pagination")}>
-        <a
-          className={styles.paginationLink}
-          href={page > 1 ? previous : undefined}
-          aria-disabled={page <= 1}
+    <div className="flex flex-col gap-3 border-t border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-wrap items-center gap-4">
+        <p className="text-body-md text-body-md--line-height text-on-surface-muted">
+          {t("ledger.showing", { from, to, total })}
+        </p>
+        <EarningsPageSizeSelect
+          value={pageSize}
+          label={t("ledger.rows_per_page")}
+          options={{
+            ten: "10",
+            twentyFive: "25",
+            fifty: "50",
+            oneHundred: "100",
+            all: t("ledger.all"),
+          }}
+          disabled={loading}
+          onChange={onPageSizeChange}
+        />
+      </div>
+      <nav
+        className="flex items-center gap-2"
+        aria-label={t("ledger.pagination")}
+      >
+        <Button
+          variant="outline"
+          size="sm"
+          type="button"
+          disabled={loading || page <= 1}
+          onClick={() => onPageChange(page - 1)}
         >
           <ArrowUp
             className="me-1 size-3.5 rotate-[-90deg]"
             aria-hidden="true"
           />
           {t("ledger.previous")}
-        </a>
-        <span className="flex min-h-[2.1rem] items-center px-1 text-xs font-bold text-[var(--earnings-muted)]">
+        </Button>
+        <span className="min-w-16 text-center text-body-md text-body-md--line-height font-medium text-on-surface-muted tabular-nums">
           {page} / {pages}
         </span>
-        <a
-          className={styles.paginationLink}
-          href={page < pages ? next : undefined}
-          aria-disabled={page >= pages}
+        <Button
+          variant="outline"
+          size="sm"
+          type="button"
+          disabled={loading || page >= pages}
+          onClick={() => onPageChange(page + 1)}
         >
           {t("ledger.next")}
           <ArrowDown
             className="ms-1 size-3.5 rotate-[-90deg]"
             aria-hidden="true"
           />
-        </a>
+        </Button>
       </nav>
     </div>
   )
 }
 
-function buildPaginationHref(filters: TeacherUsageFilters, skip: number) {
-  const query = new URLSearchParams()
-  if (filters.startDate) query.set("start_date", filters.startDate)
-  if (filters.endDate) query.set("end_date", filters.endDate)
-  if (filters.minCost) query.set("min_cost", filters.minCost)
-  if (filters.maxCost) query.set("max_cost", filters.maxCost)
-  if (filters.sortBy) query.set("sort_by", filters.sortBy)
-  if (filters.sortOrder) query.set("sort_order", filters.sortOrder)
-  query.set("skip", String(skip))
-  query.set("limit", String(filters.limit ?? 20))
-  return `?${query.toString()}`
+function resolvePageSize(
+  limit: TeacherUsageFilters["limit"]
+): EarningsPageSize {
+  return limit === "all" || limit === 25 || limit === 50 || limit === 100
+    ? limit
+    : 10
+}
+
+function createInitialFilters(
+  filters: TeacherUsageFilters
+): EarningsClientFilters {
+  return {
+    startDate: filters.startDate,
+    endDate: filters.endDate,
+    minCost: filters.minCost,
+    maxCost: filters.maxCost,
+    sortBy: filters.sortBy ?? "date",
+    sortOrder: filters.sortOrder ?? "desc",
+  }
+}
+
+function createResetFilters(): EarningsClientFilters {
+  return {
+    startDate: undefined,
+    endDate: undefined,
+    minCost: undefined,
+    maxCost: undefined,
+    sortBy: "date",
+    sortOrder: "desc",
+  }
+}
+
+function readFormValue(formData: FormData, name: string) {
+  const value = formData.get(name)
+  return typeof value === "string" ? value : undefined
+}
+
+function normalizeMoneyInput(value?: string) {
+  const candidate = value?.trim()
+  return candidate && /^(?:\d+)(?:\.\d{1,2})?$/.test(candidate)
+    ? candidate
+    : undefined
+}
+
+function parseSortBy(
+  value?: string
+): NonNullable<TeacherUsageFilters["sortBy"]> {
+  return value === "cost_amount" ||
+    value === "bandwidth_bytes" ||
+    value === "storage_bytes"
+    ? value
+    : "date"
+}
+
+function parseSortOrder(
+  value?: string
+): NonNullable<TeacherUsageFilters["sortOrder"]> {
+  return value === "asc" ? "asc" : "desc"
+}
+
+function getPageNumber(data: PaginatedTeacherUsageLogs) {
+  return Math.floor(data.skip / data.limit) + 1
 }
 
 function formatCurrency(value: number | null, currency: Intl.NumberFormat) {
@@ -446,11 +923,7 @@ function formatShortDate(value: string, locale: string) {
   }).format(new Date(`${value}T00:00:00`))
 }
 
-function formatBytes(
-  value: number,
-  locale: string,
-  t: Awaited<ReturnType<typeof getTranslations>>
-) {
+function formatBytes(value: number, locale: string, t: EarningsTranslator) {
   const units = [
     { threshold: 1024 ** 3, divisor: 1024 ** 3, label: t("units.gb") },
     { threshold: 1024 ** 2, divisor: 1024 ** 2, label: t("units.mb") },

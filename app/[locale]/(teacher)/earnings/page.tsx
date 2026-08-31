@@ -59,7 +59,7 @@ function normalizeFilters(
   const sortBy = normalizeSort(query.sort_by)
   const sortOrder = normalizeOrder(query.sort_order)
   const limit = normalizeLimit(query.limit)
-  const skip = normalizeInteger(query.skip)
+  const skip = limit === "all" ? 0 : normalizeInteger(query.skip)
 
   return {
     startDate,
@@ -97,8 +97,9 @@ function normalizeInteger(value: string | string[] | undefined) {
 }
 
 function normalizeLimit(value: string | string[] | undefined) {
+  if (first(value) === "all") return "all" as const
   const candidate = normalizeInteger(value)
-  return candidate && [10, 20, 50, 100].includes(candidate) ? candidate : 20
+  return candidate && [10, 25, 50, 100].includes(candidate) ? candidate : 10
 }
 
 function normalizeSort(

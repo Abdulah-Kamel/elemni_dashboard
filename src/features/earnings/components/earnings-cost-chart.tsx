@@ -1,12 +1,6 @@
 "use client"
 
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-} from "recharts"
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 
 import {
   ChartContainer,
@@ -14,7 +8,6 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart"
-import styles from "./earnings-view.module.css"
 
 export type EarningsChartPoint = {
   date: string
@@ -51,7 +44,7 @@ export function EarningsCostChart({
   return (
     <ChartContainer
       config={config}
-      className={styles.chart}
+      className="h-72 min-h-64 w-full px-4 pt-4 pb-6 text-body-md text-body-md--line-height sm:h-80"
       role="img"
       aria-label={ariaLabel}
     >
@@ -67,6 +60,11 @@ export function EarningsCostChart({
           axisLine={false}
           tickMargin={8}
           minTickGap={20}
+          tick={{
+            fill: "var(--on-surface-muted)",
+            fontFamily: "var(--font-app)",
+            fontSize: 13,
+          }}
         />
         <YAxis hide domain={[0, "dataMax"]} />
         <ChartTooltip

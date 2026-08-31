@@ -186,6 +186,11 @@
       "cost": "Cost"
     },
     "filters": {
+      "range": "Date range",
+      "all_time": "All time",
+      "choose": "Choose date range",
+      "dialog_title": "Choose date range",
+      "dialog_description": "Select the period to include in this usage ledger.",
       "start": "From",
       "end": "To",
       "min_cost": "Minimum cost",
@@ -199,7 +204,8 @@
       "desc": "Newest first",
       "asc": "Oldest first",
       "apply": "Apply filters",
-      "reset": "Reset"
+      "reset": "Reset",
+      "cancel": "Cancel"
     },
     "ledger": {
       "title": "Usage ledger",
@@ -213,6 +219,11 @@
       "storage_cost": "Storage cost",
       "total": "Total",
       "showing": "Showing {from}–{to} of {total}",
+      "rows_per_page": "Rows per page",
+      "all": "All",
+      "refreshing": "Updating usage data…",
+      "refresh_error": "Couldn’t update usage data.",
+      "retry": "Try again",
       "pagination": "Usage ledger pages",
       "previous": "Previous",
       "next": "Next"
