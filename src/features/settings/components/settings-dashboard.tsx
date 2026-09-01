@@ -14,7 +14,7 @@ export function SettingsDashboard() {
   const [watermarkEnabled, setWatermarkEnabled] = useState(false);
   const [allowPdfDownload, setAllowPdfDownload] = useState(false);
   const [whitelistedDomains, setWhitelistedDomains] = useState("");
-  const [primaryColor, setPrimaryColor] = useState("#00236f");
+  const [primaryColor, setPrimaryColor] = useState("#0284C7");
 
   const handleChange = (key: string, value: boolean | string) => {
     switch (key) {

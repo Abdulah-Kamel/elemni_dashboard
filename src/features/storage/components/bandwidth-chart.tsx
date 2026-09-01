@@ -15,13 +15,13 @@ import { Line } from "react-chartjs-2";
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip);
 
 function cssVar(name: string): string {
-  if (typeof document === "undefined") return "#000000";
+  if (typeof document === "undefined") return "#0284C7";
   const el = document.createElement("div");
   el.style.cssText = `${name}: var(${name}); position:absolute;pointer-events:none;opacity:0;`;
   document.body.appendChild(el);
   const val = getComputedStyle(el).getPropertyValue(name.slice(4, -1));
   document.body.removeChild(el);
-  return val.trim() || "#000000";
+  return val.trim() || "#0284C7";
 }
 
 const DAYS_7 = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];

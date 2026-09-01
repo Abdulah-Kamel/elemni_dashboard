@@ -8,7 +8,8 @@
 /*
  * Elemni dashboard — design tokens.
  *
- * Navy primary (#00236f), Zinc neutrals, super-elliptical radii, 3px halo focus,
+ * Student portal sky primary (#0284C7), slate neutrals, super-elliptical radii,
+ * 3px halo focus,
  * no shadows by default, ambient lift on hover. Compact density.
  *
  * Tokens are split in three layers:
@@ -164,46 +165,46 @@
 
 :root {
     /* Brand */
-    --brand-indigo: #00236f;
-    --brand-indigo-deep: #00164e;
-    --brand-indigo-tint: #dce1ff;
-    --brand-amber: #F59E0B;
-    --brand-amber-tint: #FEF3C7;
-    --brand-emerald: #10B981;
+    --brand-indigo: #0284C7;
+    --brand-indigo-deep: #0369A1;
+    --brand-indigo-tint: #E0F2FE;
+    --brand-amber: #F97316;
+    --brand-amber-tint: #FFF7ED;
+    --brand-emerald: #22C55E;
     --brand-emerald-tint: #D1FAE5;
     --brand-rose: #EF4444;
     --brand-rose-tint: #FEE2E2;
 
-    /* Zinc neutrals */
-    --zinc-50: #FAFAFA;
-    --zinc-100: #F4F4F5;
-    --zinc-200: #E4E4E7;
-    --zinc-300: #D4D4D8;
-    --zinc-400: #A1A1AA;
-    --zinc-500: #71717A;
-    --zinc-600: #52525B;
-    --zinc-700: #3F3F46;
-    --zinc-800: #27272A;
-    --zinc-900: #18181B;
+    /* Student portal slate neutrals */
+    --zinc-50: #F8FAFC;
+    --zinc-100: #F1F5F9;
+    --zinc-200: #E2E8F0;
+    --zinc-300: #CBD5E1;
+    --zinc-400: #94A3B8;
+    --zinc-500: #64748B;
+    --zinc-600: #475569;
+    --zinc-700: #334155;
+    --zinc-800: #1E293B;
+    --zinc-900: #0F172A;
 
     /* Surfaces */
-    --page: #FAFAFA;
+    --page: #FCFCFE;
     --surface: #FFFFFF;
     --surface-raised: #FFFFFF;
-    --surface-muted: #F4F4F5;
-    --surface-subtle: #F9FAFB;
-    --surface-strong: #F4F4F5;
+    --surface-muted: #F0F9FF;
+    --surface-subtle: #E0F2FE;
+    --surface-strong: #FAF9FD;
 
     /* Text */
-    --on-surface: #18181B;
-    --on-surface-muted: #71717A;
-    --on-surface-subtle: #A1A1AA;
+    --on-surface: #1B1B24;
+    --on-surface-muted: #777587;
+    --on-surface-subtle: #A6A3B5;
     --on-primary: #FFFFFF;
-    --on-primary-tint: #00164e;
+    --on-primary-tint: #0369A1;
 
     /* Borders */
-    --border: #c5c5d3;
-    --border-strong: #D4D4D8;
+    --border: #E2E0EF;
+    --border-strong: #DDD9E8;
 
     /* Radius base */
     --radius: 0.5rem;
@@ -214,23 +215,31 @@
 }
 
 .dark {
-    --brand-indigo: #90a8ff;
-    --brand-indigo-deep: #1e3a8a;
-    --brand-indigo-tint: #1e3a8a;
+    --brand-indigo: #38BDF8;
+    --brand-indigo-deep: #0EA5E9;
+    --brand-indigo-tint: #0C2A44;
+    --brand-amber: #FB923C;
+    --brand-amber-tint: #422006;
+    --brand-emerald: #4ADE80;
+    --brand-emerald-tint: #14532D;
+    --brand-rose: #F87171;
+    --brand-rose-tint: #450A0A;
 
-    --page: #09090B;
-    --surface: #18181B;
-    --surface-raised: #27272A;
-    --surface-muted: #27272A;
-    --surface-subtle: #18181B;
-    --surface-strong: #3F3F46;
+    --page: #0B132B;
+    --surface: #0F172A;
+    --surface-raised: #162033;
+    --surface-muted: #162033;
+    --surface-subtle: #1E293B;
+    --surface-strong: #273449;
 
-    --on-surface: #FAFAFA;
-    --on-surface-muted: #A1A1AA;
-    --on-surface-subtle: #71717A;
+    --on-surface: #F8FAFC;
+    --on-surface-muted: #94A3B8;
+    --on-surface-subtle: #64748B;
+    --on-primary: #0B132B;
+    --on-primary-tint: #BAE6FD;
 
-    --border: #27272A;
-    --border-strong: #3F3F46;
+    --border: #1E293B;
+    --border-strong: #334155;
 
     --color-chart-grid: var(--zinc-800);
     --color-chart-axis: var(--zinc-500);
@@ -331,7 +340,7 @@
     }
     .card-hover:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 12px color-mix(in srgb, var(--on-surface) 10%, transparent);
     }
   }
 }

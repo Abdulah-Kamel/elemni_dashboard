@@ -62,12 +62,12 @@ export function MonthlyEarningsChart({
     if (!ctx) return;
 
     const computed = getComputedStyle(document.documentElement);
-    const color = computed.getPropertyValue(colorVar).trim() || "#4F46E5";
-    const muted = computed.getPropertyValue(mutedColorVar).trim() || "#EEF2FF";
+    const color = computed.getPropertyValue(colorVar).trim() || "#0284C7";
+    const muted = computed.getPropertyValue(mutedColorVar).trim() || "#E0F2FE";
     const gridColor =
-      computed.getPropertyValue("--color-chart-grid").trim() || "#F4F4F5";
+      computed.getPropertyValue("--color-chart-grid").trim() || "#E2E0EF";
     const axisColor =
-      computed.getPropertyValue("--color-chart-axis").trim() || "#A1A1AA";
+      computed.getPropertyValue("--color-chart-axis").trim() || "#A6A3B5";
 
     const data: ChartData<"bar"> = {
       labels,

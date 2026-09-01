@@ -1,53 +1,53 @@
 ---
 name: Elemni
 colors:
-  surface: '#fcf8ff'
-  surface-dim: '#dcd8e5'
-  surface-bright: '#fcf8ff'
+  surface: '#fcfcfe'
+  surface-dim: '#e8e5f0'
+  surface-bright: '#ffffff'
   surface-container-lowest: '#ffffff'
-  surface-container-low: '#f5f2ff'
-  surface-container: '#f0ecf9'
-  surface-container-high: '#eae6f4'
-  surface-container-highest: '#e4e1ee'
+  surface-container-low: '#faf9fd'
+  surface-container: '#f0f9ff'
+  surface-container-high: '#e0f2fe'
+  surface-container-highest: '#e2e0ef'
   on-surface: '#1b1b24'
   on-surface-variant: '#464555'
-  inverse-surface: '#302f39'
-  inverse-on-surface: '#f3effc'
+  inverse-surface: '#0b132b'
+  inverse-on-surface: '#f8fafc'
   outline: '#777587'
-  outline-variant: '#c7c4d8'
-  surface-tint: '#4d44e3'
-  primary: '#3525cd'
+  outline-variant: '#e2e0ef'
+  surface-tint: '#0284c7'
+  primary: '#0284c7'
   on-primary: '#ffffff'
-  primary-container: '#4f46e5'
-  on-primary-container: '#dad7ff'
-  inverse-primary: '#c3c0ff'
-  secondary: '#712ae2'
+  primary-container: '#e0f2fe'
+  on-primary-container: '#0369a1'
+  inverse-primary: '#7dd3fc'
+  secondary: '#0369a1'
   on-secondary: '#ffffff'
-  secondary-container: '#8a4cfc'
-  on-secondary-container: '#fffbff'
-  tertiary: '#7e3000'
+  secondary-container: '#bae6fd'
+  on-secondary-container: '#0c4a6e'
+  tertiary: '#22c55e'
   on-tertiary: '#ffffff'
-  tertiary-container: '#a44100'
-  on-tertiary-container: '#ffd2be'
-  error: '#ba1a1a'
+  tertiary-container: '#d1fae5'
+  on-tertiary-container: '#14532d'
+  error: '#ef4444'
   on-error: '#ffffff'
-  error-container: '#ffdad6'
-  on-error-container: '#93000a'
-  primary-fixed: '#e2dfff'
-  primary-fixed-dim: '#c3c0ff'
-  on-primary-fixed: '#0f0069'
-  on-primary-fixed-variant: '#3323cc'
-  secondary-fixed: '#eaddff'
-  secondary-fixed-dim: '#d2bbff'
-  on-secondary-fixed: '#25005a'
-  on-secondary-fixed-variant: '#5a00c6'
-  tertiary-fixed: '#ffdbcc'
-  tertiary-fixed-dim: '#ffb695'
-  on-tertiary-fixed: '#351000'
-  on-tertiary-fixed-variant: '#7b2f00'
-  background: '#fcf8ff'
+  error-container: '#fee2e2'
+  on-error-container: '#991b1b'
+  primary-fixed: '#e0f2fe'
+  primary-fixed-dim: '#bae6fd'
+  on-primary-fixed: '#0c4a6e'
+  on-primary-fixed-variant: '#0369a1'
+  secondary-fixed: '#e0f2fe'
+  secondary-fixed-dim: '#bae6fd'
+  on-secondary-fixed: '#0c4a6e'
+  on-secondary-fixed-variant: '#0369a1'
+  tertiary-fixed: '#d1fae5'
+  tertiary-fixed-dim: '#bbf7d0'
+  on-tertiary-fixed: '#14532d'
+  on-tertiary-fixed-variant: '#166534'
+  background: '#fcfcfe'
   on-background: '#1b1b24'
-  surface-variant: '#e4e1ee'
+  surface-variant: '#e0f2fe'
 typography:
   display-lg:
     fontFamily: Geist
@@ -123,11 +123,11 @@ The design system embodies a high-end, minimalist SaaS aesthetic tailored for th
 The emotional response should be one of confidence and efficiency. The interface stays out of the user's way, using generous whitespace and a rigorous grid to organize complex educational data. The style is defined by ultra-clean surfaces, micro-interactions, and a sophisticated balance between vibrant brand accents and a monochrome functional foundation.
 
 ## Colors
-The palette is rooted in the Zinc grayscale to maintain a professional, neutral environment. The primary brand expression is a vibrant Indigo (#4F46E5), used sparingly for high-impact actions and focus states. 
+The palette is rooted in soft slate neutrals and the student portal's sky-blue identity. The primary brand expression is Sky Blue (#0284C7), supported by Deep Sky (#0369A1), warm Orange (#F97316), and calm semantic tints.
 
-- **Primary:** Vibrant Indigo for call-to-actions, progress indicators, and active navigation.
-- **Surface:** The background utilizes Zinc-50 (#FAFAFA) to provide a soft contrast against pure white (#FFFFFF) component cards.
-- **Typography:** Zinc-900 is used for maximum legibility in headings, while Zinc-500 handles metadata and secondary descriptions.
+- **Primary:** Sky Blue for call-to-actions, progress indicators, focus states, and active navigation.
+- **Surface:** The background uses #FCFCFE with pale sky-blue surfaces (#F0F9FF / #E0F2FE) and white component cards.
+- **Typography:** #1B1B24 is used for maximum legibility in headings, while #777587 handles metadata and secondary descriptions.
 - **Status:** Standardized semantic colors (Success: Green-600, Warning: Amber-500, Error: Red-600) should be desaturated slightly to match the professional tone.
 
 ## Typography
@@ -157,9 +157,9 @@ The shape language is modern and approachable, utilizing "Super-elliptical" curv
 - **Small Elements:** Tooltips and tags use a `6px` radius to maintain sharpness at smaller scales.
 
 ## Components
-- **Buttons:** Primary buttons use the Indigo-600 background with white text. Apply a subtle 1px inner-border (top-only) in a lighter indigo to create a "pressed" 3D effect. Secondary buttons are Zinc-100 with Zinc-900 text.
+- **Buttons:** Primary buttons use the Sky-600 background with white text. Apply a subtle 1px inner-border (top-only) in a lighter sky to create a "pressed" 3D effect. Secondary buttons are slate-100 with slate-900 text.
 - **Cards:** White background, Zinc-200 1px border. On hover, the border darkens to Zinc-300 and the card lifts slightly (Level 2 elevation). 
-- **Input Fields:** Zinc-50 background with a Zinc-200 border. On focus, the border transitions to Indigo-500 with a 3px Indigo-500/10% halo (ring).
-- **Badges:** Use a "soft" style—low-opacity background (Indigo-50) with high-contrast text (Indigo-700). 
-- **Progress Bars:** Thin 4px or 6px heights with rounded ends. Use Indigo-600 for the fill and Zinc-100 for the track.
+- **Input Fields:** #F8FAFC background with a #E2E0EF border. On focus, the border transitions to Sky-600 with a 3px Sky-600/10% halo (ring).
+- **Badges:** Use a "soft" style—low-opacity background (Sky-50) with high-contrast text (Sky-700).
+- **Progress Bars:** Thin 4px or 6px heights with rounded ends. Use Sky-600 for the fill and slate-100 for the track.
 - **Lists:** Clean rows separated by 1px Zinc-100 borders, with generous 16px vertical padding per item.

@@ -57,8 +57,8 @@ export function MiniBarChart({
     if (!ctx) return;
 
     const computed = getComputedStyle(document.documentElement);
-    const color = computed.getPropertyValue(colorVar).trim() || "#4F46E5";
-    const muted = computed.getPropertyValue(mutedColorVar).trim() || "#EEF2FF";
+    const color = computed.getPropertyValue(colorVar).trim() || "#0284C7";
+    const muted = computed.getPropertyValue(mutedColorVar).trim() || "#E0F2FE";
 
     const data: ChartData<"bar"> = {
       labels,
