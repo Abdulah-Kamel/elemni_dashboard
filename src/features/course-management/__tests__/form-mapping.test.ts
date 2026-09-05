@@ -71,11 +71,11 @@ describe("formValuesToCourseUpdate", () => {
     expect(result.price).toBe(validForm.price);
   });
 
-  it("does not include placement fields", () => {
+  it("includes placement fields", () => {
     const result = formValuesToCourseUpdate(validForm);
-    expect(result).not.toHaveProperty("subject_id");
-    expect(result).not.toHaveProperty("grade_id");
-    expect(result).not.toHaveProperty("stream_id");
+    expect(result.subject_id).toBe(validForm.subjectId);
+    expect(result.grade_id).toBe(validForm.gradeId);
+    expect(result.stream_id).toBe(validForm.streamId);
   });
 
   it("includes use_chapters", () => {

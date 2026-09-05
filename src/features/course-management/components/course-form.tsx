@@ -94,45 +94,23 @@ export function CourseForm({
         error={errors?.price}
       />
 
-      {mode === "create" ? (
-        <CurriculumPicker
-          subjects={subjects}
-          grades={grades}
-          streams={streams}
-          subjectId={values.subjectId}
-          gradeId={values.gradeId}
-          streamId={values.streamId}
-          onSubjectChange={(id) => update({ subjectId: id ?? undefined! })}
-          onGradeChange={(id) => update({ gradeId: id ?? undefined! })}
-          onStreamChange={(id) => update({ streamId: id ?? undefined! })}
-          errors={{
-            subjectId: errors?.subjectId,
-            gradeId: errors?.gradeId,
-            streamId: errors?.streamId,
-          }}
-          disabled={disabled}
-        />
-      ) : (
-        <div className="space-y-2">
-          <Label>{t("curriculum_placement")}</Label>
-          <p className="text-sm text-muted-foreground">
-            {values.subjectId
-              ? (subjects.find((s) => s.id === values.subjectId)?.name ??
-                String(values.subjectId))
-              : "—"}
-            {" / "}
-            {values.gradeId
-              ? (grades.find((g) => g.id === values.gradeId)?.name ??
-                String(values.gradeId))
-              : "—"}
-            {" / "}
-            {values.streamId
-              ? (streams.find((s) => s.id === values.streamId)?.name ??
-                String(values.streamId))
-              : "—"}
-          </p>
-        </div>
-      )}
+      <CurriculumPicker
+        subjects={subjects}
+        grades={grades}
+        streams={streams}
+        subjectId={values.subjectId}
+        gradeId={values.gradeId}
+        streamId={values.streamId}
+        onSubjectChange={(id) => update({ subjectId: id ?? undefined! })}
+        onGradeChange={(id) => update({ gradeId: id ?? undefined! })}
+        onStreamChange={(id) => update({ streamId: id ?? undefined! })}
+        errors={{
+          subjectId: errors?.subjectId,
+          gradeId: errors?.gradeId,
+          streamId: errors?.streamId,
+        }}
+        disabled={disabled}
+      />
 
       <div className="space-y-2">
         <Label>{t("chapters_organized")}</Label>

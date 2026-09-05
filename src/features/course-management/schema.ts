@@ -48,6 +48,9 @@ export const courseUpdateSchema = z.object({
   description: z.string().max(500).nullable().optional(),
   img: z.string().nullable().optional(),
   price: z.union([z.number(), z.string(), z.null()]).optional(),
+  subject_id: z.number().int().optional(),
+  grade_id: z.number().int().optional(),
+  stream_id: z.number().int().optional(),
   is_published: z.boolean().nullable().optional(),
   use_chapters: z.boolean().nullable().optional(),
 })
@@ -120,6 +123,9 @@ export function formValuesToCourseUpdate(
   if (values.description !== undefined)
     update.description = values.description ?? null
   if (values.price) update.price = formatCoursePrice(values.price)
+  if (Number.isInteger(values.subjectId)) update.subject_id = values.subjectId
+  if (Number.isInteger(values.gradeId)) update.grade_id = values.gradeId
+  if (Number.isInteger(values.streamId)) update.stream_id = values.streamId
   if (values.isPublished !== undefined) update.is_published = values.isPublished
   if (values.useChapters !== undefined) update.use_chapters = values.useChapters
   return update

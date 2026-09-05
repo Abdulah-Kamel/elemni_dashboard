@@ -117,11 +117,15 @@ describe("courseUpdateSchema (contracts/openapi.json)", () => {
     ).not.toThrow();
   });
 
-  it("does not include placement fields (subject_id, grade_id, stream_id)", () => {
-    const result = courseUpdateSchema.parse({ title: "Test" });
-    expect(result).not.toHaveProperty("subject_id");
-    expect(result).not.toHaveProperty("grade_id");
-    expect(result).not.toHaveProperty("stream_id");
+  it("accepts placement fields (subject_id, grade_id, stream_id)", () => {
+    const result = courseUpdateSchema.parse({
+      subject_id: 1,
+      grade_id: 2,
+      stream_id: 3,
+    });
+    expect(result.subject_id).toBe(1);
+    expect(result.grade_id).toBe(2);
+    expect(result.stream_id).toBe(3);
   });
 });
 
@@ -365,7 +369,7 @@ describe("formValuesToCourseUpdate", () => {
     expect(result.price).toBe("200.00");
   });
 
-  it("does not include placement fields", () => {
+  it("includes placement fields", () => {
     const formValues: CourseFormValues = {
       title: "Test",
       description: null,
@@ -377,8 +381,8 @@ describe("formValuesToCourseUpdate", () => {
     };
 
     const result = formValuesToCourseUpdate(formValues);
-    expect(result).not.toHaveProperty("subject_id");
-    expect(result).not.toHaveProperty("grade_id");
-    expect(result).not.toHaveProperty("stream_id");
+    expect(result.subject_id).toBe(formValues.subjectId);
+    expect(result.grade_id).toBe(formValues.gradeId);
+    expect(result.stream_id).toBe(formValues.streamId);
   });
 });

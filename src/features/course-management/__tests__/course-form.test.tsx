@@ -190,7 +190,7 @@ describe("CourseForm", () => {
       expect(screen.getByDisplayValue("دورة الجبر")).toBeTruthy()
     })
 
-    it("renders read-only curriculum placement", () => {
+    it("renders editable curriculum placement controls", () => {
       renderWithIntl(
         <CourseForm
           initialValues={{
@@ -210,7 +210,9 @@ describe("CourseForm", () => {
           disabled={false}
         />
       )
-      expect(screen.getByText("التصنيف")).toBeTruthy()
+      expect(screen.getAllByText("المادة").length).toBeGreaterThan(0)
+      expect(screen.getAllByText("الصف").length).toBeGreaterThan(0)
+      expect(screen.getAllByText("الشعبة").length).toBeGreaterThan(0)
     })
 
     it("allows changing organization mode in edit mode", () => {
