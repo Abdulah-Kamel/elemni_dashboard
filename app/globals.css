@@ -22,8 +22,8 @@
  * directly. They reference these tokens via Tailwind utilities.
  */
 @theme inline {
-    --font-sans: var(--font-app, "Scheherazade New"), system-ui, -apple-system, "Segoe UI", sans-serif;
-    --font-heading: var(--font-app, "Scheherazade New"), system-ui, sans-serif;
+    --font-sans: var(--font-app, "Readex Pro"), system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-heading: var(--font-app, "Readex Pro"), system-ui, sans-serif;
 
     /* Brand ----------------------------------------------------------- */
     --color-brand-indigo: var(--brand-indigo);
@@ -112,7 +112,7 @@
     --radius-3xl: 1.5rem;
     --radius-4xl: 2rem;
 
-    /* Type scale — keep Cairo weights consistent with original spec */
+    /* Type scale — keep Readex Pro weights consistent across the dashboard */
     --text-display-lg: 30px;
     --text-display-lg--line-height: 38px;
     --text-display-lg--font-weight: 700;

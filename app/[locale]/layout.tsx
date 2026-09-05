@@ -1,11 +1,11 @@
 import { setRequestLocale } from "next-intl/server";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
-import { Scheherazade_New } from "next/font/google";
+import { Readex_Pro } from "next/font/google";
 import { HtmlLocale } from "@/components/html-locale";
 import { QueryProvider } from "@/providers/query-provider";
 
-const scheherazade = Scheherazade_New({
+const readexPro = Readex_Pro({
   subsets: ["arabic", "latin"],
   variable: "--font-app",
   display: "swap",
@@ -29,7 +29,7 @@ export default async function LocaleLayout({
 
   return (
     <>
-      <HtmlLocale locale={locale} isRtl={isRtl} fontVar={scheherazade.variable} />
+      <HtmlLocale locale={locale} isRtl={isRtl} fontVar={readexPro.variable} />
       <NextIntlClientProvider messages={messages}>
         <QueryProvider>{children}</QueryProvider>
       </NextIntlClientProvider>

@@ -35,7 +35,7 @@ export type MonthlyEarningsChartProps = {
 };
 
 const CHART_FONT =
-  '12px "Cairo", system-ui, -apple-system, "Segoe UI", sans-serif';
+  '12px "Readex Pro", system-ui, -apple-system, "Segoe UI", sans-serif';
 
 export function MonthlyEarningsChart({
   months,
