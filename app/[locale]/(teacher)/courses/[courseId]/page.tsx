@@ -194,6 +194,9 @@ async function CourseEditor({
           initialSections={
             previewCurriculum.success ? previewCurriculum.data : []
           }
+          subjects={subjects}
+          grades={grades}
+          streams={streams}
           curriculum={curriculum}
           curriculumTitle={course.use_chapters ? ct("title") : lt("title")}
           curriculumHint={t("curriculum_hint")}

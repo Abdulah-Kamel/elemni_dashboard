@@ -53,8 +53,12 @@ export type StudentCoursePreviewModel = {
   coverUrl: string | null;
   price: string;
   subject: string | null;
+  /** Selected curriculum IDs are kept for the teacher workspace editor. */
+  subjectId?: number | null;
   grade: string | null;
+  gradeId?: number | null;
   stream: string | null;
+  streamId?: number | null;
   teacher: { name: string; avatarUrl: string | null } | null;
   sections: StudentPreviewSection[];
 };

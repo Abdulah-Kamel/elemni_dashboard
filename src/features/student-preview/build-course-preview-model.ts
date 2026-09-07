@@ -32,8 +32,11 @@ export function buildCoursePreviewModel({
     coverUrl: coverObjectUrl ?? publicCoverUrl ?? null,
     price: values.price || "0",
     subject: subjects.find((s) => s.id === values.subjectId)?.name ?? null,
+    subjectId: values.subjectId,
     grade: grades.find((g) => g.id === values.gradeId)?.name ?? null,
+    gradeId: values.gradeId,
     stream: streams.find((s) => s.id === values.streamId)?.name ?? null,
+    streamId: values.streamId,
     teacher,
     sections,
   };

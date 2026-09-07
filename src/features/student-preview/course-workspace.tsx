@@ -18,6 +18,12 @@ import { PreviewWorkspace } from "./preview-workspace"
 import type { PreviewWorkspaceTab } from "./preview-workspace"
 import { StudentCourseDetailPreview } from "./student-course-detail-preview"
 import { loadCoursePreviewCurriculum } from "./server-actions"
+import { CurriculumPicker } from "@/features/course-management/components/curriculum-picker"
+import type {
+  GradeOut,
+  StreamOut,
+  SubjectOut,
+} from "@/features/course-management/schema"
 import {
   CourseBuilderBridgeProvider,
   type CourseBuilderField,
@@ -44,6 +50,9 @@ interface CourseWorkspaceProps {
   curriculum?: ReactNode
   curriculumTitle?: string
   curriculumHint?: string
+  subjects?: SubjectOut[]
+  grades?: GradeOut[]
+  streams?: StreamOut[]
 }
 
 const COPY = {
@@ -111,6 +120,9 @@ function CourseWorkspaceContent({
   curriculum,
   curriculumTitle,
   curriculumHint,
+  subjects,
+  grades,
+  streams,
   teacherProfileId,
   activeTab,
   fullPreviewOpen,
@@ -124,6 +136,21 @@ function CourseWorkspaceContent({
   const [title, setTitle] = useState(model.title)
   const [description, setDescription] = useState(model.description)
   const [price, setPrice] = useState(model.price)
+  const [subjectId, setSubjectId] = useState<number | null>(
+    model.subjectId ??
+      subjects?.find((subject) => subject.name === model.subject)?.id ??
+      null
+  )
+  const [gradeId, setGradeId] = useState<number | null>(
+    model.gradeId ??
+      grades?.find((grade) => grade.name === model.grade)?.id ??
+      null
+  )
+  const [streamId, setStreamId] = useState<number | null>(
+    model.streamId ??
+      streams?.find((stream) => stream.name === model.stream)?.id ??
+      null
+  )
   const [savedCoverUrl, setSavedCoverUrl] = useState(model.coverUrl)
   const [coverFile, setCoverFile] = useState<File | null>(null)
   const [sections, setSections] = useState<StudentPreviewSection[]>(
@@ -183,6 +210,10 @@ function CourseWorkspaceContent({
         price: formatCoursePrice(price),
       }
 
+      if (subjectId !== null) body.subject_id = subjectId
+      if (gradeId !== null) body.grade_id = gradeId
+      if (streamId !== null) body.stream_id = streamId
+
       if (coverFile) {
         body.img = await uploadCourseCover(courseId, coverFile)
       }
@@ -204,6 +235,9 @@ function CourseWorkspaceContent({
     lang,
     price,
     savedCoverUrl,
+    subjectId,
+    gradeId,
+    streamId,
     teacherProfileId,
     title,
     update,
@@ -214,6 +248,15 @@ function CourseWorkspaceContent({
     title,
     description,
     price,
+    subject:
+      subjects?.find((subject) => subject.id === subjectId)?.name ??
+      model.subject,
+    grade: grades?.find((grade) => grade.id === gradeId)?.name ?? model.grade,
+    stream:
+      streams?.find((stream) => stream.id === streamId)?.name ?? model.stream,
+    subjectId,
+    gradeId,
+    streamId,
     coverUrl: coverPreviewUrl ?? savedCoverUrl,
     sections,
   }
@@ -355,43 +398,27 @@ function CourseWorkspaceContent({
             />
           </div>
         )}
-        <div>
-          <label
-            htmlFor={`${id}-subject`}
-            className="block text-sm font-medium"
-          >
-            {copy.subject}
-          </label>
-          <input
-            id={`${id}-subject`}
-            type="text"
-            value={model.subject ?? ""}
-            readOnly
-            className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-muted-foreground"
-          />
-        </div>
-        <div>
-          <label htmlFor={`${id}-grade`} className="block text-sm font-medium">
-            {copy.grade}
-          </label>
-          <input
-            id={`${id}-grade`}
-            type="text"
-            value={model.grade ?? ""}
-            readOnly
-            className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-muted-foreground"
-          />
-        </div>
-        <div>
-          <label htmlFor={`${id}-stream`} className="block text-sm font-medium">
-            {copy.stream}
-          </label>
-          <input
-            id={`${id}-stream`}
-            type="text"
-            value={model.stream ?? ""}
-            readOnly
-            className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-muted-foreground"
+        <div className="border-t border-border pt-4">
+          <CurriculumPicker
+            subjects={subjects ?? []}
+            grades={grades ?? []}
+            streams={streams ?? []}
+            subjectId={subjectId}
+            gradeId={gradeId}
+            streamId={streamId}
+            onSubjectChange={(value) => {
+              setSubjectId(value)
+              markDirty()
+            }}
+            onGradeChange={(value) => {
+              setGradeId(value)
+              markDirty()
+            }}
+            onStreamChange={(value) => {
+              setStreamId(value)
+              markDirty()
+            }}
+            disabled={saveStatus === "saving"}
           />
         </div>
         <div className="space-y-2 border-t border-border pt-4">
