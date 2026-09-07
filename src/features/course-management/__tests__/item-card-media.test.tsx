@@ -1,6 +1,12 @@
 import { useState } from "react"
 import { describe, beforeEach, expect, it, vi } from "vitest"
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react"
 import { NextIntlClientProvider } from "next-intl"
 import messages from "@/i18n/messages/en.json"
 import { CourseBuilderBridgeProvider } from "../course-builder-bridge"
@@ -26,9 +32,12 @@ vi.mock("@/features/course-management/items-actions", () => ({
   requestVideoUpload: vi.fn(),
 }))
 
-vi.mock("@/features/course-management/hooks/use-course-management-queries", () => ({
-  useItemMutations: () => mutations,
-}))
+vi.mock(
+  "@/features/course-management/hooks/use-course-management-queries",
+  () => ({
+    useItemMutations: () => mutations,
+  })
+)
 
 const videoOnlyItem: ItemOut = {
   id: 303,
@@ -72,9 +81,7 @@ describe("ItemCard media slots", () => {
     expect(
       screen.getByRole("button", { name: "Upload Document" })
     ).toBeDefined()
-    expect(
-      screen.queryByRole("button", { name: "Upload Video" })
-    ).toBeNull()
+    expect(screen.queryByRole("button", { name: "Upload Video" })).toBeNull()
   })
 
   it("removes only the document and reopens its upload slot", async () => {
@@ -99,9 +106,73 @@ describe("ItemCard media slots", () => {
       ).toBeDefined()
     })
     expect(actions.deleteItemDocument).toHaveBeenCalledWith(101, 202, 303)
-    expect(
-      screen.queryByRole("button", { name: "Delete document" })
-    ).toBeNull()
+    expect(screen.queryByRole("button", { name: "Delete document" })).toBeNull()
     expect(screen.getByRole("button", { name: "Delete video" })).toBeDefined()
+  })
+
+  it("shows attached files section in edit dialog", () => {
+    render(<StatefulItemCard initialItem={videoOnlyItem} />)
+    fireEvent.click(screen.getByRole("button", { name: "Edit item" }))
+    const dialog = screen.getByRole("dialog")
+    expect(within(dialog).getByText("Attached files")).toBeDefined()
+    expect(within(dialog).getByText("Video")).toBeDefined()
+    expect(within(dialog).getByText("Document")).toBeDefined()
+  })
+
+  it("opens upload dialog from edit dialog when slot empty", async () => {
+    render(<StatefulItemCard initialItem={videoOnlyItem} />)
+    fireEvent.click(screen.getByRole("button", { name: "Edit item" }))
+    const dialog = screen.getByRole("dialog")
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Add document" })
+    )
+    // Expect UploadDialog to open (we can check for its title)
+    await waitFor(() => {
+      expect(
+        screen.getByText("Give this lesson item a clear name.")
+      ).toBeDefined()
+    })
+    const uploadDialog = screen.getAllByRole("dialog").at(-1)
+    expect(uploadDialog).toBeDefined()
+    fireEvent.click(within(uploadDialog!).getByRole("button", { name: "Next" }))
+    expect(
+      within(uploadDialog!).queryByRole("button", { name: "Upload Video" })
+    ).toBeNull()
+    expect(
+      within(uploadDialog!).getByRole("button", { name: /^Upload Document/ })
+    ).toBeDefined()
+  })
+
+  it("deleting one asset leaves the other attached in edit dialog", async () => {
+    const itemWithBothMedia: ItemOut = {
+      ...videoOnlyItem,
+      document_path: "courses/101/lessons/202/items/303/notes.pdf",
+    }
+    actions.deleteItemDocument.mockResolvedValue({
+      success: true,
+      data: { ...itemWithBothMedia, document_path: null },
+    })
+
+    render(<StatefulItemCard initialItem={itemWithBothMedia} />)
+    fireEvent.click(screen.getByRole("button", { name: "Edit item" }))
+    const dialog = screen.getByRole("dialog")
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "Delete document" })
+    )
+    // Expect confirmation dialog to open (media delete dialog)
+    const confirmDialog = screen.getAllByRole("dialog").at(-1)
+    expect(confirmDialog).toBeDefined()
+    fireEvent.click(
+      within(confirmDialog!).getByRole("button", { name: "Confirm" })
+    )
+
+    await waitFor(() => {
+      expect(actions.deleteItemDocument).toHaveBeenCalledWith(101, 202, 303)
+    })
+    // After deletion, edit dialog should still be open with video row present
+    expect(within(dialog).getByText("Video")).toBeDefined()
+    expect(
+      within(dialog).getByRole("button", { name: "Add document" })
+    ).toBeDefined()
   })
 })

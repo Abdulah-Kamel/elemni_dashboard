@@ -35,7 +35,9 @@ import {
   DialogClose,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { UploadDialog } from "./upload-dialog"
+import { AttachedFilesSection } from "./attached-files-section"
 import type { ItemOut } from "@/features/course-management/items-schema"
 import { useCourseBuilderBridge } from "@/features/course-management/course-builder-bridge"
 import { useItemMutations } from "@/features/course-management/hooks/use-course-management-queries"
@@ -129,7 +131,8 @@ export function ItemCard({
   >("video")
   const [editTitle, setEditTitle] = useState(item.title)
   const [error, setError] = useState<string | null>(null)
-  const submitting = update.isPending || remove.isPending || deletingMedia !== null
+  const submitting =
+    update.isPending || remove.isPending || deletingMedia !== null
 
   const type = itemType(item)
   const status = itemStatus(item)
@@ -165,8 +168,7 @@ export function ItemCard({
 
   const openUploadDialog = useCallback(
     (uploadType: "video" | "document") => {
-      const alreadyAttached =
-        uploadType === "video" ? hasVideo : hasDocument
+      const alreadyAttached = uploadType === "video" ? hasVideo : hasDocument
       if (alreadyAttached || uploading || deletingMedia) return
       setUploadDialogType(uploadType)
       setUploadDialogOpen(true)
@@ -293,10 +295,24 @@ export function ItemCard({
       setEditOpen(false)
     } catch (mutationError) {
       setError(
-        mutationError instanceof Error ? mutationError.message : t("upload_error"),
+        mutationError instanceof Error
+          ? mutationError.message
+          : t("upload_error")
       )
     }
   }, [editTitle, item.id, t, update])
+
+  const handleUpdateTitle = useCallback(
+    async (title: string) => {
+      const updatedItem = await update.mutateAsync({
+        itemId: item.id,
+        data: { title },
+      })
+      setEditTitle(title)
+      onUpdate(updatedItem)
+    },
+    [item.id, onUpdate, update]
+  )
 
   const handleDelete = useCallback(async () => {
     setError(null)
@@ -305,7 +321,9 @@ export function ItemCard({
       setDeleteOpen(false)
     } catch (mutationError) {
       setError(
-        mutationError instanceof Error ? mutationError.message : t("upload_error"),
+        mutationError instanceof Error
+          ? mutationError.message
+          : t("upload_error")
       )
     }
   }, [item.id, remove, t])
@@ -538,22 +556,42 @@ export function ItemCard({
           if (!val) setError(null)
         }}
       >
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{t("edit")}</DialogTitle>
           </DialogHeader>
-          <Input
-            value={editTitle}
-            onChange={(e) => setEditTitle(e.target.value)}
-            disabled={submitting}
-            autoFocus
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault()
-                handleSave()
-              }
-            }}
-          />
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor={`item-title-${item.id}`}>
+                {t("create_placeholder")}
+              </Label>
+              <Input
+                id={`item-title-${item.id}`}
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                disabled={submitting}
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault()
+                    handleSave()
+                  }
+                }}
+              />
+            </div>
+            <AttachedFilesSection
+              item={item}
+              onUpdate={onUpdate}
+              courseId={courseId}
+              lessonId={lessonId}
+              onUpdateTitle={handleUpdateTitle}
+              onDeleteRequest={(mediaType) => {
+                setError(null)
+                setMediaToDelete(mediaType)
+              }}
+              deletingMedia={deletingMedia}
+            />
+          </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <DialogFooter>
             <DialogClose

@@ -15,13 +15,7 @@ import {
   DialogTitle,
   DialogClose,
 } from "@/components/ui/dialog"
-import {
-  Check,
-  FileText,
-  FileVideo,
-  Loader2,
-  Upload,
-} from "lucide-react"
+import { Check, FileText, FileVideo, Loader2, Upload } from "lucide-react"
 
 export type UploadType = "video" | "document"
 const MAX_VIDEO_SIZE = 500 * 1024 * 1024
@@ -35,6 +29,7 @@ export function UploadDialog({
   onUpload,
   uploading,
   progress,
+  allowTypeSelection = true,
 }: {
   open: boolean
   onOpenChange: (val: boolean) => void
@@ -43,6 +38,7 @@ export function UploadDialog({
   onUpload: (file: File, title: string, type: UploadType) => void
   uploading: boolean
   progress: number
+  allowTypeSelection?: boolean
 }) {
   const locale = useLocale()
   const t = useTranslations("items")
@@ -137,7 +133,7 @@ export function UploadDialog({
         if (!nextOpen) reset()
       }}
     >
-      <DialogContent className="!max-w-none !w-[calc(100vw-2rem)] sm:!w-[42rem]">
+      <DialogContent className="!w-[calc(100vw-2rem)] !max-w-none sm:!w-[42rem]">
         <DialogHeader>
           <div className="flex items-center justify-between gap-3">
             <div>
@@ -157,7 +153,10 @@ export function UploadDialog({
             const complete = stepNumber < step
             const active = stepNumber === step
             return (
-              <div key={stepNumber} className="flex min-w-0 flex-1 items-center gap-2">
+              <div
+                key={stepNumber}
+                className="flex min-w-0 flex-1 items-center gap-2"
+              >
                 <span
                   className={`grid size-8 shrink-0 place-items-center rounded-full border text-xs font-bold ${
                     complete
@@ -167,9 +166,15 @@ export function UploadDialog({
                         : "border-border bg-muted text-muted-foreground"
                   }`}
                 >
-                  {complete ? <Check className="size-4" aria-hidden="true" /> : stepNumber}
+                  {complete ? (
+                    <Check className="size-4" aria-hidden="true" />
+                  ) : (
+                    stepNumber
+                  )}
                 </span>
-                {stepNumber < 3 && <span className="h-px min-w-3 flex-1 bg-border" />}
+                {stepNumber < 3 && (
+                  <span className="h-px min-w-3 flex-1 bg-border" />
+                )}
               </div>
             )
           })}
@@ -177,9 +182,7 @@ export function UploadDialog({
 
         {step === 1 && (
           <div className="space-y-2">
-            <Label htmlFor="upload-item-title">
-              {t("create_placeholder")}
-            </Label>
+            <Label htmlFor="upload-item-title">{t("create_placeholder")}</Label>
             <Input
               id="upload-item-title"
               value={title}
@@ -187,39 +190,50 @@ export function UploadDialog({
               autoFocus
               disabled={uploading}
               onChange={(event) => setTitle(event.target.value)}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm transition outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
           </div>
         )}
 
         {step === 2 && (
           <div className="grid gap-3 sm:grid-cols-2">
-            {([
-              ["video", FileVideo, t("upload_video"), t("video_accept")],
-              ["document", FileText, t("upload_document"), t("document_accept")],
-            ] as const).map(([value, Icon, label, hint]) => {
-              const selected = selectedType === value
-              return (
-                <button
-                  key={value}
-                  type="button"
-                  aria-pressed={selected}
-                  onClick={() => {
-                    setSelectedType(value)
-                    resetFile()
-                  }}
-                  className={`flex min-h-32 flex-col items-center justify-center gap-2 rounded-xl border p-4 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-                    selected
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border bg-muted/30 hover:border-primary/50 hover:bg-muted"
-                  }`}
-                >
-                  <Icon className="size-7" aria-hidden="true" />
-                  <span className="text-sm font-bold">{label}</span>
-                  <span className="text-xs text-muted-foreground">{hint}</span>
-                </button>
-              )
-            })}
+            {(
+              [
+                ["video", FileVideo, t("upload_video"), t("video_accept")],
+                [
+                  "document",
+                  FileText,
+                  t("upload_document"),
+                  t("document_accept"),
+                ],
+              ] as const
+            )
+              .filter(([value]) => allowTypeSelection || value === type)
+              .map(([value, Icon, label, hint]) => {
+                const selected = selectedType === value
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => {
+                      setSelectedType(value)
+                      resetFile()
+                    }}
+                    className={`flex min-h-32 flex-col items-center justify-center gap-2 rounded-xl border p-4 text-center transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none ${
+                      selected
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border bg-muted/30 hover:border-primary/50 hover:bg-muted"
+                    }`}
+                  >
+                    <Icon className="size-7" aria-hidden="true" />
+                    <span className="text-sm font-bold">{label}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {hint}
+                    </span>
+                  </button>
+                )
+              })}
           </div>
         )}
 
@@ -233,14 +247,19 @@ export function UploadDialog({
             disabled={uploading}
             error={validationError ?? undefined}
             description={
-              selectedType === "video" ? t("video_accept") : t("document_accept")
+              selectedType === "video"
+                ? t("video_accept")
+                : t("document_accept")
             }
             className="min-h-44"
           />
         )}
 
         {uploading && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground" aria-live="polite">
+          <div
+            className="flex items-center gap-2 text-sm text-muted-foreground"
+            aria-live="polite"
+          >
             <Loader2 className="size-4 animate-spin" aria-hidden="true" />
             <span>{t("uploading_progress", { progress })}</span>
           </div>
@@ -281,7 +300,10 @@ export function UploadDialog({
             >
               {uploading ? (
                 <>
-                  <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
+                  <Loader2
+                    className="size-3.5 animate-spin"
+                    aria-hidden="true"
+                  />
                   {t("uploading")}
                 </>
               ) : (
