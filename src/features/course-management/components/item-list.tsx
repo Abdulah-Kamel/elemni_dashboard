@@ -49,12 +49,14 @@ function SortableItemCard({
   lessonId,
   chapterId,
   onUpdate,
+  onDelete,
 }: {
   item: ItemOut;
   courseId: number;
   lessonId: number;
   chapterId?: number | null;
   onUpdate: (item: ItemOut) => void;
+  onDelete: (itemId: number) => void;
 }) {
   const t = useTranslations("items");
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -87,6 +89,7 @@ function SortableItemCard({
             lessonId={lessonId}
             chapterId={chapterId}
             onUpdate={onUpdate}
+            onDelete={onDelete}
           />
         </div>
       </div>
@@ -180,6 +183,10 @@ export function ItemList({
     );
     void notifyCurriculumCommitted();
   }, [notifyCurriculumCommitted, queryClient, queryKey]);
+
+  const handleDeleted = useCallback(() => {
+    void notifyCurriculumCommitted();
+  }, [notifyCurriculumCommitted]);
 
   const openCreateUpload = useCallback(() => {
     setError(null);
@@ -357,6 +364,7 @@ export function ItemList({
                   lessonId={lessonId}
                   chapterId={chapterId}
                   onUpdate={handleUpdated}
+                  onDelete={handleDeleted}
                 />
               ))}
             </SortableContext>

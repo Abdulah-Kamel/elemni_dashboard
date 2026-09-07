@@ -59,6 +59,7 @@ export function LessonCard({
     highlightNode,
     clearSelectedNode,
     selectNode,
+    notifyCurriculumCommitted,
   } = useCourseBuilderBridge()
   const { update, remove } = useLessonMutations(
     courseId,
@@ -113,25 +114,27 @@ export function LessonCard({
           description: editDescription.trim() || null,
         },
       })
+      void notifyCurriculumCommitted()
       setEditOpen(false)
     } catch (mutationError) {
       setError(
         mutationError instanceof Error ? mutationError.message : t("error_upstream"),
       )
     }
-  }, [editDescription, editTitle, lesson.id, t, update])
+  }, [editDescription, editTitle, lesson.id, notifyCurriculumCommitted, t, update])
 
   const handleDelete = useCallback(async () => {
     setError(null)
     try {
       await remove.mutateAsync(lesson.id)
+      void notifyCurriculumCommitted()
       setDeleteOpen(false)
     } catch (mutationError) {
       setError(
         mutationError instanceof Error ? mutationError.message : t("error_upstream"),
       )
     }
-  }, [lesson.id, remove, t])
+  }, [lesson.id, notifyCurriculumCommitted, remove, t])
 
   let statusBadge = null
   if (status === "ready") {

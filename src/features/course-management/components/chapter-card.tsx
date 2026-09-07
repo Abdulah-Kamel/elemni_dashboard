@@ -60,6 +60,7 @@ export function ChapterCard({
     highlightNode,
     clearSelectedNode,
     selectNode,
+    notifyCurriculumCommitted,
   } = useCourseBuilderBridge()
   const { update, remove } = useChapterMutations(courseId)
   const [expanded, setExpanded] = useState(defaultExpanded)
@@ -101,25 +102,27 @@ export function ChapterCard({
         chapterId: chapter.id,
         data: { title: trimmed },
       })
+      void notifyCurriculumCommitted()
       setEditOpen(false)
     } catch (mutationError) {
       setError(
         mutationError instanceof Error ? mutationError.message : t("error_upstream"),
       )
     }
-  }, [chapter.id, editTitle, t, update])
+  }, [chapter.id, editTitle, notifyCurriculumCommitted, t, update])
 
   const handleDelete = useCallback(async () => {
     setError(null)
     try {
       await remove.mutateAsync(chapter.id)
+      void notifyCurriculumCommitted()
       setDeleteOpen(false)
     } catch (mutationError) {
       setError(
         mutationError instanceof Error ? mutationError.message : t("error_upstream"),
       )
     }
-  }, [chapter.id, remove, t])
+  }, [chapter.id, notifyCurriculumCommitted, remove, t])
 
   return (
     <Collapsible.Root open={expanded} onOpenChange={setExpanded}>

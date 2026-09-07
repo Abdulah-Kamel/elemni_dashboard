@@ -97,12 +97,14 @@ export function ItemCard({
   lessonId,
   chapterId,
   onUpdate,
+  onDelete,
 }: {
   item: ItemOut
   courseId: number
   lessonId: number
   chapterId?: number | null
   onUpdate: (item: ItemOut) => void
+  onDelete?: (itemId: number) => void
 }) {
   const t = useTranslations("items")
   const {
@@ -182,7 +184,11 @@ export function ItemCard({
       setUploadProgress(0)
       try {
         if (title !== item.title) {
-          await update.mutateAsync({ itemId: item.id, data: { title } })
+          const updatedItem = await update.mutateAsync({
+            itemId: item.id,
+            data: { title },
+          })
+          onUpdate(updatedItem)
         }
 
         const credentialsResult = await requestVideoUpload(
@@ -231,7 +237,11 @@ export function ItemCard({
       setUploadProgress(0)
       try {
         if (title !== item.title) {
-          await update.mutateAsync({ itemId: item.id, data: { title } })
+          const updatedItem = await update.mutateAsync({
+            itemId: item.id,
+            data: { title },
+          })
+          onUpdate(updatedItem)
         }
 
         const urlResult = await requestUploadUrl(
@@ -291,7 +301,11 @@ export function ItemCard({
     if (!trimmed) return
     setError(null)
     try {
-      await update.mutateAsync({ itemId: item.id, data: { title: trimmed } })
+      const updatedItem = await update.mutateAsync({
+        itemId: item.id,
+        data: { title: trimmed },
+      })
+      onUpdate(updatedItem)
       setEditOpen(false)
     } catch (mutationError) {
       setError(
@@ -300,7 +314,7 @@ export function ItemCard({
           : t("upload_error")
       )
     }
-  }, [editTitle, item.id, t, update])
+  }, [editTitle, item.id, onUpdate, t, update])
 
   const handleUpdateTitle = useCallback(
     async (title: string) => {
@@ -318,6 +332,7 @@ export function ItemCard({
     setError(null)
     try {
       await remove.mutateAsync(item.id)
+      onDelete?.(item.id)
       setDeleteOpen(false)
     } catch (mutationError) {
       setError(
@@ -326,7 +341,7 @@ export function ItemCard({
           : t("upload_error")
       )
     }
-  }, [item.id, remove, t])
+  }, [item.id, onDelete, remove, t])
 
   const handleDeleteMedia = useCallback(async () => {
     if (!mediaToDelete || deletingMedia) return

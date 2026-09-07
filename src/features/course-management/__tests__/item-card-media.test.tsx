@@ -117,6 +117,47 @@ describe("ItemCard media slots", () => {
     expect(within(dialog).getByText("Attached files")).toBeDefined()
     expect(within(dialog).getByText("Video")).toBeDefined()
     expect(within(dialog).getByText("Document")).toBeDefined()
+    expect(within(dialog).queryByRole("button", { name: /^Delete$/ })).toBeNull()
+  })
+
+  it("updates the item row after saving its title from the edit dialog", async () => {
+    const updatedItem = { ...videoOnlyItem, title: "Updated lesson" }
+    mutations.update.mutateAsync.mockResolvedValue(updatedItem)
+
+    render(<StatefulItemCard initialItem={videoOnlyItem} />)
+    fireEvent.click(screen.getByRole("button", { name: "Edit item" }))
+    const dialog = screen.getByRole("dialog")
+    fireEvent.change(within(dialog).getByRole("textbox"), {
+      target: { value: updatedItem.title },
+    })
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save" }))
+
+    await waitFor(() => expect(screen.getByText(updatedItem.title)).toBeDefined())
+  })
+
+  it("deletes the item from the row action, not from the edit dialog", async () => {
+    const onDelete = vi.fn()
+    mutations.remove.mutateAsync.mockResolvedValue(undefined)
+
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <CourseBuilderBridgeProvider enabled={false}>
+          <ItemCard
+            item={videoOnlyItem}
+            courseId={101}
+            lessonId={202}
+            onUpdate={vi.fn()}
+            onDelete={onDelete}
+          />
+        </CourseBuilderBridgeProvider>
+      </NextIntlClientProvider>
+    )
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }))
+    const dialog = screen.getByRole("dialog")
+    fireEvent.click(within(dialog).getByRole("button", { name: "Confirm" }))
+
+    await waitFor(() => expect(onDelete).toHaveBeenCalledWith(videoOnlyItem.id))
   })
 
   it("opens upload dialog from edit dialog when slot empty", async () => {
