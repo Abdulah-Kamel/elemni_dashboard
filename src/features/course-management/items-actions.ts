@@ -396,3 +396,62 @@ export async function confirmUpload(
     }
   }
 }
+
+async function deleteItemMedia(
+  courseId: number,
+  lessonId: number,
+  itemId: number,
+  mediaType: "video" | "document"
+): Promise<ActionResult<ItemOut>> {
+  const actionName =
+    mediaType === "video" ? "deleteItemVideo" : "deleteItemDocument"
+  logger.action(actionName, { courseId, lessonId, itemId })
+  const start = performance.now()
+
+  try {
+    const item = await apiFetch(
+      mediaType === "video"
+        ? endpoints.courses.items.deleteVideo(courseId, lessonId, itemId)
+        : endpoints.courses.items.deleteDocument(courseId, lessonId, itemId),
+      itemOutSchema,
+      { method: "DELETE" }
+    )
+    revalidateTag(`items:${courseId}:${lessonId}`, "default")
+    revalidateTag(`items:${courseId}`, "default")
+    const elapsed = Math.round(performance.now() - start)
+    logger.actionDone(actionName, { itemId }, elapsed)
+    return { success: true, data: item }
+  } catch (err: unknown) {
+    const elapsed = Math.round(performance.now() - start)
+    if (err && typeof err === "object" && "type" in err) {
+      const apiErr = err as { type: string; message: string; fields?: string[] }
+      if (apiErr.type === "Unauthorized") {
+        logger.actionDone(actionName, { unauthorized: true }, elapsed)
+        await redirectToSignIn(`/courses/${courseId}`)
+      }
+      logger.actionError(actionName, apiErr, elapsed)
+      return { success: false, error: apiErr }
+    }
+    logger.actionError(actionName, err, elapsed)
+    return {
+      success: false,
+      error: { type: "Upstream", message: "Network error" },
+    }
+  }
+}
+
+export async function deleteItemVideo(
+  courseId: number,
+  lessonId: number,
+  itemId: number
+): Promise<ActionResult<ItemOut>> {
+  return await deleteItemMedia(courseId, lessonId, itemId, "video")
+}
+
+export async function deleteItemDocument(
+  courseId: number,
+  lessonId: number,
+  itemId: number
+): Promise<ActionResult<ItemOut>> {
+  return await deleteItemMedia(courseId, lessonId, itemId, "document")
+}

@@ -60,6 +60,10 @@ export const endpoints = {
         `/api/v1/courses/${courseId}/lessons/${lessonId}/items/${itemId}/request-upload-url`,
       confirmUpload: (courseId: number, lessonId: number, itemId: number) =>
         `/api/v1/courses/${courseId}/lessons/${lessonId}/items/${itemId}/confirm-upload`,
+      deleteVideo: (courseId: number, lessonId: number, itemId: number) =>
+        `/api/v1/courses/${courseId}/lessons/${lessonId}/items/${itemId}/video`,
+      deleteDocument: (courseId: number, lessonId: number, itemId: number) =>
+        `/api/v1/courses/${courseId}/lessons/${lessonId}/items/${itemId}/document`,
     },
   },
   public: {

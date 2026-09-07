@@ -18,6 +18,8 @@ import { toast } from "sonner"
 import {
   confirmUpload,
   confirmVideoUpload,
+  deleteItemDocument,
+  deleteItemVideo,
   requestUploadUrl,
   requestVideoUpload,
 } from "@/features/course-management/items-actions"
@@ -115,21 +117,24 @@ export function ItemCard({
   const [uploadProgress, setUploadProgress] = useState(0)
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [mediaToDelete, setMediaToDelete] = useState<
+    "video" | "document" | null
+  >(null)
+  const [deletingMedia, setDeletingMedia] = useState<
+    "video" | "document" | null
+  >(null)
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
   const [uploadDialogType, setUploadDialogType] = useState<
     "video" | "document"
   >("video")
   const [editTitle, setEditTitle] = useState(item.title)
   const [error, setError] = useState<string | null>(null)
-  const submitting = update.isPending || remove.isPending
+  const submitting = update.isPending || remove.isPending || deletingMedia !== null
 
   const type = itemType(item)
   const status = itemStatus(item)
-  // Once content has been confirmed, hide the upload affordances so the same
-  // item cannot be accidentally submitted again from this editor row.
-  const hasContent = Boolean(
-    item.bunny_stream_id || item.document_path || item.exam_id
-  )
+  const hasVideo = Boolean(item.bunny_stream_id)
+  const hasDocument = Boolean(item.document_path)
   const isSelected =
     selectedNode?.type === "item" && String(selectedNode.id) === String(item.id)
   const isHovered =
@@ -160,11 +165,13 @@ export function ItemCard({
 
   const openUploadDialog = useCallback(
     (uploadType: "video" | "document") => {
-      if (hasContent || uploading) return
+      const alreadyAttached =
+        uploadType === "video" ? hasVideo : hasDocument
+      if (alreadyAttached || uploading || deletingMedia) return
       setUploadDialogType(uploadType)
       setUploadDialogOpen(true)
     },
-    [hasContent, uploading]
+    [deletingMedia, hasDocument, hasVideo, uploading]
   )
 
   const handleVideoUpload = useCallback(
@@ -303,6 +310,34 @@ export function ItemCard({
     }
   }, [item.id, remove, t])
 
+  const handleDeleteMedia = useCallback(async () => {
+    if (!mediaToDelete || deletingMedia) return
+
+    setError(null)
+    setDeletingMedia(mediaToDelete)
+    try {
+      const result =
+        mediaToDelete === "video"
+          ? await deleteItemVideo(courseId, lessonId, item.id)
+          : await deleteItemDocument(courseId, lessonId, item.id)
+
+      if (!result.success) {
+        setError(result.error.message || t("media_delete_error"))
+        return
+      }
+
+      onUpdate(result.data)
+      setMediaToDelete(null)
+      toast.success(
+        mediaToDelete === "video" ? t("video_deleted") : t("document_deleted")
+      )
+    } catch {
+      setError(t("media_delete_error"))
+    } finally {
+      setDeletingMedia(null)
+    }
+  }, [courseId, deletingMedia, item.id, lessonId, mediaToDelete, onUpdate, t])
+
   return (
     <div
       data-builder-node-type="item"
@@ -359,31 +394,63 @@ export function ItemCard({
       )}
 
       <div className="flex items-center gap-0.5 transition-opacity md:opacity-0 md:group-focus-within:opacity-100 md:group-hover:opacity-100">
-        {!hasContent && (
-          <>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="size-6"
-              disabled={uploading}
-              onClick={() => openUploadDialog("video")}
-              aria-label={t("upload_video")}
-              title={t("upload_video")}
-            >
-              <Upload className="size-3.5" />
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="size-6"
-              disabled={uploading}
-              onClick={() => openUploadDialog("document")}
-              aria-label={t("upload_document")}
-              title={t("upload_document")}
-            >
-              <FileText className="size-3.5" />
-            </Button>
-          </>
+        {!hasVideo && (
+          <Button
+            size="icon"
+            variant="ghost"
+            className="size-6"
+            disabled={uploading || deletingMedia !== null}
+            onClick={() => openUploadDialog("video")}
+            aria-label={t("upload_video")}
+            title={t("upload_video")}
+          >
+            <Upload className="size-3.5" />
+          </Button>
+        )}
+        {!hasDocument && (
+          <Button
+            size="icon"
+            variant="ghost"
+            className="size-6"
+            disabled={uploading || deletingMedia !== null}
+            onClick={() => openUploadDialog("document")}
+            aria-label={t("upload_document")}
+            title={t("upload_document")}
+          >
+            <FileText className="size-3.5" />
+          </Button>
+        )}
+        {hasVideo && (
+          <Button
+            size="icon"
+            variant="ghost"
+            className="size-6 text-destructive hover:text-destructive"
+            disabled={uploading || deletingMedia !== null}
+            onClick={() => {
+              setError(null)
+              setMediaToDelete("video")
+            }}
+            aria-label={t("delete_video")}
+            title={t("delete_video")}
+          >
+            <Trash2 className="size-3.5" />
+          </Button>
+        )}
+        {hasDocument && (
+          <Button
+            size="icon"
+            variant="ghost"
+            className="size-6 text-destructive hover:text-destructive"
+            disabled={uploading || deletingMedia !== null}
+            onClick={() => {
+              setError(null)
+              setMediaToDelete("document")
+            }}
+            aria-label={t("delete_document")}
+            title={t("delete_document")}
+          >
+            <Trash2 className="size-3.5" />
+          </Button>
         )}
         <Button
           size="icon"
@@ -421,6 +488,48 @@ export function ItemCard({
         progress={uploadProgress}
         onUpload={handleUpload}
       />
+
+      <Dialog
+        open={mediaToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !deletingMedia) {
+            setMediaToDelete(null)
+            setError(null)
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {mediaToDelete === "video"
+                ? t("delete_video")
+                : t("delete_document")}
+            </DialogTitle>
+            <DialogDescription>
+              {mediaToDelete === "video"
+                ? t("delete_video_confirm")
+                : t("delete_document_confirm")}
+            </DialogDescription>
+          </DialogHeader>
+          {error && <p className="text-sm text-destructive">{error}</p>}
+          <DialogFooter>
+            <DialogClose
+              render={
+                <Button variant="outline" disabled={deletingMedia !== null}>
+                  {t("cancel")}
+                </Button>
+              }
+            />
+            <Button
+              variant="destructive"
+              onClick={handleDeleteMedia}
+              disabled={deletingMedia !== null}
+            >
+              {deletingMedia ? t("saving") : t("confirm")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={editOpen}

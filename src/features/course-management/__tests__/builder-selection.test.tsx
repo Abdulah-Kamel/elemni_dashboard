@@ -35,6 +35,8 @@ vi.mock("@/features/course-management/items-actions", () => ({
     ],
   })),
   createItem: vi.fn(),
+  deleteItemDocument: vi.fn(),
+  deleteItemVideo: vi.fn(),
   reorderItems: vi.fn(),
   updateItem: vi.fn(),
   confirmUpload: vi.fn(),
