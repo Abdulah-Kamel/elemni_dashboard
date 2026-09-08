@@ -1,6 +1,7 @@
-import { GraduationCap } from "lucide-react"
+import Image from "next/image"
 import { getTranslations } from "next-intl/server"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import logoIcon from "@/src/assets/logo-icon.png"
 
 type AuthShellProps = {
   title: string
@@ -20,12 +21,14 @@ export async function AuthShell({
     <div className="flex min-h-screen items-center justify-center bg-page p-4">
       <div className="w-full max-w-2/4">
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
-          <div
-            aria-hidden="true"
-            className="flex size-12 items-center justify-center rounded-xl bg-primary-tint text-primary"
-          >
-            <GraduationCap className="size-6" />
-          </div>
+          <Image
+            src={logoIcon}
+            alt={t("brand")}
+            width={48}
+            height={48}
+            className="size-12 rounded-xl bg-white object-contain p-1.5 shadow-sm ring-1 ring-border"
+            priority
+          />
           <div>
             <h1 className="text-title-lg text-title-lg--line-height font-semibold text-foreground">
               {t("brand")}

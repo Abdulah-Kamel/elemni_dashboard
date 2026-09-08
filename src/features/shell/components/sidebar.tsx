@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useSyncExternalStore } from "react"
 import { useAutoAnimate } from "@formkit/auto-animate/react"
 import { useTranslations } from "next-intl"
@@ -17,6 +18,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react"
+import logoIcon from "@/src/assets/logo-icon.png"
 import { Link, usePathname } from "@/i18n/routing"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -105,12 +107,14 @@ export function Sidebar({ teacherName, teacherRole, userRole }: SidebarProps) {
         )}
       >
         <div className="flex w-full min-w-0 items-center justify-center gap-2.5">
-          <div
-            aria-hidden="true"
-            className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-tint text-primary"
-          >
-            <GraduationCap className="size-5" />
-          </div>
+          <Image
+            src={logoIcon}
+            alt={tCommon("brand")}
+            width={36}
+            height={36}
+            className="size-9 shrink-0 rounded-lg bg-white object-contain p-1 shadow-sm ring-1 ring-border"
+            priority
+          />
           {!collapsed && (
             <div className="min-w-0">
               <p className="truncate text-title-md text-title-md--line-height font-semibold text-primary">
