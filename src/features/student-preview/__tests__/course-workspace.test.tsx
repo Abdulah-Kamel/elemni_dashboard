@@ -7,16 +7,15 @@ import { CourseWorkspace } from "../course-workspace"
 import type { StudentCoursePreviewModel, StudentPreviewSection } from "../types"
 
 const updateMutation = vi.hoisted(() => ({ mutateAsync: vi.fn() }))
+const mockedUploadCourseCover = vi.hoisted(() => vi.fn())
 
 vi.mock("@/features/course-management/hooks/use-course-management-queries", () => ({
   useCourseMutations: () => ({ update: updateMutation }),
 }))
 
-vi.mock("../server-actions", () => ({
-  loadCoursePreviewCurriculum: vi.fn(),
+vi.mock("@/features/course-management/upload-course-cover", () => ({
+  uploadCourseCover: mockedUploadCourseCover,
 }))
-
-import { loadCoursePreviewCurriculum } from "../server-actions"
 
 function render(ui: React.ReactNode) {
   return rtlRender(
@@ -243,49 +242,93 @@ describe("CourseWorkspace", () => {
     )
   })
 
-  it("refreshes the curriculum preview on demand", async () => {
-    const refreshedSections: StudentPreviewSection[] = [
-      {
-        id: 1,
-        title: "الوحدة الأولى",
-        lessons: [
-          {
-            id: 2,
-            title: "درس محدث",
-            description: null,
-            durationMinutes: null,
-            items: [],
-          },
-        ],
-      },
-    ]
-    vi.mocked(loadCoursePreviewCurriculum).mockResolvedValue({
-      success: true,
-      data: refreshedSections,
-    })
-
+  it("does not render a refresh-preview button", () => {
     render(<CourseWorkspace model={mockModel} locale="ar" viewer="guest" />)
-    fireEvent.click(
-      screen.getByRole("button", { name: "تحديث محتوى المعاينة" })
-    )
-
-    await waitFor(() => expect(screen.getByText("درس محدث")).toBeDefined())
-    expect(loadCoursePreviewCurriculum).toHaveBeenCalledWith(42)
+    expect(
+      screen.queryByRole("button", { name: "تحديث محتوى المعاينة" })
+    ).toBeNull()
+    expect(
+      screen.queryByRole("button", { name: "Refresh preview content" })
+    ).toBeNull()
+    expect(
+      screen.getByRole("button", { name: "حفظ التغييرات" })
+    ).toBeDefined()
   })
 
-  it("offers a recoverable error when curriculum refresh fails", async () => {
-    vi.mocked(loadCoursePreviewCurriculum).mockResolvedValue({
-      success: false,
-      error: { type: "Server", message: "failed" },
-    })
-
-    render(<CourseWorkspace model={mockModel} locale="en" viewer="guest" />)
-    fireEvent.click(
-      screen.getByRole("button", { name: "Refresh preview content" })
+  it("shows backend error message when save fails with a descriptive error", async () => {
+    updateMutation.mutateAsync.mockRejectedValueOnce(
+      new Error("Backend says title already exists")
+    )
+    render(
+      <CourseWorkspace
+        {...editableWorkspaceProps}
+        model={mockModel}
+        locale="en"
+        teacherProfileId={7}
+      />
     )
 
-    expect((await screen.findByRole("alert")).textContent).toContain(
-      "Could not refresh"
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }))
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toBeDefined()
+    })
+    expect(screen.getByRole("alert").textContent).toBe(
+      "Backend says title already exists"
+    )
+  })
+
+  it("falls back to generic save error when save fails with no useful message", async () => {
+    updateMutation.mutateAsync.mockRejectedValueOnce({})
+    render(
+      <CourseWorkspace
+        {...editableWorkspaceProps}
+        model={mockModel}
+        locale="en"
+        teacherProfileId={7}
+      />
+    )
+
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }))
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toBeDefined()
+    })
+    expect(screen.getByRole("alert").textContent).toBe(
+      "Could not save the changes. Try again."
+    )
+  })
+
+  it("shows backend error message when cover upload fails", async () => {
+    updateMutation.mutateAsync.mockResolvedValue({ img: null })
+    mockedUploadCourseCover.mockRejectedValueOnce(
+      new Error("Upload server rejected the file")
+    )
+    render(
+      <CourseWorkspace
+        {...editableWorkspaceProps}
+        model={mockModel}
+        locale="en"
+        teacherProfileId={7}
+      />
+    )
+
+    const coverInput = document.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement
+    fireEvent.change(coverInput, {
+      target: {
+        files: [new File(["data"], "cover.jpg", { type: "image/jpeg" })],
+      },
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }))
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toBeDefined()
+    })
+    expect(screen.getByRole("alert").textContent).toBe(
+      "Upload server rejected the file"
     )
   })
 })

@@ -445,6 +445,13 @@ export function StudentCourseDetailPreview({
             </div>
 
             <div className="w-full @lg/preview:w-auto">
+              {model.coverUrl && (
+                <img
+                  src={model.coverUrl}
+                  alt={model.title}
+                  className="mb-5 w-full rounded-xl border border-[var(--border)] object-cover @sm/preview:h-40 @lg/preview:h-48"
+                />
+              )}
               <div className="mb-5 grid grid-cols-3 gap-5 text-center text-xs font-bold text-[var(--on-surface-body)] @sm/preview:flex @sm/preview:justify-end">
                 <span className="grid justify-items-center gap-1">
                   <PlayCircle className="size-5 text-[var(--brand-indigo)]" />

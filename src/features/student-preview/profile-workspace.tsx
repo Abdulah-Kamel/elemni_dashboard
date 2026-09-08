@@ -301,8 +301,10 @@ function ProfileWorkspaceContent({
       setSavedProfile((current) => ({ ...current, ...updatedProfile }))
       toast.success(copy.saved)
       setDirty(false)
-    } catch {
-      toast.error(copy.error)
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message ? error.message : copy.error
+      toast.error(message)
     } finally {
       setSaving(false)
     }

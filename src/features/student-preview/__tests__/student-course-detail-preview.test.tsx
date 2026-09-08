@@ -262,6 +262,27 @@ describe("StudentCourseDetailPreview", () => {
     expect(images[0].tagName).toBe("IMG");
   });
 
+  it("renders the course cover image when coverUrl is provided", () => {
+    const { container } = render(
+      <StudentCourseDetailPreview model={baseModel} locale="ar" viewer="guest" interactionMode="local-only" />
+    );
+    const coverImg = container.querySelector('img[alt="كورس الفيزياء"]');
+    expect(coverImg).not.toBeNull();
+    expect(coverImg!.getAttribute("src")).toBe("https://cdn.example.com/physics-cover.jpg");
+  });
+
+  it("does not render a cover image when coverUrl is null", () => {
+    const noCoverModel: StudentCoursePreviewModel = {
+      ...baseModel,
+      coverUrl: null,
+    };
+    const { container } = render(
+      <StudentCourseDetailPreview model={noCoverModel} locale="ar" viewer="guest" interactionMode="local-only" />
+    );
+    const coverImg = container.querySelector('img[alt="كورس الفيزياء"]');
+    expect(coverImg).toBeNull();
+  });
+
   it("shows empty state when no sections", () => {
     render(
       <StudentCourseDetailPreview model={emptySectionsModel} locale="ar" viewer="guest" interactionMode="local-only" />

@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react"
-import { BookOpen, Check, Loader2, RefreshCw, Save } from "lucide-react"
+import { BookOpen, Check, Loader2, Save } from "lucide-react"
 import type {
   StudentCoursePreviewModel,
   StudentPreviewSection,
@@ -68,9 +68,6 @@ const COPY = {
     saving: "جاري الحفظ...",
     saved: "تم حفظ التغييرات",
     saveError: "تعذر حفظ التغييرات. حاول مرة أخرى.",
-    refresh: "تحديث محتوى المعاينة",
-    refreshing: "جاري تحديث المحتوى",
-    loadError: "تعذر تحديث محتوى المعاينة. حاول مرة أخرى.",
   },
   en: {
     edit: "Edit Course",
@@ -84,9 +81,6 @@ const COPY = {
     saving: "Saving...",
     saved: "Changes saved",
     saveError: "Could not save the changes. Try again.",
-    refresh: "Refresh preview content",
-    refreshing: "Refreshing content",
-    loadError: "Could not refresh the preview content. Try again.",
   },
 }
 
@@ -157,8 +151,6 @@ function CourseWorkspaceContent({
     initialSections ?? model.sections
   )
   const [deviceWidth, setDeviceWidth] = useState<PreviewDeviceWidth>("full")
-  const [refreshing, setRefreshing] = useState(false)
-  const [loadError, setLoadError] = useState(false)
   const [saveStatus, setSaveStatus] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle")
@@ -222,9 +214,11 @@ function CourseWorkspaceContent({
       setSavedCoverUrl(updatedCourse.img ?? savedCoverUrl)
       setCoverFile(null)
       setSaveStatus("saved")
-    } catch {
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message ? error.message : copy.saveError
       setSaveStatus("error")
-      setSaveError(copy.saveError)
+      setSaveError(message)
     }
   }, [
     canSave,
@@ -268,19 +262,13 @@ function CourseWorkspaceContent({
     .join("|")
 
   const handleCurriculumCommitted = useCallback(async (courseId: number) => {
-    setRefreshing(true)
-    setLoadError(false)
     try {
       const result = await loadCoursePreviewCurriculum(courseId)
       if (result.success) {
         setSections(result.data)
-      } else {
-        setLoadError(true)
       }
     } catch {
-      setLoadError(true)
-    } finally {
-      setRefreshing(false)
+      // Curriculum mutations own their error state; preview refresh is best-effort.
     }
   }, [])
 
@@ -451,26 +439,6 @@ function CourseWorkspaceContent({
               </p>
             )}
           </div>
-        </div>
-        <div className="space-y-2 border-t border-border pt-4">
-          <button
-            type="button"
-            disabled={refreshing}
-            onClick={() => void refreshCurriculum()}
-            className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-bold transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-60"
-          >
-            {refreshing ? (
-              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-            ) : (
-              <RefreshCw className="size-4" aria-hidden="true" />
-            )}
-            {refreshing ? copy.refreshing : copy.refresh}
-          </button>
-          {loadError && (
-            <p role="alert" className="text-sm text-destructive">
-              {copy.loadError}
-            </p>
-          )}
         </div>
       </section>
 

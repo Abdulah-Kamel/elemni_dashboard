@@ -91,7 +91,7 @@ describe("StudentTeacherProfilePreview", () => {
     render(
       <StudentTeacherProfilePreview model={baseModel} locale="ar" interactionMode="local-only" />
     );
-    expect(screen.getByText(/5.*سنة خبرة/)).toBeDefined();
+    expect(screen.getByText(/5.*سنوات خبرة/)).toBeDefined();
   });
 
   it("shows subject tags", () => {
@@ -223,8 +223,8 @@ describe("StudentTeacherProfilePreview", () => {
     );
     expect(container.firstElementChild?.getAttribute("dir")).toBe("ltr");
     expect(screen.getByText("All teachers")).toBeDefined();
-    expect(screen.getByText("About the teacher")).toBeDefined();
     expect(screen.getByText("Available courses")).toBeDefined();
+    expect(screen.getByText("5 years of experience")).toBeDefined();
     expect(screen.getByText("Subscribe now")).toBeDefined();
     expect(screen.getByText("Course content")).toBeDefined();
   });

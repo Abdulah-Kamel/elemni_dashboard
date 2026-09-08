@@ -83,6 +83,8 @@ const eslintConfig = defineConfig([
   },
   globalIgnores([
     ".next/**",
+    ".agent/**",
+    ".worktrees/**",
     "out/**",
     "build/**",
     "next-env.d.ts",

@@ -1,9 +1,12 @@
-import { describe, it, expect, vi } from "vitest"
-import { render as rtlRender, screen, fireEvent } from "@testing-library/react"
+import { describe, it, expect, vi, beforeEach } from "vitest"
+import { render as rtlRender, screen, fireEvent, waitFor } from "@testing-library/react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { ProfileWorkspace } from "../profile-workspace"
 import type { TeacherProfile } from "@/features/profile/schema"
 import type { CourseOut } from "@/features/shell/schema"
+import { toast } from "sonner"
+
+const profileUpdateMutation = vi.hoisted(() => ({ mutateAsync: vi.fn() }))
 
 vi.mock("@/i18n/routing", () => ({
   useRouter: () => ({ refresh: vi.fn() }),
@@ -21,6 +24,11 @@ vi.mock("@/features/profile/actions", () => ({
 
 vi.mock("@/lib/upload", () => ({
   uploadToPresignedUrl: vi.fn(),
+}))
+
+vi.mock("@/features/profile/hooks/use-profile-queries", () => ({
+  useProfileMutations: () => ({ update: profileUpdateMutation }),
+  useTeacherProfileQuery: () => ({ data: undefined }),
 }))
 
 function render(ui: React.ReactNode) {
@@ -50,6 +58,11 @@ const mockProfile: TeacherProfile = {
 const mockCourses: CourseOut[] = []
 
 describe("ProfileWorkspace", () => {
+  beforeEach(() => {
+    profileUpdateMutation.mutateAsync.mockReset()
+    profileUpdateMutation.mutateAsync.mockResolvedValue({})
+  })
+
   it("renders editor and preview", () => {
     render(
       <ProfileWorkspace
@@ -402,5 +415,49 @@ describe("ProfileWorkspace", () => {
         !btn.textContent?.toLowerCase().includes("remove file")
     )
     expect(removeButtons).toHaveLength(0)
+  })
+
+  it("shows backend error message when save fails with a descriptive error", async () => {
+    profileUpdateMutation.mutateAsync.mockRejectedValueOnce(
+      new Error("Backend says profile invalid")
+    )
+    render(
+      <ProfileWorkspace
+        profile={mockProfile}
+        courses={mockCourses}
+        locale="en"
+        publicImageUrl={null}
+      />
+    )
+
+    fireEvent.change(screen.getByDisplayValue("أحمد علي"), {
+      target: { value: "أحمد عليModified" },
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Save" }))
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Backend says profile invalid")
+    })
+  })
+
+  it("falls back to generic error toast when save fails with no useful message", async () => {
+    profileUpdateMutation.mutateAsync.mockRejectedValueOnce({})
+    render(
+      <ProfileWorkspace
+        profile={mockProfile}
+        courses={mockCourses}
+        locale="en"
+        publicImageUrl={null}
+      />
+    )
+
+    fireEvent.change(screen.getByDisplayValue("أحمد علي"), {
+      target: { value: "أحمد عليModified" },
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Save" }))
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Something went wrong")
+    })
   })
 })

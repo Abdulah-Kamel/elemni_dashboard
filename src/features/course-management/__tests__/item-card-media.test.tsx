@@ -84,7 +84,7 @@ describe("ItemCard media slots", () => {
     expect(screen.queryByRole("button", { name: "Upload Video" })).toBeNull()
   })
 
-  it("removes only the document and reopens its upload slot", async () => {
+  it("removes only the document and reopens its upload slot via edit dialog", async () => {
     const itemWithBothMedia: ItemOut = {
       ...videoOnlyItem,
       document_path: "courses/101/lessons/202/items/303/notes.pdf",
@@ -95,19 +95,22 @@ describe("ItemCard media slots", () => {
     })
 
     render(<StatefulItemCard initialItem={itemWithBothMedia} />)
-
-    fireEvent.click(screen.getByRole("button", { name: "Delete document" }))
-    const dialog = screen.getByRole("dialog")
-    fireEvent.click(within(dialog).getByRole("button", { name: "Confirm" }))
+    fireEvent.click(screen.getByRole("button", { name: "Edit item" }))
+    const editDialog = screen.getByRole("dialog")
+    fireEvent.click(
+      within(editDialog).getByRole("button", { name: "Delete document" })
+    )
+    const confirmDialog = screen.getAllByRole("dialog").at(-1)
+    fireEvent.click(
+      within(confirmDialog!).getByRole("button", { name: "Confirm" })
+    )
 
     await waitFor(() => {
-      expect(
-        screen.getByRole("button", { name: "Upload Document" })
-      ).toBeDefined()
+      expect(actions.deleteItemDocument).toHaveBeenCalledWith(101, 202, 303)
     })
-    expect(actions.deleteItemDocument).toHaveBeenCalledWith(101, 202, 303)
-    expect(screen.queryByRole("button", { name: "Delete document" })).toBeNull()
-    expect(screen.getByRole("button", { name: "Delete video" })).toBeDefined()
+    expect(
+      within(editDialog).getByRole("button", { name: "Add document" })
+    ).toBeDefined()
   })
 
   it("shows attached files section in edit dialog", () => {
@@ -133,6 +136,25 @@ describe("ItemCard media slots", () => {
     fireEvent.click(within(dialog).getByRole("button", { name: "Save" }))
 
     await waitFor(() => expect(screen.getByText(updatedItem.title)).toBeDefined())
+  })
+
+  it("row does not expose Delete video or Delete document buttons", () => {
+    const itemWithBothMedia: ItemOut = {
+      ...videoOnlyItem,
+      document_path: "courses/101/lessons/202/items/303/notes.pdf",
+    }
+    render(<StatefulItemCard initialItem={itemWithBothMedia} />)
+
+    expect(screen.queryByRole("button", { name: "Delete video" })).toBeNull()
+    expect(
+      screen.queryByRole("button", { name: "Delete document" })
+    ).toBeNull()
+  })
+
+  it("row still exposes Delete button for the item", () => {
+    render(<StatefulItemCard initialItem={videoOnlyItem} />)
+
+    expect(screen.getByRole("button", { name: "Delete" })).toBeDefined()
   })
 
   it("deletes the item from the row action, not from the edit dialog", async () => {

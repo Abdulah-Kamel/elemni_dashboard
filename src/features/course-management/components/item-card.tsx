@@ -453,38 +453,6 @@ export function ItemCard({
             <FileText className="size-3.5" />
           </Button>
         )}
-        {hasVideo && (
-          <Button
-            size="icon"
-            variant="ghost"
-            className="size-6 text-destructive hover:text-destructive"
-            disabled={uploading || deletingMedia !== null}
-            onClick={() => {
-              setError(null)
-              setMediaToDelete("video")
-            }}
-            aria-label={t("delete_video")}
-            title={t("delete_video")}
-          >
-            <Trash2 className="size-3.5" />
-          </Button>
-        )}
-        {hasDocument && (
-          <Button
-            size="icon"
-            variant="ghost"
-            className="size-6 text-destructive hover:text-destructive"
-            disabled={uploading || deletingMedia !== null}
-            onClick={() => {
-              setError(null)
-              setMediaToDelete("document")
-            }}
-            aria-label={t("delete_document")}
-            title={t("delete_document")}
-          >
-            <Trash2 className="size-3.5" />
-          </Button>
-        )}
         <Button
           size="icon"
           variant="ghost"
