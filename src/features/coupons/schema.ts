@@ -22,6 +22,9 @@ const couponBaseSchema = z.object({
 export const couponSchema = couponBaseSchema.superRefine(percentageRangeRefine);
 const createCouponBaseSchema = couponBaseSchema.omit({ usedCount: true, createdAt: true, currency: true });
 export const createCouponSchema = createCouponBaseSchema.superRefine(percentageRangeRefine);
-export const updateCouponSchema = createCouponBaseSchema.partial().extend({ code: couponCodeSchema });
+export const updateCouponSchema = createCouponBaseSchema.partial().extend({ code: couponCodeSchema }).superRefine((c, ctx) => {
+  if (c.type === "percentage" && c.value !== undefined && (c.value < 1 || c.value > 100))
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["value"], message: "percentage_1_100" });
+});
 export type Coupon = z.infer<typeof couponSchema>;
 export type CouponStatus = "active" | "inactive" | "expired" | "exhausted";

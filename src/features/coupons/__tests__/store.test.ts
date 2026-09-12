@@ -1,6 +1,7 @@
 // src/features/coupons/__tests__/store.test.ts
 import { describe, expect, it, beforeEach } from "vitest";
 import { createCoupon, listCoupons, toggleCoupon, deriveStatus } from "../store";
+import { updateCouponSchema } from "../schema";
 
 // Env shim: Node >=22 defines globalThis.localStorage as an experimental stub
 // (undefined without --localstorage-file) which shadows jsdom's, so install a
@@ -38,5 +39,9 @@ describe("coupon store", () => {
   it("derives expired status", () => {
     const c = listCoupons().find((x) => x.code === "EXPIRED10")!;
     expect(deriveStatus(c, new Date("2026-09-12T00:00:00Z"))).toBe("expired");
+  });
+  it("update schema enforces percentage 1-100", () => {
+    expect(() => updateCouponSchema.parse({ code: "SAVE20", type: "percentage", value: 200 })).toThrow();
+    expect(() => updateCouponSchema.parse({ code: "SAVE20", type: "percentage", value: 25 })).not.toThrow();
   });
 });
