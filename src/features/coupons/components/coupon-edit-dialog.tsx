@@ -1,7 +1,7 @@
 // src/features/coupons/components/coupon-edit-dialog.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -22,28 +22,26 @@ type Props = {
   onSuccess?: () => void;
 };
 
+function initialForm(code: string | null) {
+  const coupon = code ? listCoupons().find((c) => c.code === code) : undefined;
+  return {
+    type: coupon?.type ?? "percentage",
+    value: coupon ? String(coupon.value) : "",
+    active: coupon?.active ?? true,
+    expires: coupon?.expiresAt ? coupon.expiresAt.slice(0, 10) : "",
+    maxUses: coupon?.maxUses != null ? String(coupon.maxUses) : "",
+    description: coupon?.description ?? "",
+  };
+}
+
 export function CouponEditDialog({ code, open, onOpenChange, onSuccess }: Props) {
   const t = useTranslations("coupons");
-  const [form, setForm] = useState({ type: "percentage", value: "", active: true, expires: "", maxUses: "", description: "" });
+  // Taxonomy-pattern prefill: lazy initializer (no set-state-in-effect).
+  // Parents remount per coupon via key={code}.
+  const [form, setForm] = useState(() => initialForm(code));
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const update = useUpdateCoupon();
-
-  useEffect(() => {
-    if (!code) return;
-    const coupon = listCoupons().find((c) => c.code === code);
-    if (!coupon) return;
-    setForm({
-      type: coupon.type,
-      value: String(coupon.value),
-      active: coupon.active,
-      expires: coupon.expiresAt ? coupon.expiresAt.slice(0, 10) : "",
-      maxUses: coupon.maxUses != null ? String(coupon.maxUses) : "",
-      description: coupon.description ?? "",
-    });
-    setFieldErrors({});
-    setFormError(null);
-  }, [code, open]);
 
   const set = (key: keyof typeof form, v: string | boolean) =>
     setForm((prev) => ({ ...prev, [key]: v }));

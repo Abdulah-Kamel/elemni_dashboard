@@ -187,7 +187,7 @@ export function CouponsView({ onCreate, onEdit, onDelete, onToggle }: CouponsVie
       <CouponCreateDialog open={createOpen} onOpenChange={setCreateOpen} />
     ) : null}
     {onEdit === undefined ? (
-      <CouponEditDialog code={editCode} open={editCode !== null} onOpenChange={(o) => { if (!o) setEditCode(null); }} />
+      <CouponEditDialog key={editCode} code={editCode} open={editCode !== null} onOpenChange={(o) => { if (!o) setEditCode(null); }} />
     ) : null}
     {onDelete === undefined ? (
       <CouponDeleteDialog code={deleteCode} open={deleteCode !== null} onOpenChange={(o) => { if (!o) setDeleteCode(null); }} />
@@ -257,7 +257,7 @@ function CouponRow({
             data-checked={coupon.active}
           >
             <span
-              className="absolute top-0.5 left-0.5 size-4 rounded-full bg-background shadow transition-transform data-[on=true]:translate-x-4"
+              className="absolute top-0.5 start-0.5 size-4 rounded-full bg-background shadow transition-transform data-[on=true]:translate-x-4"
               data-on={coupon.active}
             />
           </button>

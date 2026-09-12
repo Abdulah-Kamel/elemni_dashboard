@@ -33,6 +33,7 @@ export function CouponsManager() {
       />
       <CouponCreateDialog open={createOpen} onOpenChange={setCreateOpen} />
       <CouponEditDialog
+        key={editCode}
         code={editCode}
         open={editCode !== null}
         onOpenChange={(o) => {

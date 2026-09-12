@@ -1,6 +1,6 @@
 // src/features/coupons/store.ts (excerpt — full CRUD + localStorage mirror)
 import type { Coupon, CouponStatus } from "./schema";
-import { createCouponSchema } from "./schema";
+import { createCouponSchema, updateCouponSchema } from "./schema";
 
 export const ADMIN_STORAGE_KEY = "elemni.admin.coupons.v1";
 export const SHARED_STORAGE_KEY = "elemni.coupons.v1";
@@ -105,7 +105,7 @@ export function updateCoupon(code: string, patch: unknown): Coupon {
   const all = read();
   const idx = all.findIndex((c) => c.code === code);
   if (idx === -1) throw new Error("not_found");
-  const next = { ...all[idx], ...(patch as object), code };
+  const next = { ...all[idx], ...updateCouponSchema.parse({ ...all[idx], ...(patch as object), code }), code };
   write(all.map((c, i) => (i === idx ? next : c)));
   return next;
 }

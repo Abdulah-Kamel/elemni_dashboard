@@ -44,6 +44,13 @@ describe("coupon store", () => {
     expect(() => updateCouponSchema.parse({ code: "SAVE20", type: "percentage", value: 200 })).toThrow();
     expect(() => updateCouponSchema.parse({ code: "SAVE20", type: "percentage", value: 25 })).not.toThrow();
   });
+  it("updateCoupon validates merged result", () => {
+    expect(() => updateCoupon("SAVE20", { value: 200, type: "percentage" })).toThrow();
+    expect(listCoupons().find((c) => c.code === "SAVE20")!.value).toBe(20);
+    expect(() => updateCoupon("NOPE", { value: 25 })).toThrowError("not_found");
+    updateCoupon("SAVE20", { value: 25 });
+    expect(listCoupons().find((c) => c.code === "SAVE20")!.value).toBe(25);
+  });
   it("updates value and deletes", () => {
     updateCoupon("SAVE20", { value: 25 });
     expect(listCoupons().find((c) => c.code === "SAVE20")!.value).toBe(25);
