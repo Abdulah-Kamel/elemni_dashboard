@@ -15,6 +15,7 @@ import {
   GitBranch,
   Library,
   ReceiptText,
+  TicketPercent,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react"
@@ -39,6 +40,7 @@ const ADMIN_NAV = [
   { id: "teachers", href: "/admin/teachers", icon: GraduationCap },
   { id: "students", href: "/admin/students", icon: User },
   { id: "subscriptions", href: "/admin/subscriptions", icon: ReceiptText },
+  { id: "coupons", href: "/admin/coupons", icon: TicketPercent },
   { id: "grades", href: "/admin/grades", icon: Layers },
   { id: "streams", href: "/admin/streams", icon: GitBranch },
   { id: "subjects", href: "/admin/subjects", icon: Library },

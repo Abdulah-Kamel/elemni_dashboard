@@ -181,9 +181,17 @@ export function CouponsView({ onCreate, onEdit, onDelete, onToggle }: CouponsVie
         </p>
       </CardFooter>
     </Card>
-    <CouponCreateDialog open={createOpen} onOpenChange={setCreateOpen} />
-    <CouponEditDialog code={editCode} open={editCode !== null} onOpenChange={(o) => { if (!o) setEditCode(null); }} />
-    <CouponDeleteDialog code={deleteCode} open={deleteCode !== null} onOpenChange={(o) => { if (!o) setDeleteCode(null); }} />
+    {/* Internal dialogs only when the parent doesn't own dialog state
+        (e.g. CouponsManager passes all callbacks and renders dialogs itself). */}
+    {onCreate === undefined ? (
+      <CouponCreateDialog open={createOpen} onOpenChange={setCreateOpen} />
+    ) : null}
+    {onEdit === undefined ? (
+      <CouponEditDialog code={editCode} open={editCode !== null} onOpenChange={(o) => { if (!o) setEditCode(null); }} />
+    ) : null}
+    {onDelete === undefined ? (
+      <CouponDeleteDialog code={deleteCode} open={deleteCode !== null} onOpenChange={(o) => { if (!o) setDeleteCode(null); }} />
+    ) : null}
     </>
   );
 }

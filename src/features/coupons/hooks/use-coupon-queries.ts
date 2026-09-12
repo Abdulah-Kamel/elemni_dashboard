@@ -28,7 +28,7 @@ export function useCreateCoupon() {
   const inv = useInvalidate();
   return useMutation({
     mutationFn: async (input: unknown) => createCoupon(input),
-    onSuccess: () => { toast.success("created"); inv(); },
+    onSuccess: () => { inv(); },
     onError: (e: Error) => toast.error(e.message),
   });
 }
@@ -36,7 +36,7 @@ export function useUpdateCoupon() {
   const inv = useInvalidate();
   return useMutation({
     mutationFn: async ({ code, patch }: { code: string; patch: unknown }) => updateCoupon(code, patch),
-    onSuccess: () => { toast.success("updated"); inv(); },
+    onSuccess: () => { inv(); },
     onError: (e: Error) => toast.error(e.message),
   });
 }
@@ -44,7 +44,7 @@ export function useDeleteCoupon() {
   const inv = useInvalidate();
   return useMutation({
     mutationFn: async (code: string) => { deleteCoupon(code); return code; },
-    onSuccess: () => { toast.success("deleted"); inv(); },
+    onSuccess: () => { inv(); },
     onError: (e: Error) => toast.error(e.message),
   });
 }
@@ -52,7 +52,7 @@ export function useToggleCoupon() {
   const inv = useInvalidate();
   return useMutation({
     mutationFn: async (code: string) => toggleCoupon(code),
-    onSuccess: () => { toast.success("toggled"); inv(); },
+    onSuccess: () => { inv(); },
     onError: (e: Error) => toast.error(e.message),
   });
 }

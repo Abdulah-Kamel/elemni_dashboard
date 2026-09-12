@@ -12,6 +12,7 @@ import {
   GitBranch,
   Library,
   ReceiptText,
+  TicketPercent,
   MoreHorizontal,
 } from "lucide-react"
 import { Link, usePathname } from "@/i18n/routing"
@@ -33,6 +34,7 @@ const ADMIN_NAV = [
   { id: "teachers", href: "/admin/teachers", icon: GraduationCap },
   { id: "students", href: "/admin/students", icon: User },
   { id: "subscriptions", href: "/admin/subscriptions", icon: ReceiptText },
+  { id: "coupons", href: "/admin/coupons", icon: TicketPercent },
 ]
 
 const ADMIN_MORE_NAV = [
