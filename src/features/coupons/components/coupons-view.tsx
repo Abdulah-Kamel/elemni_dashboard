@@ -17,15 +17,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useCoupons } from "../hooks/use-coupon-queries";
+import { useCoupons, useToggleCoupon } from "../hooks/use-coupon-queries";
 import { deriveStatus, listCoupons } from "../store";
 import type { Coupon } from "../schema";
+import { CouponCreateDialog } from "./coupon-create-dialog";
+import { CouponEditDialog } from "./coupon-edit-dialog";
+import { CouponDeleteDialog } from "./coupon-delete-dialog";
 
 export interface CouponsViewProps {
-  onCreate: () => void;
-  onEdit: (code: string) => void;
-  onDelete: (code: string) => void;
-  onToggle: (code: string) => void;
+  onCreate?: () => void;
+  onEdit?: (code: string) => void;
+  onDelete?: (code: string) => void;
+  onToggle?: (code: string) => void;
 }
 
 const STATUS_STYLES: Record<string, string> = {
@@ -46,6 +49,15 @@ export function CouponsView({ onCreate, onEdit, onDelete, onToggle }: CouponsVie
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [type, setType] = useState("all");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editCode, setEditCode] = useState<string | null>(null);
+  const [deleteCode, setDeleteCode] = useState<string | null>(null);
+  const toggle = useToggleCoupon();
+
+  const handleCreate = onCreate ?? (() => setCreateOpen(true));
+  const handleEdit = onEdit ?? ((code: string) => setEditCode(code));
+  const handleDelete = onDelete ?? ((code: string) => setDeleteCode(code));
+  const handleToggle = onToggle ?? ((code: string) => toggle.mutate(code));
 
   const { data: coupons, isLoading } = useCoupons(search, status, type);
 
@@ -71,13 +83,14 @@ export function CouponsView({ onCreate, onEdit, onDelete, onToggle }: CouponsVie
   const showSkeleton = isLoading && coupons === undefined && fallback.length === 0;
 
   return (
+    <>
     <Card>
       <CardHeader className="flex-row items-center justify-between">
         <div className="flex items-center gap-2">
           <CardTitle>{t("title")}</CardTitle>
           <Badge variant="secondary">{rows.length}</Badge>
         </div>
-        <Button onClick={onCreate}>
+        <Button onClick={handleCreate}>
           <Plus className="size-4" />
           {t("create")}
         </Button>
@@ -153,9 +166,9 @@ export function CouponsView({ onCreate, onEdit, onDelete, onToggle }: CouponsVie
                   t={t}
                   dateFormatter={dateFormatter}
                   currencyFormatter={currencyFormatter}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
-                  onToggle={onToggle}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  onToggle={handleToggle}
                 />
               ))
             )}
@@ -168,6 +181,10 @@ export function CouponsView({ onCreate, onEdit, onDelete, onToggle }: CouponsVie
         </p>
       </CardFooter>
     </Card>
+    <CouponCreateDialog open={createOpen} onOpenChange={setCreateOpen} />
+    <CouponEditDialog code={editCode} open={editCode !== null} onOpenChange={(o) => { if (!o) setEditCode(null); }} />
+    <CouponDeleteDialog code={deleteCode} open={deleteCode !== null} onOpenChange={(o) => { if (!o) setDeleteCode(null); }} />
+    </>
   );
 }
 

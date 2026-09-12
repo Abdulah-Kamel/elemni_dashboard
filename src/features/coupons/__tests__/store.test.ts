@@ -1,6 +1,6 @@
 // src/features/coupons/__tests__/store.test.ts
 import { describe, expect, it, beforeEach } from "vitest";
-import { createCoupon, listCoupons, toggleCoupon, deriveStatus } from "../store";
+import { createCoupon, deleteCoupon, listCoupons, toggleCoupon, deriveStatus, updateCoupon } from "../store";
 import { updateCouponSchema } from "../schema";
 
 // Env shim: Node >=22 defines globalThis.localStorage as an experimental stub
@@ -43,5 +43,11 @@ describe("coupon store", () => {
   it("update schema enforces percentage 1-100", () => {
     expect(() => updateCouponSchema.parse({ code: "SAVE20", type: "percentage", value: 200 })).toThrow();
     expect(() => updateCouponSchema.parse({ code: "SAVE20", type: "percentage", value: 25 })).not.toThrow();
+  });
+  it("updates value and deletes", () => {
+    updateCoupon("SAVE20", { value: 25 });
+    expect(listCoupons().find((c) => c.code === "SAVE20")!.value).toBe(25);
+    deleteCoupon("OFF50");
+    expect(listCoupons().some((c) => c.code === "OFF50")).toBe(false);
   });
 });
