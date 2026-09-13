@@ -9,7 +9,6 @@ import { listChapters } from "@/features/course-management/chapters-queries"
 import { listLessons } from "@/features/course-management/lessons-queries"
 import { ChapterList } from "@/features/course-management/components/chapter-list"
 import { LessonList } from "@/features/course-management/components/lesson-list"
-import { CourseCardActions } from "@/features/course-management/components/course-card-actions"
 import { Skeleton } from "@/components/ui/skeleton"
 import Link from "next/link"
 import { ArrowLeft, ArrowRight } from "lucide-react"
@@ -136,7 +135,7 @@ async function CourseEditor({
   }
 
   const editorActions = (
-    <div dir="ltr" className="flex items-center justify-between gap-3">
+    <div dir="ltr" className="flex items-center gap-3">
       <Link
         href={`/${locale}/courses`}
         dir={locale === "ar" ? "rtl" : "ltr"}
@@ -149,18 +148,6 @@ async function CourseEditor({
         )}
         {t("title")}
       </Link>
-
-      <div
-        className="flex shrink-0 items-center gap-2"
-        dir={locale === "ar" ? "rtl" : "ltr"}
-      >
-        <CourseCardActions
-          courseId={course.id}
-          isPublished={course.is_published}
-          teacherProfileId={course.teacher_profile_id}
-          showEdit={false}
-        />
-      </div>
     </div>
   )
 
@@ -190,6 +177,7 @@ async function CourseEditor({
           })}
           locale={locale}
           teacherProfileId={course.teacher_profile_id}
+          isPublished={course.is_published}
           editorActions={editorActions}
           initialSections={
             previewCurriculum.success ? previewCurriculum.data : []

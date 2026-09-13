@@ -3,7 +3,7 @@
 
 import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, SearchX, TicketPercent, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,10 +32,17 @@ export interface CouponsViewProps {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  active: "bg-emerald-500/10 text-emerald-600",
-  inactive: "bg-slate-500/10 text-slate-500",
-  expired: "bg-red-500/10 text-red-600",
-  exhausted: "bg-amber-500/10 text-amber-600",
+  active: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+  inactive: "bg-slate-500/10 text-slate-600 dark:text-slate-400",
+  expired: "bg-red-500/10 text-red-700 dark:text-red-400",
+  exhausted: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+};
+
+const STATUS_DOTS: Record<string, string> = {
+  active: "bg-emerald-500",
+  inactive: "bg-slate-400",
+  expired: "bg-red-500",
+  exhausted: "bg-amber-500",
 };
 
 const TYPE_STYLES: Record<string, string> = {
@@ -154,8 +161,17 @@ export function CouponsView({ onCreate, onEdit, onDelete, onToggle }: CouponsVie
               ))
             ) : rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="p-8 text-center">
-                  {t("empty")}
+                <TableCell colSpan={7}>
+                  <div className="flex flex-col items-center gap-3 px-4 py-10 text-center">
+                    <span className="flex size-12 items-center justify-center rounded-2xl bg-sky-500/10 text-sky-600">
+                      <SearchX className="size-6" aria-hidden="true" />
+                    </span>
+                    <p className="text-sm font-medium text-muted-foreground">{t("empty")}</p>
+                    <Button variant="outline" size="sm" onClick={handleCreate}>
+                      <Plus className="size-4" aria-hidden="true" />
+                      {t("create")}
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
@@ -219,7 +235,12 @@ function CouponRow({
 
   return (
     <TableRow>
-      <TableCell className="font-mono font-bold">{coupon.code}</TableCell>
+      <TableCell>
+        <span className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-border bg-muted/50 px-2 py-1 font-mono text-xs font-bold tracking-wide">
+          <TicketPercent className="size-3.5 text-sky-600" aria-hidden="true" />
+          {coupon.code}
+        </span>
+      </TableCell>
       <TableCell>
         <Badge variant="outline" className={TYPE_STYLES[coupon.type]}>
           {t(`type_${coupon.type}`)}
@@ -228,6 +249,7 @@ function CouponRow({
       <TableCell>{value}</TableCell>
       <TableCell>
         <Badge variant="outline" className={STATUS_STYLES[status]}>
+          <span className={`size-1.5 rounded-full ${STATUS_DOTS[status]}`} aria-hidden="true" />
           {t(`status_${status}`)}
         </Badge>
       </TableCell>
@@ -257,7 +279,7 @@ function CouponRow({
             data-checked={coupon.active}
           >
             <span
-              className="absolute top-0.5 start-0.5 size-4 rounded-full bg-background shadow transition-transform data-[on=true]:translate-x-4"
+              className="absolute top-0.5 start-0.5 size-4 rounded-full bg-background shadow transition-transform data-[on=true]:translate-x-4 rtl:data-[on=true]:-translate-x-4"
               data-on={coupon.active}
             />
           </button>

@@ -37,12 +37,14 @@ import {
   type CourseUpdate,
 } from "@/features/course-management/schema"
 import { Button } from "@/components/ui/button"
+import { PublishSwitch } from "@/features/course-management/components/publish-switch"
 import { cn } from "@/lib/utils"
 
 interface CourseWorkspaceProps {
   model: StudentCoursePreviewModel
   locale: string
   teacherProfileId?: number
+  isPublished?: boolean
   /** @deprecated The preview now uses one public student view. */
   viewer?: "guest" | "subscribed"
   initialSections?: StudentPreviewSection[]
@@ -118,6 +120,7 @@ function CourseWorkspaceContent({
   grades,
   streams,
   teacherProfileId,
+  isPublished,
   activeTab,
   fullPreviewOpen,
   onActiveTabChange,
@@ -292,6 +295,13 @@ function CourseWorkspaceContent({
           <h2 id={`${id}-settings-title`} className="text-lg font-bold">
             {copy.edit}
           </h2>
+          {teacherProfileId != null && isPublished != null && (
+            <PublishSwitch
+              courseId={courseId}
+              teacherProfileId={teacherProfileId}
+              isPublished={isPublished}
+            />
+          )}
         </div>
         <CourseEditorField field="title">
           {(controlClassName) => (
