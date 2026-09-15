@@ -19,7 +19,7 @@ export async function AuthShell({
   const t = await getTranslations("common")
   return (
     <div className="flex min-h-screen items-center justify-center bg-page p-4">
-      <div className="w-full max-w-2/4">
+      <div className="w-full max-w-[28rem]">
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
           <Image
             src={logoIcon}

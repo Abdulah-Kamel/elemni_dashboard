@@ -197,7 +197,7 @@ export function StudentActivityCard({
 
       <Table>
         <TableHeader>
-          <TableRow className="grid grid-cols-[1.4fr_1.4fr_1.6fr_0.8fr_0.8fr] gap-md bg-surface-muted px-md py-2.5 text-label-sm text-label-sm--line-height font-semibold text-on-surface-muted">
+          <TableRow className="grid min-w-[640px] grid-cols-[1.4fr_1.4fr_1.6fr_0.8fr_0.8fr] gap-md bg-surface-muted px-md py-2.5 text-label-sm text-label-sm--line-height font-semibold text-on-surface-muted">
             <TableHead>{headers.student}</TableHead>
             <TableHead>{headers.action}</TableHead>
             <TableHead>{headers.course}</TableHead>
@@ -210,7 +210,7 @@ export function StudentActivityCard({
             filteredActivity.map((row) => (
               <TableRow
                 key={row.id}
-                className="grid grid-cols-[1.4fr_1.4fr_1.6fr_0.8fr_0.8fr] items-center gap-md border-b border-border px-md py-3 last:border-b-0"
+                className="grid min-w-[640px] grid-cols-[1.4fr_1.4fr_1.6fr_0.8fr_0.8fr] items-center gap-md border-b border-border px-md py-3 last:border-b-0"
               >
                 <TableCell className="flex items-center gap-2.5">
                   <Avatar

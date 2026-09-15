@@ -15,8 +15,13 @@ export const endpoints = {
     analyticsTopCourses: "/api/v1/teachers/me/analytics/top-courses",
     usage: "/api/v1/teachers/me/usage",
     subscriptions: "/api/v1/teachers/me/subscriptions",
+    payments: "/api/v1/teachers/me/payments",
     publicDetail: (slug: string) =>
       `/api/v1/teachers/${encodeURIComponent(slug)}`,
+  },
+  admin: {
+    teacherPayments: (teacherProfileId: number) =>
+      `/api/v1/admin/teachers/${teacherProfileId}/payments`,
   },
   courses: {
     list: "/api/v1/courses",

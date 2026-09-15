@@ -4,10 +4,10 @@ import { useDeferredValue, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Search } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
-import { Badge } from "@/components/ui/badge"
 import { DashboardPagination } from "@/components/dashboard-pagination"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
+import { PaymentStatusBadge } from "@/features/billing/components/payment-status-badge"
 import {
   Table,
   TableBody,
@@ -78,6 +78,12 @@ export function SubscriptionsList({
         >
           <option value="completed">{t("payment_completed")}</option>
           <option value="pending">{t("payment_pending")}</option>
+          <option value="failed">{t("payment_failed")}</option>
+          <option value="cancelled">{t("payment_cancelled")}</option>
+          <option value="refunded">{t("payment_refunded")}</option>
+          <option value="duplicate_paid">
+            {t("payment_duplicate_paid")}
+          </option>
           <option value="all">{t("status_all")}</option>
         </select>
       </div>
@@ -111,15 +117,7 @@ export function SubscriptionsList({
                       {item.course.title}
                     </TableCell>
                     <TableCell className="px-4 py-3">
-                      <Badge
-                        variant={
-                          item.payment_status === "completed"
-                            ? "default"
-                            : "secondary"
-                        }
-                      >
-                        {item.payment_status}
-                      </Badge>
+                      <PaymentStatusBadge status={item.payment_status} />
                     </TableCell>
                     <TableCell className="px-4 py-3 font-semibold" dir="ltr">
                       {new Intl.NumberFormat(locale, {

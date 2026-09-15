@@ -3,6 +3,7 @@
 import { useLocale, useTranslations } from "next-intl"
 import { useAutoAnimate } from "@formkit/auto-animate/react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { PaymentStatusBadge } from "@/features/billing/components/payment-status-badge"
 import {
   Table,
   TableBody,
@@ -32,14 +33,6 @@ export interface StudentSubscriptionRow {
 
 interface StudentTableProps {
   students: StudentSubscriptionRow[]
-}
-
-const STATUS_STYLES: Record<string, string> = {
-  completed: "bg-success-tint text-success",
-  pending: "bg-warning-tint text-warning",
-  failed: "bg-destructive/10 text-destructive",
-  cancelled: "bg-surface-strong text-on-surface-muted",
-  refunded: "bg-surface-strong text-on-surface-muted",
 }
 
 export function StudentTable({ students }: StudentTableProps) {
@@ -125,14 +118,7 @@ export function StudentTable({ students }: StudentTableProps) {
                   )}
                 </TableCell>
                 <TableCell className="px-4 py-3">
-                  <span
-                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${
-                      STATUS_STYLES[student.status] ??
-                      "bg-surface-strong text-on-surface-muted"
-                    }`}
-                  >
-                    {getStatusLabel(student.status, t)}
-                  </span>
+                  <PaymentStatusBadge status={student.status} />
                 </TableCell>
               </TableRow>
             ))
@@ -141,27 +127,6 @@ export function StudentTable({ students }: StudentTableProps) {
       </Table>
     </div>
   )
-}
-
-function getStatusLabel(status: string, t: ReturnType<typeof useTranslations>) {
-  switch (status) {
-    case "completed":
-      return t("status_completed")
-    case "pending":
-      return t("status_pending")
-    case "failed":
-      return t("status_failed")
-    case "cancelled":
-      return t("status_cancelled")
-    case "refunded":
-      return t("status_refunded")
-    default:
-      return status
-        .split("_")
-        .filter(Boolean)
-        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(" ")
-  }
 }
 
 function formatCurrency(

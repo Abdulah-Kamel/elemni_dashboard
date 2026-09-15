@@ -38,7 +38,7 @@ export default async function AdminLayout({
 
   return (
     <DirectionProvider direction={(locale === "ar" ? "rtl" : "ltr") as never}>
-      <div className="flex h-screen overflow-hidden bg-page">
+      <div className="flex h-dvh overflow-hidden bg-page">
         <Sidebar
           teacherName={user.name}
           teacherRole={t("admin_role")}
@@ -46,7 +46,7 @@ export default async function AdminLayout({
         />
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <Topbar teacherName={user.name} userRole={user.role} />
-          <main className="flex-1 overflow-auto">
+          <main className="flex-1 overflow-auto pb-[calc(4rem+env(safe-area-inset-bottom,0px))] md:pb-0">
             <div className="mx-auto w-full max-w-7xl animate-fade-in px-container-margin py-xl">
               {children}
             </div>

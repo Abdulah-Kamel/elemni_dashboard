@@ -524,6 +524,7 @@
     "status_failed": "فاشل",
     "status_cancelled": "ملغي",
     "status_refunded": "مسترد",
+    "status_duplicate_paid": "مدفوع مكرر",
     "showing": "عرض {from}-{to} من {total} طالب",
     "no_results": "لا توجد نتائج تطابق بحثك",
     "pagination": "الصفحة {page} من {pages}",
@@ -868,6 +869,20 @@
     "search_taxonomy": "ابحث في التصنيفات…",
     "payment_completed": "مكتمل",
     "payment_pending": "قيد الانتظار",
+    "payment_failed": "فاشل",
+    "payment_cancelled": "ملغي",
+    "payment_refunded": "مسترد",
+    "payment_duplicate_paid": "مدفوع مكرر",
+    "title_payments": "المدفوعات",
+    "payments_count": "{count, plural, =0 {لا توجد مدفوعات} one {دفعة واحدة} two {دفعتان} other {# دفعة}}",
+    "payments_admin": "سجّلها",
+    "payments_note": "ملاحظة",
+    "payment_amount": "مبلغ الدفعة",
+    "payment_note": "ملاحظة (اختياري)",
+    "record_payment": "تسجيل دفعة",
+    "payment_recorded": "تم تسجيل الدفعة بنجاح",
+    "payment_amount_invalid": "أدخل مبلغًا أكبر من الصفر",
+    "payment_note_too_long": "يجب ألا تتجاوز الملاحظة ٥٠٠ حرف",
     "video_library": "مكتبة الفيديو",
     "save_secure_settings": "تطبيق الإعدادات الآمنة",
     "create_library": "إنشاء المكتبة",
@@ -890,5 +905,52 @@
     "action_create_library": "سيتم تجهيز مكتبة فيديو آمنة لـ {name}.",
     "action_save_library_title": "تطبيق إعدادات المكتبة؟",
     "action_save_library": "سيتم تحديث إعدادات أمان الفيديو لـ {name}."
+  },
+  "billing": {
+    "title": "الفوترة",
+    "subtitle": "المدفوعات المسجلة لحسابك. الأرصدة أدناه من الواجهة الخلفية.",
+    "summary_title": "أرصدة المدفوعات",
+    "pending_dues": "المستحقات المعلقة",
+    "total_paid": "إجمالي المدفوع",
+    "filtered_sum": "إجمالي المدفوعات المحددة",
+    "not_available": "غير متاح",
+    "filters": {
+      "start": "من",
+      "end": "إلى",
+      "min_amount": "أقل مبلغ",
+      "max_amount": "أعلى مبلغ",
+      "sort": "ترتيب حسب",
+      "order": "الاتجاه",
+      "sort_created": "التاريخ",
+      "sort_amount": "المبلغ",
+      "desc": "الأحدث أولاً",
+      "asc": "الأقدم أولاً",
+      "apply": "تطبيق الفلاتر",
+      "reset": "إعادة ضبط"
+    },
+    "ledger": {
+      "title": "سجل المدفوعات",
+      "subtitle": "صف واحد لكل دفعة مسجلة.",
+      "entries": "{count, plural, =0 {لا توجد سجلات} one {سجل واحد} two {سجلان} few {# سجلات} many {# سجلاً} other {# سجل}}",
+      "amount": "المبلغ",
+      "date": "التاريخ",
+      "admin": "سجّلها",
+      "note": "ملاحظة",
+      "showing": "عرض {from}–{to} من {total}",
+      "pagination": "صفحات سجل المدفوعات",
+      "previous": "السابق",
+      "next": "التالي"
+    },
+    "empty": {
+      "title": "لا توجد مدفوعات في هذه الفترة"
+    },
+    "payment_status": {
+      "completed": "مكتمل",
+      "pending": "قيد الانتظار",
+      "failed": "فاشل",
+      "cancelled": "ملغي",
+      "refunded": "مسترد",
+      "duplicate_paid": "مدفوع مكرر"
+    }
   }
 }

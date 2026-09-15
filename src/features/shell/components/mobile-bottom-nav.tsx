@@ -49,7 +49,7 @@ export function MobileBottomNav({ userRole }: { userRole?: string }) {
   const navItems = userRole === "ADMIN" ? ADMIN_NAV : TEACHER_NAV
 
   return (
-    <nav className="fixed start-0 bottom-0 z-50 flex w-full items-center justify-around border-t border-border bg-surface px-2 py-1 shadow-lg md:hidden">
+    <nav className="fixed start-0 bottom-0 z-50 flex w-full items-center justify-around border-t border-border bg-surface px-1 py-1 shadow-lg md:hidden safe-area-bottom">
       {navItems.map(({ id, href, icon: Icon }) => {
         const isActive = href === "/admin" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`)
         return (
@@ -57,18 +57,18 @@ export function MobileBottomNav({ userRole }: { userRole?: string }) {
             key={id}
             href={href as never}
             className={cn(
-              "flex flex-col items-center gap-0.5 rounded-xl px-3 py-1.5 transition-colors",
+              "flex min-h-11 min-w-11 flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 transition-colors",
               isActive
                 ? "bg-primary text-primary-foreground"
                 : "text-on-surface-muted hover:text-foreground"
             )}
           >
-            <Icon className="size-5" aria-hidden="true" />
-            <span className="text-[10px] font-semibold">{tNav(id)}</span>
+            <Icon className="size-5 shrink-0" aria-hidden="true" />
+            <span className="max-w-[60px] truncate text-label-sm font-semibold leading-tight">{tNav(id)}</span>
           </Link>
         )
       })}
-      {userRole === "ADMIN" && <Sheet><SheetTrigger className="flex flex-col items-center gap-0.5 rounded-xl px-3 py-1.5 text-on-surface-muted"><MoreHorizontal className="size-5" /><span className="text-[10px] font-semibold">{tNav("more")}</span></SheetTrigger><SheetContent side="bottom" className="rounded-t-2xl"><SheetHeader><SheetTitle>{tNav("catalog")}</SheetTitle></SheetHeader><div className="grid gap-2 p-4">{ADMIN_MORE_NAV.map(({ id, href, icon: Icon }) => <Link key={id} href={href as never} className="flex items-center gap-3 rounded-xl bg-surface-muted p-3 font-medium"><Icon className="size-5 text-primary" />{tNav(id)}</Link>)}</div></SheetContent></Sheet>}
+      {userRole === "ADMIN" && <Sheet><SheetTrigger className="flex min-h-11 min-w-11 flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 text-on-surface-muted"><MoreHorizontal className="size-5" /><span className="max-w-[60px] truncate text-label-sm font-semibold leading-tight">{tNav("more")}</span></SheetTrigger><SheetContent side="bottom" className="rounded-t-2xl"><SheetHeader><SheetTitle>{tNav("catalog")}</SheetTitle></SheetHeader><div className="grid gap-2 p-4">{ADMIN_MORE_NAV.map(({ id, href, icon: Icon }) => <Link key={id} href={href as never} className="flex items-center gap-3 rounded-xl bg-surface-muted p-3 font-medium"><Icon className="size-5 text-primary" />{tNav(id)}</Link>)}</div></SheetContent></Sheet>}
     </nav>
   )
 }

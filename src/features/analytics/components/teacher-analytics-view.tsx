@@ -126,15 +126,18 @@ export async function TeacherAnalyticsView({
         {stats.map(({ label, value, icon: Icon }, index) => (
           <Card
             key={label}
-            className={`card-hover animate-slide-up ${stagger[index]} rounded-2xl border border-border p-md shadow-xs`}
+            className={`card-hover animate-slide-up ${stagger[index]} rounded-2xl border border-border p-md text-center shadow-xs`}
           >
-            <div className="mb-4 flex size-10 items-center justify-center rounded-xl bg-primary-tint text-primary">
+            <div className="mx-auto mb-4 flex size-10 items-center justify-center rounded-xl bg-primary-tint text-primary">
               <Icon className="size-5" aria-hidden="true" />
             </div>
             <p className="text-sm font-semibold text-on-surface-muted">
               {label}
             </p>
-            <p className="mt-1 text-2xl font-bold text-primary tabular-nums" dir="ltr">
+            <p
+              className="mt-1 text-center text-2xl font-bold text-primary tabular-nums"
+              dir="ltr"
+            >
               {value}
             </p>
           </Card>
@@ -155,9 +158,15 @@ export async function TeacherAnalyticsView({
           <TableHeader>
             <TableRow className="bg-surface-muted">
               <TableHead>{t("top_courses.headers.course")}</TableHead>
-              <TableHead>{t("top_courses.headers.price")}</TableHead>
-              <TableHead>{t("top_courses.headers.earnings")}</TableHead>
-              <TableHead>{t("top_courses.headers.subscriptions")}</TableHead>
+              <TableHead className="text-center">
+                {t("top_courses.headers.price")}
+              </TableHead>
+              <TableHead className="text-center">
+                {t("top_courses.headers.earnings")}
+              </TableHead>
+              <TableHead className="text-center">
+                {t("top_courses.headers.subscriptions")}
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -175,13 +184,13 @@ export async function TeacherAnalyticsView({
                       <span>{course.title}</span>
                     </Link>
                   </TableCell>
-                  <TableCell dir="ltr" className="tabular-nums">
+                  <TableCell dir="ltr" className="text-center tabular-nums">
                     {formatMoney(course.price, locale, currency)}
                   </TableCell>
-                  <TableCell dir="ltr" className="tabular-nums">
+                  <TableCell dir="ltr" className="text-center tabular-nums">
                     {formatMoney(course.earning_amount, locale, currency)}
                   </TableCell>
-                  <TableCell dir="ltr" className="tabular-nums">
+                  <TableCell dir="ltr" className="text-center tabular-nums">
                     {formatCount(course.student_subscription_count, locale)}
                   </TableCell>
                 </TableRow>

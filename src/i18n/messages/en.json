@@ -524,6 +524,7 @@
     "status_failed": "Failed",
     "status_cancelled": "Cancelled",
     "status_refunded": "Refunded",
+    "status_duplicate_paid": "Duplicate paid",
     "showing": "Showing {from}-{to} of {total} students",
     "no_results": "No students match your search",
     "pagination": "Page {page} of {pages}",
@@ -868,6 +869,20 @@
     "search_taxonomy": "Search taxonomy…",
     "payment_completed": "Completed",
     "payment_pending": "Pending",
+    "payment_failed": "Failed",
+    "payment_cancelled": "Cancelled",
+    "payment_refunded": "Refunded",
+    "payment_duplicate_paid": "Duplicate paid",
+    "title_payments": "Payments",
+    "payments_count": "{count, plural, =0 {No payments} one {# payment} other {# payments}}",
+    "payments_admin": "Recorded by",
+    "payments_note": "Note",
+    "payment_amount": "Payment amount",
+    "payment_note": "Note (optional)",
+    "record_payment": "Record payment",
+    "payment_recorded": "Payment recorded successfully",
+    "payment_amount_invalid": "Enter an amount greater than zero",
+    "payment_note_too_long": "Note must be 500 characters or fewer",
     "video_library": "Video library",
     "save_secure_settings": "Apply secure settings",
     "create_library": "Create library",
@@ -890,5 +905,52 @@
     "action_create_library": "Provision a secure video library for {name}.",
     "action_save_library_title": "Apply library settings?",
     "action_save_library": "Update the video security settings for {name}."
+  },
+  "billing": {
+    "title": "Billing",
+    "subtitle": "Payments recorded for your account. Balances below come from the API.",
+    "summary_title": "Payment balances",
+    "pending_dues": "Pending dues",
+    "total_paid": "Total paid",
+    "filtered_sum": "Filtered payments total",
+    "not_available": "Not available",
+    "filters": {
+      "start": "From",
+      "end": "To",
+      "min_amount": "Minimum amount",
+      "max_amount": "Maximum amount",
+      "sort": "Sort by",
+      "order": "Order",
+      "sort_created": "Date",
+      "sort_amount": "Amount",
+      "desc": "Newest first",
+      "asc": "Oldest first",
+      "apply": "Apply filters",
+      "reset": "Reset"
+    },
+    "ledger": {
+      "title": "Payment history",
+      "subtitle": "One row per recorded payment.",
+      "entries": "{count, plural, =0 {No entries} one {# entry} other {# entries}}",
+      "amount": "Amount",
+      "date": "Date",
+      "admin": "Recorded by",
+      "note": "Note",
+      "showing": "Showing {from}–{to} of {total}",
+      "pagination": "Payment history pages",
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "empty": {
+      "title": "No payments in this range"
+    },
+    "payment_status": {
+      "completed": "Completed",
+      "pending": "Pending",
+      "failed": "Failed",
+      "cancelled": "Cancelled",
+      "refunded": "Refunded",
+      "duplicate_paid": "Duplicate paid"
+    }
   }
 }

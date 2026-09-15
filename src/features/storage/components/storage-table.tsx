@@ -108,7 +108,7 @@ export function StorageTable({ rows }: { rows: CourseUsageRow[] }) {
 
   return (
     <div className="rounded-2xl border border-border bg-surface shadow-xs">
-      <div className="grid gap-3 border-b border-border px-4 py-3 xl:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))]">
+      <div className="grid gap-3 border-b border-border px-4 py-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))]">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-on-surface-muted" />
           <Input
@@ -214,17 +214,17 @@ export function StorageTable({ rows }: { rows: CourseUsageRow[] }) {
           </SelectContent>
         </Select>
       </div>
-      <Table>
+      <Table className="min-w-[800px]">
         <TableHeader className="bg-surface-muted text-xs font-bold text-on-surface-muted">
           <TableRow>
             <TableHead className="px-4 py-3">{t("course_name")}</TableHead>
-            <TableHead className="px-4 py-3">{t("subject")}</TableHead>
-            <TableHead className="px-4 py-3">{t("grade")}</TableHead>
-            <TableHead className="px-4 py-3">{t("stream")}</TableHead>
+            <TableHead className="hidden px-4 py-3 md:table-cell">{t("subject")}</TableHead>
+            <TableHead className="hidden px-4 py-3 md:table-cell">{t("grade")}</TableHead>
+            <TableHead className="hidden px-4 py-3 md:table-cell">{t("stream")}</TableHead>
             <TableHead className="px-4 py-3">{t("lessons")}</TableHead>
             <TableHead className="px-4 py-3">{t("items")}</TableHead>
             <TableHead className="px-4 py-3">{t("content_mix")}</TableHead>
-            <TableHead className="px-4 py-3">{t("subscriptions")}</TableHead>
+            <TableHead className="hidden px-4 py-3 md:table-cell">{t("subscriptions")}</TableHead>
             <TableHead className="px-4 py-3">{t("status")}</TableHead>
           </TableRow>
         </TableHeader>
@@ -251,13 +251,13 @@ export function StorageTable({ rows }: { rows: CourseUsageRow[] }) {
                     </span>
                   </div>
                 </TableCell>
-                <TableCell className="px-4 py-3 text-sm text-on-surface-muted">
+                <TableCell className="hidden px-4 py-3 text-sm text-on-surface-muted md:table-cell">
                   {course.subject ?? t("not_available")}
                 </TableCell>
-                <TableCell className="px-4 py-3 text-sm text-on-surface-muted">
+                <TableCell className="hidden px-4 py-3 text-sm text-on-surface-muted md:table-cell">
                   {course.grade ?? t("not_available")}
                 </TableCell>
-                <TableCell className="px-4 py-3 text-sm text-on-surface-muted">
+                <TableCell className="hidden px-4 py-3 text-sm text-on-surface-muted md:table-cell">
                   {course.stream ?? t("not_available")}
                 </TableCell>
                 <TableCell className="px-4 py-3 text-sm text-on-surface-muted">
@@ -279,7 +279,7 @@ export function StorageTable({ rows }: { rows: CourseUsageRow[] }) {
                     <ContentBadge label={t("exams")} value={course.examCount} />
                   </div>
                 </TableCell>
-                <TableCell className="px-4 py-3 text-sm text-on-surface-muted">
+                <TableCell className="hidden px-4 py-3 text-sm text-on-surface-muted md:table-cell">
                   {course.subscriptionCount}
                 </TableCell>
                 <TableCell className="px-4 py-3">

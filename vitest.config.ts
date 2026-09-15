@@ -13,6 +13,10 @@ export default defineConfig({
         replacement: path.resolve(__dirname, "lib/utils.ts"),
       },
       {
+        find: "@/src/assets/logo-icon.png",
+        replacement: path.resolve(__dirname, "tests/mocks/empty.ts"),
+      },
+      {
         find: "server-only",
         replacement: path.resolve(__dirname, "tests/mocks/empty.ts"),
       },

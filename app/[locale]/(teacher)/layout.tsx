@@ -42,11 +42,11 @@ export default async function TeacherLayout({
 
   return (
     <DirectionProvider direction={(locale === "ar" ? "rtl" : "ltr") as never}>
-      <div className="flex h-screen overflow-hidden bg-page">
+      <div className="flex h-dvh overflow-hidden bg-page">
         <Sidebar teacherName={user.name} teacherRole={teacherRole} />
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <Topbar teacherName={user.name} />
-          <main className="flex-1 overflow-auto">
+          <main className="flex-1 overflow-auto pb-[calc(4rem+env(safe-area-inset-bottom,0px))] md:pb-0">
             <ChapterNavigationProvider>
               <div className="teacher-content-shell mx-auto w-full max-w-7xl animate-fade-in px-container-margin py-xl">
                 {children}

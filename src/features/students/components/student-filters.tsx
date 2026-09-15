@@ -172,6 +172,8 @@ function getStatusLabel(status: string, t: ReturnType<typeof useTranslations>) {
       return t("status_cancelled")
     case "refunded":
       return t("status_refunded")
+    case "duplicate_paid":
+      return t("status_duplicate_paid")
     default:
       return status
         .split("_")
