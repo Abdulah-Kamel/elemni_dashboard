@@ -24,15 +24,8 @@ import { Plus, GripVertical } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PortalDragOverlay } from "@/components/ui/portal-drag-overlay"
 import { ItemCard } from "./item-card";
-import { UploadDialog, type UploadType } from "./upload-dialog";
-import {
-  confirmUpload,
-  confirmVideoUpload,
-  requestUploadUrl,
-  requestVideoUpload,
-} from "@/features/course-management/items-actions";
-import { uploadToPresignedUrl } from "@/lib/upload";
-import { uploadVideoToBunnyTus } from "@/lib/tus-upload";
+import { CreateItemDialog } from "./create-item-dialog";
+import { useCreateItemFlow } from "@/features/course-management/hooks/use-create-item-flow";
 import { applyOptimisticReorder, buildReorderPayload, rollbackReorder } from "@/features/course-management/reorder-utils";
 import { toast } from "sonner";
 import type { ItemOut } from "@/features/course-management/items-schema";
@@ -119,14 +112,10 @@ export function ItemList({
     initialError,
   );
   const items = useMemo(() => itemsQuery.data ?? [], [itemsQuery.data]);
-  const { create, update, reorder } = useItemMutations(courseId, lessonId);
+  const { create, reorder } = useItemMutations(courseId, lessonId);
   const [error, setError] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [createUploadOpen, setCreateUploadOpen] = useState(false);
-  const [createUploadType, setCreateUploadType] = useState<UploadType>("video");
-  const [createUploading, setCreateUploading] = useState(false);
-  const [createUploadProgress, setCreateUploadProgress] = useState(0);
-  const createdUploadItemRef = useRef<ItemOut | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const previousRef = useRef(_initialItems ?? []);
   const [parentRef] = useAutoAnimate({ duration: 200 });
 
@@ -177,133 +166,45 @@ export function ItemList({
     [items, notifyCurriculumCommitted, queryClient, queryKey, reorder, t],
   );
 
-  const handleUpdated = useCallback((updated: ItemOut) => {
-    queryClient.setQueryData<ItemOut[]>(queryKey, (current) =>
-      current?.map((item) => (item.id === updated.id ? updated : item)),
-    );
-    void notifyCurriculumCommitted();
-  }, [notifyCurriculumCommitted, queryClient, queryKey]);
+  const cacheItemUpdate = useCallback(
+    (updated: ItemOut) => {
+      queryClient.setQueryData<ItemOut[]>(queryKey, (current) =>
+        current?.map((item) => (item.id === updated.id ? updated : item))
+      );
+    },
+    [queryClient, queryKey]
+  );
+
+  const handleUpdated = useCallback(
+    (updated: ItemOut) => {
+      cacheItemUpdate(updated);
+      void notifyCurriculumCommitted();
+    },
+    [cacheItemUpdate, notifyCurriculumCommitted]
+  );
 
   const handleDeleted = useCallback(() => {
     void notifyCurriculumCommitted();
   }, [notifyCurriculumCommitted]);
 
-  const openCreateUpload = useCallback(() => {
-    setError(null);
-    createdUploadItemRef.current = null;
-    setCreateUploadType("video");
-    setCreateUploadOpen(true);
-  }, []);
-
-  const handleCreateUpload = useCallback(
-    async (file: File, title: string, uploadType: UploadType) => {
-      if (createUploading) return;
-
-      setCreateUploading(true);
-      setCreateUploadProgress(0);
-      setError(null);
-
-      try {
-        let item = createdUploadItemRef.current;
-
-        if (!item) {
-          item = await create.mutateAsync({ title });
-          createdUploadItemRef.current = item;
-          void notifyCurriculumCommitted();
-        } else if (item.title !== title) {
-          item = await update.mutateAsync({ itemId: item.id, data: { title } });
-          createdUploadItemRef.current = item;
-        }
-
-        if (uploadType === "video") {
-          const credentialsResult = await requestVideoUpload(
-            courseId,
-            lessonId,
-            item.id,
-            title,
-          );
-          if (!credentialsResult.success) {
-            throw new Error(credentialsResult.error.message || t("upload_error"));
-          }
-
-          await uploadVideoToBunnyTus(
-            file,
-            credentialsResult.data,
-            setCreateUploadProgress,
-          );
-          const confirmResult = await confirmVideoUpload(
-            courseId,
-            lessonId,
-            item.id,
-            credentialsResult.data.video_id,
-          );
-          if (!confirmResult.success) {
-            throw new Error(confirmResult.error.message || t("upload_error"));
-          }
-          item = confirmResult.data;
-        } else {
-          const urlResult = await requestUploadUrl(
-            courseId,
-            lessonId,
-            item.id,
-            file.name,
-          );
-          if (!urlResult.success) {
-            throw new Error(urlResult.error.message || t("upload_error"));
-          }
-          const uploadResponse = await uploadToPresignedUrl(
-            urlResult.data.upload_url,
-            file,
-          );
-          if (!uploadResponse.ok) {
-            throw new Error(t("upload_error"));
-          }
-          const confirmResult = await confirmUpload(
-            courseId,
-            lessonId,
-            item.id,
-            urlResult.data.key,
-          );
-          if (!confirmResult.success) {
-            throw new Error(confirmResult.error.message || t("upload_error"));
-          }
-          item = confirmResult.data;
-        }
-
-        queryClient.setQueryData<ItemOut[]>(queryKey, (current) =>
-          current?.map((candidate) =>
-            candidate.id === item.id ? item : candidate,
-          ),
-        );
-        createdUploadItemRef.current = null;
-        setCreateUploadOpen(false);
-        void notifyCurriculumCommitted();
-        toast.success(
-          uploadType === "video"
-            ? t("upload_success_processing")
-            : t("upload_success"),
-        );
-      } catch (uploadError) {
-        toast.error(
-          uploadError instanceof Error ? uploadError.message : t("upload_error"),
-        );
-      } finally {
-        setCreateUploading(false);
-        setCreateUploadProgress(0);
-      }
+  const createFlow = useCreateItemFlow({
+    courseId,
+    lessonId,
+    createItem: create.mutateAsync,
+    onItemUpdated: cacheItemUpdate,
+    onCurriculumCommitted: notifyCurriculumCommitted,
+    onComplete: () => {
+      setCreateDialogOpen(false);
+      toast.success(t("upload_success"));
     },
-    [
-      courseId,
-      create,
-      createUploading,
-      lessonId,
-      notifyCurriculumCommitted,
-      queryClient,
-      queryKey,
-      t,
-      update,
-    ],
-  );
+    uploadErrorMessage: t("upload_error"),
+  });
+
+  const openCreateDialog = useCallback(() => {
+    setError(null);
+    createFlow.reset();
+    setCreateDialogOpen(true);
+  }, [createFlow]);
 
   const queryError = itemsQuery.isError
     ? itemsQuery.error instanceof Error
@@ -340,7 +241,7 @@ export function ItemList({
             variant="ghost"
             size="sm"
             className="h-7 w-full text-xs text-muted-foreground"
-            onClick={openCreateUpload}
+            onClick={openCreateDialog}
           >
             <Plus className="me-1 size-3" />
             {t("create")}
@@ -381,7 +282,7 @@ export function ItemList({
             variant="ghost"
             size="sm"
             className="h-7 w-full text-xs text-muted-foreground"
-            onClick={openCreateUpload}
+            onClick={openCreateDialog}
           >
             <Plus className="me-1 size-3" />
             {t("create")}
@@ -389,20 +290,18 @@ export function ItemList({
         </>
       )}
 
-      <UploadDialog
-        open={createUploadOpen}
-        onOpenChange={(nextOpen) => {
-          setCreateUploadOpen(nextOpen);
-          if (!nextOpen) {
-            createdUploadItemRef.current = null;
-            setError(null);
-          }
+      <CreateItemDialog
+        open={createDialogOpen}
+        onOpenChange={(open) => {
+          setCreateDialogOpen(open);
+          if (!open) createFlow.reset();
         }}
-        type={createUploadType}
-        itemTitle=""
-        uploading={createUploading}
-        progress={createUploadProgress}
-        onUpload={handleCreateUpload}
+        onSubmit={(payload) => void createFlow.submit(payload)}
+        uploading={createFlow.uploading}
+        videoStatus={createFlow.videoStatus}
+        documentStatus={createFlow.documentStatus}
+        videoProgress={createFlow.videoProgress}
+        error={createFlow.error}
       />
     </div>
   );
