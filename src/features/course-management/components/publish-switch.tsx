@@ -38,6 +38,7 @@ export function PublishSwitch({
         await unpublish.mutateAsync(courseId)
       }
       onPublishedChange?.(next)
+      setOptimisticPublished(null)
     } catch {
       setOptimisticPublished(null)
       setError(t("error_upstream"))
@@ -57,7 +58,13 @@ export function PublishSwitch({
         disabled={submitting || disabled}
         onClick={() => void handleToggle()}
         data-checked={published}
-        className="relative h-6 w-11 shrink-0 cursor-pointer rounded-full bg-muted transition-colors data-[checked=true]:bg-primary disabled:cursor-wait disabled:opacity-60"
+        className={`relative h-6 w-11 shrink-0 rounded-full bg-muted transition-colors data-[checked=true]:bg-primary ${
+          submitting
+            ? "cursor-wait opacity-60"
+            : disabled
+              ? "cursor-not-allowed opacity-60"
+              : "cursor-pointer"
+        }`}
       >
         <span
           aria-hidden="true"

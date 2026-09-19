@@ -54,7 +54,10 @@ describe("PublishSwitch", () => {
     renderWithIntl(
       <PublishSwitch courseId={1} teacherProfileId={7} isPublished={false} disabled />
     )
-    expect(screen.getByRole("switch", { name: "حالة النشر" }).getAttribute("disabled")).not.toBeNull()
+    const publishSwitch = screen.getByRole("switch", { name: "حالة النشر" })
+    expect(publishSwitch.getAttribute("disabled")).not.toBeNull()
+    expect(publishSwitch.className).toContain("cursor-not-allowed")
+    expect(publishSwitch.className).not.toContain("cursor-wait")
   })
 
   it("calls onPublishedChange after a successful publish mutation", async () => {

@@ -131,6 +131,8 @@ describe("CourseWorkspace", () => {
   beforeEach(() => {
     updateMutation.mutateAsync.mockReset()
     updateMutation.mutateAsync.mockResolvedValue({ img: null })
+    publishMutation.mutateAsync.mockReset()
+    unpublishMutation.mutateAsync.mockReset()
     mockedLoadCoursePreviewCurriculum.mockReset()
     mockedLoadCoursePreviewCurriculum.mockResolvedValue({ success: true, data: [] })
   })
@@ -493,6 +495,41 @@ describe("CourseWorkspace", () => {
         data: { is_archived: true, is_published: false },
       })
     )
+  })
+
+  it("switches a newly published course back to disabled draft after archiving", async () => {
+    publishMutation.mutateAsync.mockResolvedValue(undefined)
+    updateMutation.mutateAsync.mockResolvedValue({
+      is_archived: true,
+      is_published: false,
+      img: null,
+    })
+    render(
+      <CourseWorkspace
+        {...editableWorkspaceProps}
+        model={mockModel}
+        locale="en"
+        teacherProfileId={7}
+        isPublished={false}
+        isArchived={false}
+      />,
+      "en"
+    )
+
+    fireEvent.click(screen.getByRole("switch", { name: "Publishing status" }))
+    await waitFor(() => expect(screen.getByText("Published")).toBeDefined())
+
+    fireEvent.click(screen.getByRole("button", { name: "Archive course" }))
+    fireEvent.click(screen.getByRole("button", { name: "Confirm archive" }))
+
+    await waitFor(() => {
+      const publishSwitch = screen.getByRole("switch", {
+        name: "Publishing status",
+      })
+      expect(screen.getByText("Draft")).toBeDefined()
+      expect(publishSwitch.getAttribute("aria-checked")).toBe("false")
+      expect(publishSwitch.getAttribute("disabled")).not.toBeNull()
+    })
   })
 
   it("unarchives without republishing", async () => {
