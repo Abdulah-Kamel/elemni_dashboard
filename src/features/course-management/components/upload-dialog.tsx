@@ -17,8 +17,13 @@ import {
 } from "@/components/ui/dialog"
 import { Check, FileText, FileVideo, Loader2, Upload } from "lucide-react"
 
-export type UploadType = "video" | "document"
-const MAX_VIDEO_SIZE = 500 * 1024 * 1024
+import {
+  type UploadType,
+  validateItemUploadFile,
+} from "../item-upload-validation"
+
+export type { UploadType } from "../item-upload-validation"
+
 type UploadStep = 1 | 2 | 3
 
 export function UploadDialog({
@@ -69,20 +74,9 @@ export function UploadDialog({
   const handleFile = useCallback(
     (selected: File | null) => {
       if (!selected) return
-      if (selectedType === "video" && !selected.type.startsWith("video/")) {
-        setValidationError(t("invalid_video"))
-        return
-      }
-      if (selectedType === "video" && selected.size > MAX_VIDEO_SIZE) {
-        setValidationError(t("video_too_large"))
-        return
-      }
-      if (
-        selectedType === "document" &&
-        selected.type !== "application/pdf" &&
-        !selected.name.toLowerCase().endsWith(".pdf")
-      ) {
-        setValidationError(t("invalid_document"))
+      const validationKey = validateItemUploadFile(selected, selectedType)
+      if (validationKey) {
+        setValidationError(t(validationKey))
         return
       }
       setValidationError(null)
