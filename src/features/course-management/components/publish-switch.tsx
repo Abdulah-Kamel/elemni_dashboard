@@ -19,24 +19,27 @@ export function PublishSwitch({
   onPublishedChange?: (published: boolean) => void
 }) {
   const t = useTranslations("courses")
-  const [published, setPublished] = useState(isPublished)
+  const [optimisticPublished, setOptimisticPublished] = useState<boolean | null>(null)
   const [error, setError] = useState<string | null>(null)
   const { publish, unpublish } = useCourseMutations(teacherProfileId)
   const submitting = publish.isPending || unpublish.isPending
+
+  const published = optimisticPublished ?? isPublished
 
   const handleToggle = async () => {
     if (submitting || disabled) return
     setError(null)
     const next = !published
+    setOptimisticPublished(next)
     try {
       if (next) {
         await publish.mutateAsync(courseId)
       } else {
         await unpublish.mutateAsync(courseId)
       }
-      setPublished(next)
       onPublishedChange?.(next)
     } catch {
+      setOptimisticPublished(null)
       setError(t("error_upstream"))
     }
   }

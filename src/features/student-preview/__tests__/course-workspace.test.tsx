@@ -59,8 +59,11 @@ function render(ui: React.ReactNode, locale: string = "ar") {
           archive_title: "Archive this course?",
           archive_warning: "The course will be unpublished and hidden from students.",
           confirm_archive: "Confirm archive",
-          archived_publish_hint: "Unarchive this course before publishing it.",
+          published: "Published",
+          draft: "Draft",
           published_status: "Publishing status",
+          error_upstream: "Service temporarily unavailable",
+          archived_publish_hint: "Unarchive this course before publishing it.",
         },
       }}
     >
@@ -673,5 +676,137 @@ describe("CourseWorkspace", () => {
       "en"
     )
     expect(screen.getByRole("switch", { name: "Publishing status" }).getAttribute("disabled")).not.toBeNull()
+  })
+
+  it("renders archived_publish_hint beside the disabled publish control when archived", () => {
+    render(
+      <CourseWorkspace
+        {...editableWorkspaceProps}
+        model={mockModel}
+        locale="en"
+        teacherProfileId={7}
+        isPublished={false}
+        isArchived
+      />,
+      "en"
+    )
+    expect(screen.getByText("Unarchive this course before publishing it.")).toBeDefined()
+  })
+
+  it("does not render archived_publish_hint when not archived", () => {
+    render(
+      <CourseWorkspace
+        {...editableWorkspaceProps}
+        model={mockModel}
+        locale="en"
+        teacherProfileId={7}
+        isPublished
+        isArchived={false}
+      />,
+      "en"
+    )
+    expect(screen.queryByText("Unarchive this course before publishing it.")).toBeNull()
+  })
+
+  it("prevents archive confirm double-fire while pending", async () => {
+    let resolvePromise: (value: unknown) => void
+    updateMutation.mutateAsync.mockImplementation(
+      () => new Promise((resolve) => { resolvePromise = resolve })
+    )
+    render(
+      <CourseWorkspace
+        {...editableWorkspaceProps}
+        model={mockModel}
+        locale="en"
+        teacherProfileId={7}
+        isPublished
+        isArchived={false}
+      />,
+      "en"
+    )
+    fireEvent.click(screen.getByRole("button", { name: "Archive course" }))
+    fireEvent.click(screen.getByRole("button", { name: "Confirm archive" }))
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Archive course" }).getAttribute("disabled")).not.toBeNull()
+    )
+    resolvePromise!({ is_archived: true, is_published: false, img: null })
+    await waitFor(() =>
+      expect(updateMutation.mutateAsync).toHaveBeenCalledTimes(1)
+    )
+  })
+
+  it("disables unarchive button while unarchive request is pending", async () => {
+    let resolvePromise: (value: unknown) => void
+    updateMutation.mutateAsync.mockImplementation(
+      () => new Promise((resolve) => { resolvePromise = resolve })
+    )
+    render(
+      <CourseWorkspace
+        {...editableWorkspaceProps}
+        model={mockModel}
+        locale="en"
+        teacherProfileId={7}
+        isPublished={false}
+        isArchived
+      />,
+      "en"
+    )
+    fireEvent.click(screen.getByRole("button", { name: "Unarchive course" }))
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Unarchive course" }).getAttribute("disabled")).not.toBeNull()
+    )
+    resolvePromise!({ is_archived: false, is_published: false, img: null })
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Archive course" })).toBeDefined()
+    )
+  })
+
+  it("syncs both archived and published from returned CourseOut on unarchive", async () => {
+    updateMutation.mutateAsync.mockResolvedValue({ is_archived: false, is_published: true, img: null })
+    render(
+      <CourseWorkspace
+        {...editableWorkspaceProps}
+        model={mockModel}
+        locale="en"
+        teacherProfileId={7}
+        isPublished={false}
+        isArchived
+      />,
+      "en"
+    )
+    fireEvent.click(screen.getByRole("button", { name: "Unarchive course" }))
+    await waitFor(() =>
+      expect(screen.getByRole("switch", { name: "Publishing status" }).getAttribute("aria-checked")).toBe("true")
+    )
+  })
+
+  it("publish switch reflects parent state without key remount", async () => {
+    rtlRender(
+      <NextIntlClientProvider
+        locale="en"
+        messages={{
+          courses: {
+            published: "Published",
+            draft: "Draft",
+            published_status: "Publishing status",
+            error_upstream: "Service temporarily unavailable",
+            archived_publish_hint: "Unarchive this course before publishing it.",
+          },
+        }}
+      >
+        <QueryClientProvider client={new QueryClient()}>
+          <CourseWorkspace
+            {...editableWorkspaceProps}
+            model={mockModel}
+            locale="en"
+            teacherProfileId={7}
+            isPublished={false}
+            isArchived={false}
+          />
+        </QueryClientProvider>
+      </NextIntlClientProvider>
+    )
+    expect(screen.getByText("Draft")).toBeDefined()
+    expect(screen.getByRole("switch", { name: "Publishing status" }).getAttribute("aria-checked")).toBe("false")
   })
 })

@@ -81,4 +81,29 @@ describe("PublishSwitch", () => {
       expect(onPublishedChange).toHaveBeenCalledWith(true)
     )
   })
+
+  it("syncs display when isPublished prop changes without remount", () => {
+    const queryClient = new QueryClient()
+    const Wrapper = ({ children }: { children: React.ReactNode }) => (
+      <NextIntlClientProvider locale="ar" messages={messages}>
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      </NextIntlClientProvider>
+    )
+
+    const { rerender } = render(
+      <Wrapper>
+        <PublishSwitch courseId={1} teacherProfileId={7} isPublished={false} />
+      </Wrapper>
+    )
+    expect(screen.getByText("مسودة")).toBeTruthy()
+    expect(screen.getByRole("switch", { name: "حالة النشر" }).getAttribute("aria-checked")).toBe("false")
+
+    rerender(
+      <Wrapper>
+        <PublishSwitch courseId={1} teacherProfileId={7} isPublished={true} />
+      </Wrapper>
+    )
+    expect(screen.getByText("منشور")).toBeTruthy()
+    expect(screen.getByRole("switch", { name: "حالة النشر" }).getAttribute("aria-checked")).toBe("true")
+  })
 })

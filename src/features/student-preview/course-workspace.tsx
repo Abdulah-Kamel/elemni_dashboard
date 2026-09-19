@@ -44,6 +44,7 @@ import { Button } from "@/components/ui/button"
 import { PublishSwitch } from "@/features/course-management/components/publish-switch"
 import { ArchiveCourseControl } from "@/features/course-management/components/archive-course-control"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 interface CourseWorkspaceProps {
   model: StudentCoursePreviewModel
@@ -66,7 +67,7 @@ interface CourseWorkspaceProps {
 
 const COPY = {
   ar: {
-    edit: "تعديل الكورس",
+    edit: "تعديل الدورة",
     title: "العنوان",
     description: "الوصف",
     price: "السعر",
@@ -77,7 +78,6 @@ const COPY = {
     saving: "جاري الحفظ...",
     saved: "تم حفظ التغييرات",
     saveError: "تعذر حفظ التغييرات. حاول مرة أخرى.",
-    error_upstream: "الخدمة غير متاحة مؤقتًا",
   },
   en: {
     edit: "Edit Course",
@@ -91,7 +91,6 @@ const COPY = {
     saving: "Saving...",
     saved: "Changes saved",
     saveError: "Could not save the changes. Try again.",
-    error_upstream: "Service temporarily unavailable",
   },
 }
 
@@ -139,6 +138,7 @@ function CourseWorkspaceContent({
 }: CourseWorkspaceContentProps) {
   const lang = locale.startsWith("ar") ? "ar" : "en"
   const copy = COPY[lang]
+  const t = useTranslations("courses")
   const id = useId()
 
   const [title, setTitle] = useState(model.title)
@@ -198,26 +198,12 @@ function CourseWorkspaceContent({
   }, [])
 
   const performSave = useCallback(async () => {
-    if (!canSave || teacherProfileId == null) {
-      setSaveStatus("error")
-      setSaveError(copy.saveError)
-      return
-    }
-
-    const trimmedTitle = title.trim()
-    if (!trimmedTitle) {
-      setSaveStatus("error")
-      setSaveError(
-        lang === "ar" ? "عنوان الكورس مطلوب." : "A course title is required."
-      )
-      return
-    }
-
     setSaveStatus("saving")
     setSaveError(null)
     setStructureConfirmationOpen(false)
 
     try {
+      const trimmedTitle = title.trim()
       const body: CourseUpdate = {
         title: trimmedTitle,
         description: description.trim() || null,
@@ -259,18 +245,15 @@ function CourseWorkspaceContent({
       setSaveError(message)
     }
   }, [
-    canSave,
     copy.saveError,
     courseId,
     coverFile,
     description,
-    lang,
     price,
     savedCoverUrl,
     subjectId,
     gradeId,
     streamId,
-    teacherProfileId,
     title,
     update,
     useChapters,
@@ -288,7 +271,7 @@ function CourseWorkspaceContent({
     if (!trimmedTitle) {
       setSaveStatus("error")
       setSaveError(
-        lang === "ar" ? "عنوان الكورس مطلوب." : "A course title is required."
+        lang === "ar" ? "عنوان الدورة مطلوب." : "A course title is required."
       )
       return
     }
@@ -364,12 +347,12 @@ function CourseWorkspaceContent({
       const message =
         error instanceof Error && error.message
           ? error.message
-          : copy.error_upstream
+          : t("error_upstream")
       setArchiveError(message)
     } finally {
       setArchivePending(false)
     }
-  }, [courseId, copy.error_upstream, update])
+  }, [courseId, t, update])
 
   const handleUnarchive = useCallback(async () => {
     setArchiveError(null)
@@ -380,16 +363,17 @@ function CourseWorkspaceContent({
         data: { is_archived: false },
       })
       setArchived(updated.is_archived)
+      setPublished(updated.is_published)
     } catch (error) {
       const message =
         error instanceof Error && error.message
           ? error.message
-          : copy.error_upstream
+          : t("error_upstream")
       setArchiveError(message)
     } finally {
       setArchivePending(false)
     }
-  }, [courseId, copy.error_upstream, update])
+  }, [courseId, t, update])
 
   const editor = (
     <div className="space-y-6 p-4">
@@ -409,7 +393,6 @@ function CourseWorkspaceContent({
           {teacherProfileId != null && isPublished != null && (
             <div className="flex items-center gap-2">
               <PublishSwitch
-                key={`publish-${published}`}
                 courseId={courseId}
                 teacherProfileId={teacherProfileId}
                 isPublished={published}
@@ -425,6 +408,11 @@ function CourseWorkspaceContent({
             </div>
           )}
         </div>
+        {archived && (
+          <p className="text-sm text-muted-foreground">
+            {t("archived_publish_hint")}
+          </p>
+        )}
         {archiveError && (
           <p role="alert" className="text-sm text-destructive">
             {archiveError}

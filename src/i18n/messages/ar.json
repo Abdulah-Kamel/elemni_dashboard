@@ -630,12 +630,12 @@
     "structure_to_flat_warning": "سيتم إزالة الفصول وسيبقى ترتيب الدروس كما هو.",
     "confirm_structure_change": "تغيير البنية",
     "archived": "مؤرشفة",
-    "archive_course": "أرشفة الكورس",
-    "unarchive_course": "إلغاء أرشفة الكورس",
-    "archive_title": "أرشفة هذا الكورس؟",
-    "archive_warning": "سيتم إلغاء نشر الكورس وإخفاؤه عن الطلاب.",
+    "archive_course": "أرشفة الدورة",
+    "unarchive_course": "إلغاء أرشفة الدورة",
+    "archive_title": "أرشفة هذه الدورة؟",
+    "archive_warning": "سيتم إلغاء نشر الدورة وإخفاؤها عن الطلاب.",
     "confirm_archive": "تأكيد الأرشفة",
-    "archived_publish_hint": "ألغِ أرشفة هذا الكورس قبل نشره."
+    "archived_publish_hint": "ألغِ أرشفة هذه الدورة قبل نشرها."
   },
   "storage": {
     "title": "الاستخدام",
