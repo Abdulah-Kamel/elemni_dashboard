@@ -1,3 +1,7 @@
+"use client"
+
+import { useState } from "react"
+import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import {
   Archive,
   Banknote,
@@ -6,7 +10,7 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react"
-import { getLocale, getTranslations } from "next-intl/server"
+import { useTranslations, useLocale } from "next-intl"
 import { Link } from "@/i18n/routing"
 import { Card } from "@/components/ui/card"
 import {
@@ -18,6 +22,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { DateRangeFilterForm } from "@/features/analytics/components/date-range-filter-form"
+import { getTeacherAnalyticsAction } from "@/features/analytics/actions"
 import type {
   TeacherAnalytics,
   TopEarningCourse,
@@ -36,7 +41,7 @@ type Props = {
   currency?: string
 }
 
-export async function TeacherAnalyticsView({
+export function TeacherAnalyticsView({
   summary,
   topCourses,
   filters,
@@ -45,38 +50,89 @@ export async function TeacherAnalyticsView({
   basePath = "/dashboard",
   currency = "EGP",
 }: Props) {
-  const t = await getTranslations("analytics")
-  const locale = await getLocale()
+  const t = useTranslations("analytics")
+  const locale = useLocale()
+
+  const [activeFilters, setActiveFilters] = useState<{
+    start?: string
+    end?: string
+  }>(() => ({ start: filters.start, end: filters.end }))
+
+  const filtersKey = JSON.stringify(activeFilters)
+  const [initialFiltersKey] = useState(filtersKey)
+
+  const analyticsQuery = useQuery({
+    queryKey: ["teacher-analytics", activeFilters],
+    queryFn: () => getTeacherAnalyticsAction(activeFilters),
+    initialData:
+      initialFiltersKey === filtersKey
+        ? { summary, topCourses }
+        : undefined,
+    placeholderData: keepPreviousData,
+  })
+
+  const displayedData = analyticsQuery.data ?? { summary, topCourses }
 
   const stats = [
     {
       label: t("stats.teacher_earnings"),
-      value: formatMoney(summary.total_earnings, locale, currency),
+      value: formatMoney(
+        displayedData.summary.total_earnings,
+        locale,
+        currency
+      ),
       icon: TrendingUp,
     },
     {
       label: t("stats.total_revenue"),
-      value: formatMoney(summary.total_revenue, locale, currency),
+      value: formatMoney(
+        displayedData.summary.total_revenue,
+        locale,
+        currency
+      ),
       icon: Banknote,
     },
     {
       label: t("stats.subscriptions"),
-      value: formatCount(summary.subscription_count, locale),
+      value: formatCount(
+        displayedData.summary.subscription_count,
+        locale
+      ),
       icon: ReceiptText,
     },
     {
       label: t("stats.active_courses"),
-      value: formatCount(summary.active_courses_count, locale),
+      value: formatCount(
+        displayedData.summary.active_courses_count,
+        locale
+      ),
       icon: BookOpen,
     },
     {
       label: t("stats.archived_courses"),
-      value: formatCount(summary.archived_courses_count, locale),
+      value: formatCount(
+        displayedData.summary.archived_courses_count,
+        locale
+      ),
       icon: Archive,
     },
   ]
 
-  const stagger = ["animate-stagger-1", "animate-stagger-2", "animate-stagger-3", "animate-stagger-4", "animate-stagger-5"]
+  const stagger = [
+    "animate-stagger-1",
+    "animate-stagger-2",
+    "animate-stagger-3",
+    "animate-stagger-4",
+    "animate-stagger-5",
+  ]
+
+  function handleDateRangeApply(range: { start?: string; end?: string }) {
+    setActiveFilters({ start: range.start, end: range.end })
+  }
+
+  function handleDateRangeReset() {
+    setActiveFilters({ start: undefined, end: undefined })
+  }
 
   return (
     <div className="flex flex-col gap-xl">
@@ -97,8 +153,8 @@ export async function TeacherAnalyticsView({
             </p>
             <p className="text-body-md font-medium text-foreground">
               {formatDateRange(
-                summary.start_date,
-                summary.end_date,
+                displayedData.summary.start_date,
+                displayedData.summary.end_date,
                 locale,
                 t("filters.all_time")
               )}
@@ -106,8 +162,10 @@ export async function TeacherAnalyticsView({
           </div>
 
           <DateRangeFilterForm
-            filters={filters}
+            filters={activeFilters}
             basePath={basePath}
+            onApply={handleDateRangeApply}
+            onReset={handleDateRangeReset}
             labels={{
               range: t("filters.range"),
               allTime: t("filters.all_time"),
@@ -170,8 +228,8 @@ export async function TeacherAnalyticsView({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {topCourses.length ? (
-              topCourses.map((course) => (
+            {displayedData.topCourses.length ? (
+              displayedData.topCourses.map((course) => (
                 <TableRow key={course.id}>
                   <TableCell>
                     <Link
@@ -191,7 +249,10 @@ export async function TeacherAnalyticsView({
                     {formatMoney(course.earning_amount, locale, currency)}
                   </TableCell>
                   <TableCell dir="ltr" className="text-center tabular-nums">
-                    {formatCount(course.student_subscription_count, locale)}
+                    {formatCount(
+                      course.student_subscription_count,
+                      locale
+                    )}
                   </TableCell>
                 </TableRow>
               ))

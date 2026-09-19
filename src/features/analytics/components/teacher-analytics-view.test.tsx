@@ -1,39 +1,41 @@
-import { render, screen } from "@testing-library/react"
-import { describe, expect, it, vi } from "vitest"
+import { render, screen, waitFor } from "@testing-library/react"
+import { describe, expect, it, vi, beforeEach } from "vitest"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { TeacherAnalyticsView } from "./teacher-analytics-view"
 import type {
   TeacherAnalytics,
   TopEarningCourse,
 } from "@/features/analytics/schema"
 
-vi.mock("next-intl/server", () => ({
-  getLocale: vi.fn().mockResolvedValue("ar"),
-  getTranslations: vi.fn().mockResolvedValue((key: string) => {
+vi.mock("next-intl", () => ({
+  useTranslations: vi.fn().mockReturnValue((key: string) => {
     const messages: Record<string, string> = {
-      "filters.range": "الفترة المحددة",
-      "filters.all_time": "كل الوقت",
-      "filters.choose": "اختر نطاق التاريخ",
-      "filters.dialog_title": "اختر الفترة",
-      "filters.dialog_description": "اختر الفترة",
-      "filters.apply": "تطبيق",
-      "filters.reset": "إعادة ضبط",
-      "filters.cancel": "إلغاء",
-      "stats.teacher_earnings": "أرباح المعلم",
-      "stats.total_revenue": "إجمالي الإيرادات",
-      "stats.subscriptions": "الاشتراكات المكتملة",
-      "stats.active_courses": "الدورات النشطة",
-      "stats.archived_courses": "الدورات المؤرشفة",
-      "top_courses.title": "أعلى الدورات ربحًا",
-      "top_courses.subtitle": "مرتبة حسب أرباح المعلم",
-      "top_courses.headers.course": "الدورة",
-      "top_courses.headers.price": "السعر",
-      "top_courses.headers.earnings": "الأرباح",
-      "top_courses.headers.subscriptions": "الاشتراكات",
-      "top_courses.empty": "لا توجد دورات",
+      title: "Dashboard",
+      subtitle: "Overview",
+      "filters.range": "Date Range",
+      "filters.all_time": "All Time",
+      "filters.choose": "Choose date range",
+      "filters.dialog_title": "Select Range",
+      "filters.dialog_description": "Pick a start and end date",
+      "filters.apply": "Apply",
+      "filters.reset": "Reset",
+      "filters.cancel": "Cancel",
+      "stats.teacher_earnings": "Teacher Earnings",
+      "stats.total_revenue": "Total Revenue",
+      "stats.subscriptions": "Subscriptions",
+      "stats.active_courses": "Active Courses",
+      "stats.archived_courses": "Archived Courses",
+      "top_courses.title": "Top Earning Courses",
+      "top_courses.subtitle": "Ranked by teacher earnings",
+      "top_courses.headers.course": "Course",
+      "top_courses.headers.price": "Price",
+      "top_courses.headers.earnings": "Earnings",
+      "top_courses.headers.subscriptions": "Subscriptions",
+      "top_courses.empty": "No courses",
     }
-
     return messages[key] ?? key
   }),
+  useLocale: vi.fn().mockReturnValue("ar"),
 }))
 
 vi.mock("@/i18n/routing", () => ({
@@ -48,17 +50,46 @@ vi.mock("@/i18n/routing", () => ({
   ),
 }))
 
-vi.mock("@/features/analytics/components/date-range-filter-form", () => ({
-  DateRangeFilterForm: () => <div data-testid="date-range-filter" />,
+vi.mock("@/features/analytics/actions", () => ({
+  getTeacherAnalyticsAction: vi.fn(),
 }))
 
+const mockDateRangeFilterForm = vi.fn(
+  ({
+    onApply,
+    onReset,
+    labels,
+  }: {
+    onApply?: (range: { start?: string; end?: string }) => void
+    onReset?: () => void
+    labels: { choose: string; apply: string; reset: string }
+  }) => (
+    <div data-testid="date-range-filter">
+      <button type="button" data-testid="mock-apply" disabled={!onApply}>
+        {labels.apply}
+      </button>
+      <button type="button" data-testid="mock-reset" disabled={!onReset}>
+        {labels.reset}
+      </button>
+    </div>
+  )
+)
+
+vi.mock(
+  "@/features/analytics/components/date-range-filter-form",
+  () => ({
+    DateRangeFilterForm: (props: Parameters<typeof mockDateRangeFilterForm>[0]) =>
+      mockDateRangeFilterForm(props),
+  })
+)
+
 const summary: TeacherAnalytics = {
-  total_earnings: 3134.03,
-  sum_earning_money: 3134.03,
-  total_revenue: 3281.75,
-  student_subscription_count: 24,
-  subscription_count: 24,
-  active_courses_count: 8,
+  total_earnings: 1000.0,
+  sum_earning_money: 1000.0,
+  total_revenue: 1200.0,
+  student_subscription_count: 10,
+  subscription_count: 10,
+  active_courses_count: 5,
   archived_courses_count: 2,
   archieved_courses_count: 2,
   start_date: null,
@@ -68,37 +99,222 @@ const summary: TeacherAnalytics = {
 const topCourses: TopEarningCourse[] = [
   {
     id: 1,
-    title: "Advanced History",
-    name: "Advanced History",
-    price: 145.88,
-    earning_amount: 696.55,
-    total_earnings: 696.55,
+    title: "Advanced Math",
+    name: "Advanced Math",
+    price: 100.0,
+    earning_amount: 500.0,
+    total_earnings: 500.0,
     student_subscription_count: 5,
     subscribed_students_count: 5,
   },
 ]
 
+const filteredSummary: TeacherAnalytics = {
+  total_earnings: 500.0,
+  sum_earning_money: 500.0,
+  total_revenue: 600.0,
+  student_subscription_count: 5,
+  subscription_count: 5,
+  active_courses_count: 3,
+  archived_courses_count: 1,
+  archieved_courses_count: 1,
+  start_date: "2025-01-01T00:00:00Z",
+  end_date: "2025-01-31T00:00:00Z",
+}
+
+const filteredTopCourses: TopEarningCourse[] = [
+  {
+    id: 2,
+    title: "Physics 101",
+    name: "Physics 101",
+    price: 75.0,
+    earning_amount: 250.0,
+    total_earnings: 250.0,
+    student_subscription_count: 3,
+    subscribed_students_count: 3,
+  },
+]
+
+const getTeacherAnalyticsAction = vi.mocked(
+  await import("@/features/analytics/actions")
+).getTeacherAnalyticsAction
+
+function createQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        gcTime: 0,
+      },
+    },
+  })
+}
+
+function renderWithQuery(ui: React.ReactElement) {
+  const queryClient = createQueryClient()
+  return {
+    ...render(
+      <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
+    ),
+    queryClient,
+  }
+}
+
 describe("TeacherAnalyticsView", () => {
-  it("centers RTL dashboard metric columns while preserving LTR numeric direction", async () => {
-    render(
-      await TeacherAnalyticsView({
-        summary,
-        topCourses,
-        filters: {},
-        currency: "EGP",
-      })
+  beforeEach(() => {
+    getTeacherAnalyticsAction.mockReset()
+    mockDateRangeFilterForm.mockClear()
+  })
+
+  it("renders initial data from server props", async () => {
+    getTeacherAnalyticsAction.mockResolvedValue({
+      summary,
+      topCourses,
+    })
+
+    renderWithQuery(
+      <TeacherAnalyticsView
+        summary={summary}
+        topCourses={topCourses}
+        filters={{}}
+      />
     )
 
-    const statValue = screen
-      .getByText(/3,134\.03|٣٬١٣٤٫٠٣/)
-      .closest("p")
+    expect(screen.getByText("Dashboard")).toBeDefined()
+    expect(screen.getByText("Advanced Math")).toBeDefined()
+    expect(screen.getByText(/1,000\.00/)).toBeDefined()
+  })
+
+  it("passes onApply and onReset callbacks so no Link/native fallback is used", async () => {
+    getTeacherAnalyticsAction.mockResolvedValue({
+      summary,
+      topCourses,
+    })
+
+    renderWithQuery(
+      <TeacherAnalyticsView
+        summary={summary}
+        topCourses={topCourses}
+        filters={{}}
+      />
+    )
+
+    const props = mockDateRangeFilterForm.mock.calls[0][0]
+    expect(typeof props.onApply).toBe("function")
+    expect(typeof props.onReset).toBe("function")
+
+    expect(screen.getByTestId("mock-apply").getAttribute("disabled")).toBeNull()
+    expect(screen.getByTestId("mock-reset").getAttribute("disabled")).toBeNull()
+  })
+
+  it("apply invokes action with selected dates and renders updated result", async () => {
+    getTeacherAnalyticsAction
+      .mockResolvedValueOnce({ summary, topCourses })
+      .mockResolvedValueOnce({
+        summary: filteredSummary,
+        topCourses: filteredTopCourses,
+      })
+
+    renderWithQuery(
+      <TeacherAnalyticsView
+        summary={summary}
+        topCourses={topCourses}
+        filters={{}}
+      />
+    )
+
+    expect(screen.getByText("Advanced Math")).toBeDefined()
+
+    const props = mockDateRangeFilterForm.mock.calls[0][0]
+    props.onApply!({ start: "2025-01-01", end: "2025-01-31" })
+
+    await waitFor(() => {
+      expect(getTeacherAnalyticsAction).toHaveBeenCalledWith({
+        start: "2025-01-01",
+        end: "2025-01-31",
+      })
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText("Physics 101")).toBeDefined()
+    })
+  })
+
+  it("reset invokes action with cleared filters and renders unfiltered result", async () => {
+    getTeacherAnalyticsAction
+      .mockResolvedValueOnce({
+        summary: filteredSummary,
+        topCourses: filteredTopCourses,
+      })
+      .mockResolvedValueOnce({ summary, topCourses })
+
+    renderWithQuery(
+      <TeacherAnalyticsView
+        summary={filteredSummary}
+        topCourses={filteredTopCourses}
+        filters={{ start: "2025-01-01", end: "2025-01-31" }}
+      />
+    )
+
+    expect(screen.getByText("Physics 101")).toBeDefined()
+
+    const props = mockDateRangeFilterForm.mock.calls[0][0]
+    props.onReset!()
+
+    await waitFor(() => {
+      expect(getTeacherAnalyticsAction).toHaveBeenCalledWith({
+        start: undefined,
+        end: undefined,
+      })
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText("Advanced Math")).toBeDefined()
+    })
+  })
+
+  it("course titles are links to /courses/:id", async () => {
+    getTeacherAnalyticsAction.mockResolvedValue({
+      summary,
+      topCourses,
+    })
+
+    renderWithQuery(
+      <TeacherAnalyticsView
+        summary={summary}
+        topCourses={topCourses}
+        filters={{}}
+      />
+    )
+
+    const courseLink = screen.getByRole("link", {
+      name: /Advanced Math/i,
+    })
+    expect(courseLink.getAttribute("href")).toBe("/courses/1")
+  })
+
+  it("centers RTL dashboard metric columns while preserving LTR numeric direction", async () => {
+    getTeacherAnalyticsAction.mockResolvedValue({
+      summary,
+      topCourses,
+    })
+
+    renderWithQuery(
+      <TeacherAnalyticsView
+        summary={summary}
+        topCourses={topCourses}
+        filters={{}}
+      />
+    )
+
+    const statValue = screen.getByText(/1,000\.00/).closest("p")
     expect(statValue?.getAttribute("dir")).toBe("ltr")
     expect(statValue?.className).toContain("text-center")
 
-    for (const header of ["السعر", "الأرباح", "الاشتراكات"]) {
-      expect(screen.getByRole("columnheader", { name: header }).className).toContain(
-        "text-center"
-      )
+    for (const header of ["Price", "Earnings", "Subscriptions"]) {
+      expect(
+        screen.getByRole("columnheader", { name: header }).className
+      ).toContain("text-center")
     }
 
     for (const cell of screen.getAllByRole("cell").filter((node) => {
