@@ -413,7 +413,20 @@
     "item_created": "تم إنشاء العنصر",
     "item_updated": "تم تحديث العنصر",
     "item_deleted": "تم حذف العنصر",
-    "error_upstream": "الخدمة غير متاحة مؤقتًا"
+    "error_upstream": "الخدمة غير متاحة مؤقتًا",
+    "create_step_count": "الخطوة {step} من 2",
+    "create_attachments": "إضافة مرفقات",
+    "create_attachments_desc": "أضف فيديو أو ملف PDF أو كليهما.",
+    "attachment_optional": "اختياري",
+    "attachment_selected": "تم الاختيار",
+    "attachment_uploaded": "تم الرفع",
+    "attachment_failed": "فشل",
+    "select_one_attachment": "أضف فيديو واحدًا أو ملف PDF واحدًا على الأقل.",
+    "create_item": "إنشاء العنصر",
+    "create_item_with_two_files": "إنشاء العنصر بملفين",
+    "retry_video": "إعادة رفع الفيديو",
+    "retry_document": "إعادة رفع ملف PDF",
+    "retry_failed_uploads": "إعادة رفع الملفات المتعثرة"
   },
   "account": {
     "name": "الاسم"

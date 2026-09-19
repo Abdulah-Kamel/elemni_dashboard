@@ -413,7 +413,20 @@
     "item_created": "Item created",
     "item_updated": "Item updated",
     "item_deleted": "Item deleted",
-    "error_upstream": "Service temporarily unavailable"
+    "error_upstream": "Service temporarily unavailable",
+    "create_step_count": "Step {step} of 2",
+    "create_attachments": "Add attachments",
+    "create_attachments_desc": "Add a video, a PDF, or both.",
+    "attachment_optional": "Optional",
+    "attachment_selected": "Selected",
+    "attachment_uploaded": "Uploaded",
+    "attachment_failed": "Failed",
+    "select_one_attachment": "Add at least one video or PDF.",
+    "create_item": "Create item",
+    "create_item_with_two_files": "Create item with 2 files",
+    "retry_video": "Retry video",
+    "retry_document": "Retry PDF",
+    "retry_failed_uploads": "Retry failed uploads"
   },
   "account": {
     "name": "Name"
