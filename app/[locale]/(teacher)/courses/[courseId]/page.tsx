@@ -188,6 +188,7 @@ async function CourseEditor({
           curriculum={curriculum}
           curriculumTitle={course.use_chapters ? ct("title") : lt("title")}
           curriculumHint={t("curriculum_hint")}
+          useChapters={course.use_chapters}
         />
       </section>
     </div>

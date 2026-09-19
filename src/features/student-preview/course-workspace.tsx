@@ -30,6 +30,10 @@ import {
   useCourseBuilderBridge,
 } from "@/features/course-management/course-builder-bridge"
 import { CourseCoverPicker } from "@/features/course-management/components/course-cover-picker"
+import {
+  CourseStructureControl,
+  CourseStructureConfirmation,
+} from "@/features/course-management/components/course-structure-control"
 import { useCourseMutations } from "@/features/course-management/hooks/use-course-management-queries"
 import { uploadCourseCover } from "@/features/course-management/upload-course-cover"
 import {
@@ -55,6 +59,7 @@ interface CourseWorkspaceProps {
   subjects?: SubjectOut[]
   grades?: GradeOut[]
   streams?: StreamOut[]
+  useChapters?: boolean
 }
 
 const COPY = {
@@ -125,6 +130,7 @@ function CourseWorkspaceContent({
   fullPreviewOpen,
   onActiveTabChange,
   onFullPreviewOpenChange,
+  useChapters: initialUseChapters = false,
 }: CourseWorkspaceContentProps) {
   const lang = locale.startsWith("ar") ? "ar" : "en"
   const copy = COPY[lang]
@@ -158,6 +164,9 @@ function CourseWorkspaceContent({
     "idle" | "saving" | "saved" | "error"
   >("idle")
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [useChapters, setUseChapters] = useState(initialUseChapters)
+  const [savedUseChapters, setSavedUseChapters] = useState(initialUseChapters)
+  const [structureConfirmationOpen, setStructureConfirmationOpen] = useState(false)
   const { update } = useCourseMutations(teacherProfileId ?? 0)
 
   const coverPreviewUrl = useMemo(
@@ -192,6 +201,11 @@ function CourseWorkspaceContent({
       setSaveError(
         lang === "ar" ? "عنوان الكورس مطلوب." : "A course title is required."
       )
+      return
+    }
+
+    if (useChapters !== savedUseChapters) {
+      setStructureConfirmationOpen(true)
       return
     }
 
@@ -238,6 +252,88 @@ function CourseWorkspaceContent({
     teacherProfileId,
     title,
     update,
+    useChapters,
+    savedUseChapters,
+  ])
+
+  const performSave = useCallback(async () => {
+    if (!canSave || teacherProfileId == null) {
+      setSaveStatus("error")
+      setSaveError(copy.saveError)
+      return
+    }
+
+    const trimmedTitle = title.trim()
+    if (!trimmedTitle) {
+      setSaveStatus("error")
+      setSaveError(
+        lang === "ar" ? "عنوان الكورس مطلوب." : "A course title is required."
+      )
+      return
+    }
+
+    setSaveStatus("saving")
+    setSaveError(null)
+    setStructureConfirmationOpen(false)
+
+    try {
+      const body: CourseUpdate = {
+        title: trimmedTitle,
+        description: description.trim() || null,
+        price: formatCoursePrice(price),
+      }
+
+      if (subjectId !== null) body.subject_id = subjectId
+      if (gradeId !== null) body.grade_id = gradeId
+      if (streamId !== null) body.stream_id = streamId
+
+      if (useChapters !== savedUseChapters) {
+        body.use_chapters = useChapters
+      }
+
+      if (coverFile) {
+        body.img = await uploadCourseCover(courseId, coverFile)
+      }
+
+      const updatedCourse = await update.mutateAsync({ courseId, data: body })
+      setSavedCoverUrl(updatedCourse.img ?? savedCoverUrl)
+      setCoverFile(null)
+      setSaveStatus("saved")
+
+      if (useChapters !== savedUseChapters) {
+        setSavedUseChapters(useChapters)
+        try {
+          const result = await loadCoursePreviewCurriculum(courseId)
+          if (result.success) {
+            setSections(result.data)
+          }
+        } catch {
+          // Curriculum refresh is best-effort after structure change.
+        }
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message ? error.message : copy.saveError
+      setSaveStatus("error")
+      setSaveError(message)
+    }
+  }, [
+    canSave,
+    copy.saveError,
+    courseId,
+    coverFile,
+    description,
+    lang,
+    price,
+    savedCoverUrl,
+    subjectId,
+    gradeId,
+    streamId,
+    teacherProfileId,
+    title,
+    update,
+    useChapters,
+    savedUseChapters,
   ])
 
   const previewModel: StudentCoursePreviewModel = {
@@ -419,6 +515,18 @@ function CourseWorkspaceContent({
             disabled={saveStatus === "saving"}
           />
         </div>
+        {teacherProfileId != null && (
+          <div className="border-t border-border pt-4">
+            <CourseStructureControl
+              value={useChapters}
+              disabled={saveStatus === "saving"}
+              onChange={(v) => {
+                setUseChapters(v)
+                markDirty()
+              }}
+            />
+          </div>
+        )}
         <div className="space-y-2 border-t border-border pt-4">
           <Button
             type="button"
@@ -480,6 +588,14 @@ function CourseWorkspaceContent({
           </div>
         </section>
       )}
+
+      <CourseStructureConfirmation
+        open={structureConfirmationOpen}
+        nextValue={useChapters}
+        pending={saveStatus === "saving"}
+        onConfirm={() => void performSave()}
+        onCancel={() => setStructureConfirmationOpen(false)}
+      />
     </div>
   )
 

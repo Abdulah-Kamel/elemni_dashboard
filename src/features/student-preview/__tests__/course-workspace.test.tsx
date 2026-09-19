@@ -1,5 +1,5 @@
 import { beforeEach, describe, it, expect, vi } from "vitest"
-import { render as rtlRender, screen, fireEvent, waitFor } from "@testing-library/react"
+import { render as rtlRender, screen, fireEvent, waitFor, act } from "@testing-library/react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { NextIntlClientProvider } from "next-intl"
 import type { ComponentProps } from "react"
@@ -8,6 +8,7 @@ import type { StudentCoursePreviewModel, StudentPreviewSection } from "../types"
 
 const updateMutation = vi.hoisted(() => ({ mutateAsync: vi.fn() }))
 const mockedUploadCourseCover = vi.hoisted(() => vi.fn())
+const mockedLoadCoursePreviewCurriculum = vi.hoisted(() => vi.fn())
 
 vi.mock("@/features/course-management/hooks/use-course-management-queries", () => ({
   useCourseMutations: () => ({ update: updateMutation }),
@@ -17,10 +18,14 @@ vi.mock("@/features/course-management/upload-course-cover", () => ({
   uploadCourseCover: mockedUploadCourseCover,
 }))
 
-function render(ui: React.ReactNode) {
+vi.mock("../server-actions", () => ({
+  loadCoursePreviewCurriculum: mockedLoadCoursePreviewCurriculum,
+}))
+
+function render(ui: React.ReactNode, locale: string = "ar") {
   return rtlRender(
     <NextIntlClientProvider
-      locale="ar"
+      locale={locale}
       messages={{
         courses: {
           subject_label: "المادة",
@@ -34,6 +39,14 @@ function render(ui: React.ReactNode) {
           cover_invalid_type: "نوع غير صالح",
           cover_too_large: "الملف كبير جداً",
           cover_clear_selection: "إزالة الاختيار",
+          structure_label: "Course structure",
+          structure_change_title: "Change course structure?",
+          structure_to_chapters_warning: "Existing flat lessons will move into a default chapter.",
+          structure_to_flat_warning: "Chapter groupings will be removed and lessons will be kept in their current order.",
+          confirm_structure_change: "Change structure",
+          chapters_organized: "Organized into chapters",
+          flat_lessons: "Flat list of lessons",
+          cancel: "Cancel",
         },
       }}
     >
@@ -101,6 +114,8 @@ describe("CourseWorkspace", () => {
   beforeEach(() => {
     updateMutation.mutateAsync.mockReset()
     updateMutation.mutateAsync.mockResolvedValue({ img: null })
+    mockedLoadCoursePreviewCurriculum.mockReset()
+    mockedLoadCoursePreviewCurriculum.mockResolvedValue({ success: true, data: [] })
   })
 
   it("renders editor and preview", () => {
@@ -330,5 +345,113 @@ describe("CourseWorkspace", () => {
     expect(screen.getByRole("alert").textContent).toBe(
       "Upload server rejected the file"
     )
+  })
+
+  it("saves unchanged chapter mode without confirmation", async () => {
+    render(
+      <CourseWorkspace
+        {...editableWorkspaceProps}
+        model={mockModel}
+        locale="en"
+        teacherProfileId={7}
+        useChapters={false}
+      />,
+      "en"
+    )
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }))
+    await waitFor(() =>
+      expect(updateMutation.mutateAsync).toHaveBeenCalledWith({
+        courseId: 42,
+        data: expect.not.objectContaining({ use_chapters: expect.anything() }),
+      })
+    )
+  })
+
+  it("requires confirmation before changing chapter mode", async () => {
+    render(
+      <CourseWorkspace
+        {...editableWorkspaceProps}
+        model={mockModel}
+        locale="en"
+        teacherProfileId={7}
+        useChapters={false}
+      />,
+      "en"
+    )
+    await act(async () => {
+      fireEvent.click(screen.getByRole("radio", { name: "Organized into chapters" }))
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }))
+    expect(updateMutation.mutateAsync).not.toHaveBeenCalled()
+    expect(screen.getByRole("dialog", { name: "Change course structure?" })).toBeDefined()
+  })
+
+  it("cancels structure change without mutating", async () => {
+    render(
+      <CourseWorkspace
+        {...editableWorkspaceProps}
+        model={mockModel}
+        locale="en"
+        teacherProfileId={7}
+        useChapters={false}
+      />,
+      "en"
+    )
+    await act(async () => {
+      fireEvent.click(screen.getByRole("radio", { name: "Organized into chapters" }))
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }))
+    expect(screen.getByRole("dialog", { name: "Change course structure?" })).toBeDefined()
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }))
+    expect(updateMutation.mutateAsync).not.toHaveBeenCalled()
+  })
+
+  it("confirms structure change and reloads curriculum", async () => {
+    mockedLoadCoursePreviewCurriculum.mockResolvedValue({ success: true, data: mockSections })
+    render(
+      <CourseWorkspace
+        {...editableWorkspaceProps}
+        model={mockModel}
+        locale="en"
+        teacherProfileId={7}
+        useChapters={false}
+      />,
+      "en"
+    )
+    await act(async () => {
+      fireEvent.click(screen.getByRole("radio", { name: "Organized into chapters" }))
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }))
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Change structure" }))
+    })
+    await waitFor(() =>
+      expect(updateMutation.mutateAsync).toHaveBeenCalledWith({
+        courseId: 42,
+        data: expect.objectContaining({ use_chapters: true }),
+      })
+    )
+    await waitFor(() =>
+      expect(mockedLoadCoursePreviewCurriculum).toHaveBeenCalledWith(42)
+    )
+  })
+
+  it("warns about removing chapter groupings when switching to flat", async () => {
+    render(
+      <CourseWorkspace
+        {...editableWorkspaceProps}
+        model={mockModel}
+        locale="en"
+        teacherProfileId={7}
+        useChapters={true}
+      />,
+      "en"
+    )
+    await act(async () => {
+      fireEvent.click(screen.getByRole("radio", { name: "Flat list of lessons" }))
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }))
+    expect(screen.getByRole("dialog", { name: "Change course structure?" })).toBeDefined()
+    expect(screen.getByText("Chapter groupings will be removed and lessons will be kept in their current order.")).toBeDefined()
   })
 })

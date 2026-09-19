@@ -622,7 +622,12 @@
     "course_settings": "Course settings",
     "course_navigation": "Course navigation",
     "content_tab": "Content",
-    "curriculum_hint": "Organize the learning path, then open a lesson to add videos, documents, or exams."
+    "curriculum_hint": "Organize the learning path, then open a lesson to add videos, documents, or exams.",
+    "structure_label": "Course structure",
+    "structure_change_title": "Change course structure?",
+    "structure_to_chapters_warning": "Existing flat lessons will move into a default chapter.",
+    "structure_to_flat_warning": "Chapter groupings will be removed and lessons will be kept in their current order.",
+    "confirm_structure_change": "Change structure"
   },
   "storage": {
     "title": "Usage",

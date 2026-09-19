@@ -622,7 +622,12 @@
     "course_settings": "إعدادات الدورة",
     "course_navigation": "التنقل داخل الدورة",
     "content_tab": "المحتوى",
-    "curriculum_hint": "نظّم مسار التعلّم، ثم افتح أي درس لإضافة الفيديوهات والمستندات والاختبارات."
+    "curriculum_hint": "نظّم مسار التعلّم، ثم افتح أي درس لإضافة الفيديوهات والمستندات والاختبارات.",
+    "structure_label": "بنية الدورة",
+    "structure_change_title": "تغيير بنية الدورة؟",
+    "structure_to_chapters_warning": "سيتم نقل الدروس المسطحة إلى فصل افتراضي.",
+    "structure_to_flat_warning": "سيتم إزالة الفصول وسيبقى ترتيب الدروس كما هو.",
+    "confirm_structure_change": "تغيير البنية"
   },
   "storage": {
     "title": "الاستخدام",
