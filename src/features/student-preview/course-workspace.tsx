@@ -42,6 +42,7 @@ import {
 } from "@/features/course-management/schema"
 import { Button } from "@/components/ui/button"
 import { PublishSwitch } from "@/features/course-management/components/publish-switch"
+import { ArchiveCourseControl } from "@/features/course-management/components/archive-course-control"
 import { cn } from "@/lib/utils"
 
 interface CourseWorkspaceProps {
@@ -49,6 +50,7 @@ interface CourseWorkspaceProps {
   locale: string
   teacherProfileId?: number
   isPublished?: boolean
+  isArchived?: boolean
   /** @deprecated The preview now uses one public student view. */
   viewer?: "guest" | "subscribed"
   initialSections?: StudentPreviewSection[]
@@ -126,6 +128,7 @@ function CourseWorkspaceContent({
   streams,
   teacherProfileId,
   isPublished,
+  isArchived,
   activeTab,
   fullPreviewOpen,
   onActiveTabChange,
@@ -167,6 +170,8 @@ function CourseWorkspaceContent({
   const [useChapters, setUseChapters] = useState(initialUseChapters)
   const [savedUseChapters, setSavedUseChapters] = useState(initialUseChapters)
   const [structureConfirmationOpen, setStructureConfirmationOpen] = useState(false)
+  const [archived, setArchived] = useState(isArchived ?? false)
+  const [published, setPublished] = useState(isPublished ?? false)
   const { update } = useCourseMutations(teacherProfileId ?? 0)
 
   const coverPreviewUrl = useMemo(
@@ -341,6 +346,31 @@ function CourseWorkspaceContent({
     [handleCurriculumCommitted, model.id]
   )
 
+  const handleArchive = useCallback(async () => {
+    try {
+      const updated = await update.mutateAsync({
+        courseId,
+        data: { is_archived: true, is_published: false },
+      })
+      setArchived(updated.is_archived)
+      setPublished(updated.is_published)
+    } catch {
+      // Archive failure retains prior local state.
+    }
+  }, [courseId, update])
+
+  const handleUnarchive = useCallback(async () => {
+    try {
+      const updated = await update.mutateAsync({
+        courseId,
+        data: { is_archived: false },
+      })
+      setArchived(updated.is_archived)
+    } catch {
+      // Unarchive failure retains prior local state.
+    }
+  }, [courseId, update])
+
   const editor = (
     <div className="space-y-6 p-4">
       {editorActions && (
@@ -357,11 +387,22 @@ function CourseWorkspaceContent({
             {copy.edit}
           </h2>
           {teacherProfileId != null && isPublished != null && (
-            <PublishSwitch
-              courseId={courseId}
-              teacherProfileId={teacherProfileId}
-              isPublished={isPublished}
-            />
+            <div className="flex items-center gap-2">
+              <PublishSwitch
+                key={`publish-${published}`}
+                courseId={courseId}
+                teacherProfileId={teacherProfileId}
+                isPublished={published}
+                disabled={archived}
+                onPublishedChange={setPublished}
+              />
+              <ArchiveCourseControl
+                isArchived={archived}
+                pending={saveStatus === "saving"}
+                onArchive={() => void handleArchive()}
+                onUnarchive={() => void handleUnarchive()}
+              />
+            </div>
           )}
         </div>
         <CourseEditorField field="title">

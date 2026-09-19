@@ -627,7 +627,14 @@
     "structure_change_title": "Change course structure?",
     "structure_to_chapters_warning": "Existing flat lessons will move into a default chapter.",
     "structure_to_flat_warning": "Chapter groupings will be removed and lessons will be kept in their current order.",
-    "confirm_structure_change": "Change structure"
+    "confirm_structure_change": "Change structure",
+    "archived": "Archived",
+    "archive_course": "Archive course",
+    "unarchive_course": "Unarchive course",
+    "archive_title": "Archive this course?",
+    "archive_warning": "The course will be unpublished and hidden from students.",
+    "confirm_archive": "Confirm archive",
+    "archived_publish_hint": "Unarchive this course before publishing it."
   },
   "storage": {
     "title": "Usage",

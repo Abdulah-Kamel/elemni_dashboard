@@ -9,10 +9,14 @@ export function PublishSwitch({
   courseId,
   teacherProfileId,
   isPublished,
+  disabled,
+  onPublishedChange,
 }: {
   courseId: number
   teacherProfileId: number
   isPublished: boolean
+  disabled?: boolean
+  onPublishedChange?: (published: boolean) => void
 }) {
   const t = useTranslations("courses")
   const [published, setPublished] = useState(isPublished)
@@ -21,7 +25,7 @@ export function PublishSwitch({
   const submitting = publish.isPending || unpublish.isPending
 
   const handleToggle = async () => {
-    if (submitting) return
+    if (submitting || disabled) return
     setError(null)
     const next = !published
     try {
@@ -31,6 +35,7 @@ export function PublishSwitch({
         await unpublish.mutateAsync(courseId)
       }
       setPublished(next)
+      onPublishedChange?.(next)
     } catch {
       setError(t("error_upstream"))
     }
@@ -46,7 +51,7 @@ export function PublishSwitch({
         role="switch"
         aria-checked={published}
         aria-label={t("published_status")}
-        disabled={submitting}
+        disabled={submitting || disabled}
         onClick={() => void handleToggle()}
         data-checked={published}
         className="relative h-6 w-11 shrink-0 cursor-pointer rounded-full bg-muted transition-colors data-[checked=true]:bg-primary disabled:cursor-wait disabled:opacity-60"

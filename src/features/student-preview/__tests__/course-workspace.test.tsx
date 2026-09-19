@@ -7,11 +7,17 @@ import { CourseWorkspace } from "../course-workspace"
 import type { StudentCoursePreviewModel, StudentPreviewSection } from "../types"
 
 const updateMutation = vi.hoisted(() => ({ mutateAsync: vi.fn() }))
+const publishMutation = vi.hoisted(() => ({ mutateAsync: vi.fn(), isPending: false }))
+const unpublishMutation = vi.hoisted(() => ({ mutateAsync: vi.fn(), isPending: false }))
 const mockedUploadCourseCover = vi.hoisted(() => vi.fn())
 const mockedLoadCoursePreviewCurriculum = vi.hoisted(() => vi.fn())
 
 vi.mock("@/features/course-management/hooks/use-course-management-queries", () => ({
-  useCourseMutations: () => ({ update: updateMutation }),
+  useCourseMutations: () => ({
+    update: updateMutation,
+    publish: publishMutation,
+    unpublish: unpublishMutation,
+  }),
 }))
 
 vi.mock("@/features/course-management/upload-course-cover", () => ({
@@ -47,6 +53,14 @@ function render(ui: React.ReactNode, locale: string = "ar") {
           chapters_organized: "Organized into chapters",
           flat_lessons: "Flat list of lessons",
           cancel: "Cancel",
+          archived: "Archived",
+          archive_course: "Archive course",
+          unarchive_course: "Unarchive course",
+          archive_title: "Archive this course?",
+          archive_warning: "The course will be unpublished and hidden from students.",
+          confirm_archive: "Confirm archive",
+          archived_publish_hint: "Unarchive this course before publishing it.",
+          published_status: "Publishing status",
         },
       }}
     >
@@ -453,5 +467,102 @@ describe("CourseWorkspace", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }))
     expect(screen.getByRole("dialog", { name: "Change course structure?" })).toBeDefined()
     expect(screen.getByText("Chapter groupings will be removed and lessons will be kept in their current order.")).toBeDefined()
+  })
+
+  it("archives and unpublishes in one update", async () => {
+    updateMutation.mutateAsync.mockResolvedValue({ is_archived: true, is_published: false, img: null })
+    render(
+      <CourseWorkspace
+        {...editableWorkspaceProps}
+        model={mockModel}
+        locale="en"
+        teacherProfileId={7}
+        isPublished
+        isArchived={false}
+      />,
+      "en"
+    )
+    fireEvent.click(screen.getByRole("button", { name: "Archive course" }))
+    fireEvent.click(screen.getByRole("button", { name: "Confirm archive" }))
+    await waitFor(() =>
+      expect(updateMutation.mutateAsync).toHaveBeenCalledWith({
+        courseId: 42,
+        data: { is_archived: true, is_published: false },
+      })
+    )
+  })
+
+  it("unarchives without republishing", async () => {
+    updateMutation.mutateAsync.mockResolvedValue({ is_archived: false, is_published: false, img: null })
+    render(
+      <CourseWorkspace
+        {...editableWorkspaceProps}
+        model={mockModel}
+        locale="en"
+        teacherProfileId={7}
+        isPublished={false}
+        isArchived
+      />,
+      "en"
+    )
+    fireEvent.click(screen.getByRole("button", { name: "Unarchive course" }))
+    await waitFor(() =>
+      expect(updateMutation.mutateAsync).toHaveBeenCalledWith({
+        courseId: 42,
+        data: { is_archived: false },
+      })
+    )
+  })
+
+  it("sends no request when archive is cancelled", async () => {
+    render(
+      <CourseWorkspace
+        {...editableWorkspaceProps}
+        model={mockModel}
+        locale="en"
+        teacherProfileId={7}
+        isPublished
+        isArchived={false}
+      />,
+      "en"
+    )
+    fireEvent.click(screen.getByRole("button", { name: "Archive course" }))
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }))
+    expect(updateMutation.mutateAsync).not.toHaveBeenCalled()
+  })
+
+  it("leaves archive control unchanged on mutation failure", async () => {
+    updateMutation.mutateAsync.mockRejectedValueOnce(new Error("Server error"))
+    render(
+      <CourseWorkspace
+        {...editableWorkspaceProps}
+        model={mockModel}
+        locale="en"
+        teacherProfileId={7}
+        isPublished
+        isArchived={false}
+      />,
+      "en"
+    )
+    fireEvent.click(screen.getByRole("button", { name: "Archive course" }))
+    fireEvent.click(screen.getByRole("button", { name: "Confirm archive" }))
+    await waitFor(() => expect(updateMutation.mutateAsync).toHaveBeenCalled())
+    expect(screen.getByRole("button", { name: "Archive course" })).toBeDefined()
+    expect(screen.queryByRole("button", { name: "Unarchive course" })).toBeNull()
+  })
+
+  it("disables publish switch while archived", () => {
+    render(
+      <CourseWorkspace
+        {...editableWorkspaceProps}
+        model={mockModel}
+        locale="en"
+        teacherProfileId={7}
+        isPublished={false}
+        isArchived
+      />,
+      "en"
+    )
+    expect(screen.getByRole("switch", { name: "Publishing status" }).getAttribute("disabled")).not.toBeNull()
   })
 })

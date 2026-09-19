@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest"
-import { render, screen } from "@testing-library/react"
+import { describe, it, expect, vi } from "vitest"
+import { render, screen, fireEvent } from "@testing-library/react"
 import { NextIntlClientProvider } from "next-intl"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { PublishSwitch } from "../components/publish-switch"
@@ -12,6 +12,13 @@ const messages = {
     error_upstream: "تعذر تنفيذ العملية.",
   },
 }
+
+vi.mock("@/features/course-management/hooks/use-course-management-queries", () => ({
+  useCourseMutations: () => ({
+    publish: { mutateAsync: vi.fn(), isPending: false },
+    unpublish: { mutateAsync: vi.fn(), isPending: false },
+  }),
+}))
 
 function renderWithIntl(ui: React.ReactNode) {
   const queryClient = new QueryClient()
@@ -41,5 +48,37 @@ describe("PublishSwitch", () => {
     expect(
       screen.getByRole("switch", { name: "حالة النشر" }).getAttribute("aria-checked")
     ).toBe("false")
+  })
+
+  it("disables the switch when disabled prop is true", () => {
+    renderWithIntl(
+      <PublishSwitch courseId={1} teacherProfileId={7} isPublished={false} disabled />
+    )
+    expect(screen.getByRole("switch", { name: "حالة النشر" }).getAttribute("disabled")).not.toBeNull()
+  })
+
+  it("calls onPublishedChange after a successful publish mutation", async () => {
+    const onPublishedChange = vi.fn()
+    const mockPublish = vi.fn().mockResolvedValue(undefined)
+    vi.doMock("@/features/course-management/hooks/use-course-management-queries", () => ({
+      useCourseMutations: () => ({
+        publish: { mutateAsync: mockPublish, isPending: false },
+        unpublish: { mutateAsync: vi.fn(), isPending: false },
+      }),
+    }))
+
+    const { PublishSwitch: FreshPublishSwitch } = await import("../components/publish-switch")
+    renderWithIntl(
+      <FreshPublishSwitch
+        courseId={1}
+        teacherProfileId={7}
+        isPublished={false}
+        onPublishedChange={onPublishedChange}
+      />
+    )
+    fireEvent.click(screen.getByRole("switch", { name: "حالة النشر" }))
+    await vi.waitFor(() =>
+      expect(onPublishedChange).toHaveBeenCalledWith(true)
+    )
   })
 })

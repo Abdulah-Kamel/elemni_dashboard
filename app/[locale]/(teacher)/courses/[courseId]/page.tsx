@@ -178,6 +178,7 @@ async function CourseEditor({
           locale={locale}
           teacherProfileId={course.teacher_profile_id}
           isPublished={course.is_published}
+          isArchived={course.is_archived}
           editorActions={editorActions}
           initialSections={
             previewCurriculum.success ? previewCurriculum.data : []
