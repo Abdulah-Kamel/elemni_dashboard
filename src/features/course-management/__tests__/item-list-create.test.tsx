@@ -145,11 +145,8 @@ describe("ItemList creation integration", () => {
     })
     fireEvent.click(screen.getByRole("button", { name: "Next" }))
 
-    fireEvent.change(document.getElementById("create-item-video")!, {
-      target: { files: [videoFile] },
-    })
-    fireEvent.change(document.getElementById("create-item-document")!, {
-      target: { files: [pdfFile] },
+    fireEvent.change(document.getElementById("create-item-attachments")!, {
+      target: { files: [videoFile, pdfFile] },
     })
     fireEvent.click(
       screen.getByRole("button", { name: "Create item with 2 files" })
@@ -177,11 +174,8 @@ describe("ItemList creation integration", () => {
     })
     fireEvent.click(screen.getByRole("button", { name: "Next" }))
 
-    fireEvent.change(document.getElementById("create-item-video")!, {
-      target: { files: [videoFile] },
-    })
-    fireEvent.change(document.getElementById("create-item-document")!, {
-      target: { files: [pdfFile] },
+    fireEvent.change(document.getElementById("create-item-attachments")!, {
+      target: { files: [videoFile, pdfFile] },
     })
     fireEvent.click(
       screen.getByRole("button", { name: "Create item with 2 files" })

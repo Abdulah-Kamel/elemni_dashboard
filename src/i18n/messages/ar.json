@@ -426,7 +426,17 @@
     "create_item_with_two_files": "إنشاء العنصر بملفين",
     "retry_video": "إعادة رفع الفيديو",
     "retry_document": "إعادة رفع ملف PDF",
-    "retry_failed_uploads": "إعادة رفع الملفات المتعثرة"
+    "retry_failed_uploads": "إعادة رفع الملفات المتعثرة",
+    "attachment_picker_label": "اختر فيديو وملف PDF",
+    "attachment_picker_hint": "اختر فيديو واحدًا وملف PDF واحدًا كحد أقصى.",
+    "too_many_attachments": "اختر ملفين كحد أقصى.",
+    "duplicate_video": "اختر فيديو واحدًا فقط.",
+    "duplicate_document": "اختر ملف PDF واحدًا فقط.",
+    "unsupported_attachment": "اختر ملف فيديو أو ملف PDF.",
+    "video_already_uploaded": "تم رفع الفيديو بالفعل ولا يمكن استبداله هنا.",
+    "document_already_uploaded": "تم رفع ملف PDF بالفعل ولا يمكن استبداله هنا.",
+    "remove_video": "إزالة الفيديو",
+    "remove_document": "إزالة ملف PDF"
   },
   "account": {
     "name": "الاسم"

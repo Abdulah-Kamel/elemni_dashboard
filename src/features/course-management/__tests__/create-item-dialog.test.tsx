@@ -35,30 +35,26 @@ function getNextButton() {
   return screen.getByRole("button", { name: "Next" })
 }
 
-function getFileInput(id: string) {
-  return document.getElementById(id) as HTMLInputElement
+function goToAttachments(title: string) {
+  fireEvent.change(getTitleInput(), { target: { value: title } })
+  fireEvent.click(getNextButton())
+}
+
+function selectFiles(files: File[]) {
+  fireEvent.change(document.getElementById("create-item-attachments")!, {
+    target: { files },
+  })
 }
 
 describe("CreateItemDialog", () => {
-  it("submits one payload containing both selected files", () => {
+  it("submits one payload after selecting video and PDF together", () => {
     const onSubmit = vi.fn()
     renderDialog({ onSubmit })
-
-    fireEvent.change(getTitleInput(), {
-      target: { value: "Lesson resources" },
-    })
-    fireEvent.click(getNextButton())
-
+    goToAttachments("Lesson resources")
     const video = new File(["video"], "lesson.mp4", { type: "video/mp4" })
-    const doc = new File(["pdf"], "notes.pdf", {
-      type: "application/pdf",
-    })
-    fireEvent.change(getFileInput("create-item-video"), {
-      target: { files: [video] },
-    })
-    fireEvent.change(getFileInput("create-item-document"), {
-      target: { files: [doc] },
-    })
+    const pdf = new File(["pdf"], "notes.pdf", { type: "application/pdf" })
+
+    selectFiles([video, pdf])
     fireEvent.click(
       screen.getByRole("button", { name: "Create item with 2 files" })
     )
@@ -66,43 +62,64 @@ describe("CreateItemDialog", () => {
     expect(onSubmit).toHaveBeenCalledWith({
       title: "Lesson resources",
       videoFile: video,
-      documentFile: doc,
+      documentFile: pdf,
     })
   })
 
-  it("requires at least one attachment", () => {
+  it("shows an error and preserves files when two videos are selected", () => {
     renderDialog()
-    fireEvent.change(getTitleInput(), {
-      target: { value: "Empty item" },
-    })
-    fireEvent.click(getNextButton())
+    goToAttachments("Duplicate videos")
+    const pdf = new File(["pdf"], "notes.pdf", { type: "application/pdf" })
+    selectFiles([pdf])
+    selectFiles([
+      new File(["one"], "one.mp4", { type: "video/mp4" }),
+      new File(["two"], "two.mp4", { type: "video/mp4" }),
+    ])
 
-    const createBtn = screen.getByRole("button", { name: "Create item" }) as HTMLButtonElement
-    expect(createBtn.disabled).toBe(true)
-    expect(screen.getByText("Add at least one video or PDF.")).toBeDefined()
+    expect(screen.getByText("Choose only one video.")).toBeDefined()
+    expect(screen.getByText("notes.pdf")).toBeDefined()
   })
 
-  it("does not dismiss while an upload is active", () => {
-    const onOpenChange = vi.fn()
-    renderDialog({ onOpenChange, uploading: true })
+  it("shows an error for two PDFs", () => {
+    renderDialog()
+    goToAttachments("Two PDFs")
+    selectFiles([
+      new File(["a"], "a.pdf", { type: "application/pdf" }),
+      new File(["b"], "b.pdf", { type: "application/pdf" }),
+    ])
 
-    fireEvent.click(screen.getByRole("button", { name: "Cancel" }))
-    expect(onOpenChange).not.toHaveBeenCalledWith(false)
+    expect(screen.getByText("Choose only one PDF.")).toBeDefined()
+  })
+
+  it("shows an error for more than two files", () => {
+    renderDialog()
+    goToAttachments("Too many")
+    selectFiles([
+      new File(["v"], "v.mp4", { type: "video/mp4" }),
+      new File(["a"], "a.pdf", { type: "application/pdf" }),
+      new File(["b"], "b.txt", { type: "text/plain" }),
+    ])
+
+    expect(screen.getByText("Choose no more than two files.")).toBeDefined()
+  })
+
+  it("shows an error for unsupported files", () => {
+    renderDialog()
+    goToAttachments("Bad file")
+    selectFiles([
+      new File(["t"], "readme.txt", { type: "text/plain" }),
+    ])
+
+    expect(screen.getByText("Choose a video or PDF file.")).toBeDefined()
   })
 
   it("submits with only a video when no document selected", () => {
     const onSubmit = vi.fn()
     renderDialog({ onSubmit })
-
-    fireEvent.change(getTitleInput(), {
-      target: { value: "Video only" },
-    })
-    fireEvent.click(getNextButton())
+    goToAttachments("Video only")
 
     const video = new File(["video"], "lesson.mp4", { type: "video/mp4" })
-    fireEvent.change(getFileInput("create-item-video"), {
-      target: { files: [video] },
-    })
+    selectFiles([video])
     fireEvent.click(screen.getByRole("button", { name: "Create item" }))
 
     expect(onSubmit).toHaveBeenCalledWith({
@@ -115,16 +132,10 @@ describe("CreateItemDialog", () => {
   it("submits with only a document when no video selected", () => {
     const onSubmit = vi.fn()
     renderDialog({ onSubmit })
-
-    fireEvent.change(getTitleInput(), {
-      target: { value: "Doc only" },
-    })
-    fireEvent.click(getNextButton())
+    goToAttachments("Doc only")
 
     const docFile = new File(["pdf"], "notes.pdf", { type: "application/pdf" })
-    fireEvent.change(getFileInput("create-item-document"), {
-      target: { files: [docFile] },
-    })
+    selectFiles([docFile])
     fireEvent.click(screen.getByRole("button", { name: "Create item" }))
 
     expect(onSubmit).toHaveBeenCalledWith({
@@ -134,64 +145,102 @@ describe("CreateItemDialog", () => {
     })
   })
 
-  it("shows error for invalid video type", () => {
+  it("replaces only the video when a new video is selected incrementally", () => {
     renderDialog()
+    goToAttachments("Incremental")
 
-    fireEvent.change(getTitleInput(), {
-      target: { value: "Bad video" },
-    })
-    fireEvent.click(getNextButton())
+    const v1 = new File(["v1"], "first.mp4", { type: "video/mp4" })
+    const pdf = new File(["pdf"], "notes.pdf", { type: "application/pdf" })
+    selectFiles([v1, pdf])
 
-    const badFile = new File(["text"], "readme.txt", { type: "text/plain" })
-    fireEvent.change(getFileInput("create-item-video"), {
-      target: { files: [badFile] },
-    })
+    expect(screen.getByText("first.mp4")).toBeDefined()
+    expect(screen.getByText("notes.pdf")).toBeDefined()
 
-    expect(screen.getByText("Choose a valid video file.")).toBeDefined()
+    const v2 = new File(["v2"], "second.mp4", { type: "video/mp4" })
+    selectFiles([v2])
+
+    expect(screen.getByText("second.mp4")).toBeDefined()
+    expect(screen.getByText("notes.pdf")).toBeDefined()
+    expect(screen.queryByText("first.mp4")).toBeNull()
   })
 
-  it("shows error for invalid document type", () => {
+  it("replaces only the PDF when a new PDF is selected incrementally", () => {
     renderDialog()
+    goToAttachments("Incremental PDF")
 
-    fireEvent.change(getTitleInput(), {
-      target: { value: "Bad doc" },
-    })
-    fireEvent.click(getNextButton())
+    const video = new File(["v"], "lesson.mp4", { type: "video/mp4" })
+    const d1 = new File(["p1"], "old.pdf", { type: "application/pdf" })
+    selectFiles([video, d1])
 
-    const badFile = new File(["img"], "page.png", { type: "image/png" })
-    fireEvent.change(getFileInput("create-item-document"), {
-      target: { files: [badFile] },
-    })
+    expect(screen.getByText("old.pdf")).toBeDefined()
 
-    expect(screen.getByText("Choose a valid PDF document.")).toBeDefined()
+    const d2 = new File(["p2"], "new.pdf", { type: "application/pdf" })
+    selectFiles([d2])
+
+    expect(screen.getByText("new.pdf")).toBeDefined()
+    expect(screen.getByText("lesson.mp4")).toBeDefined()
+    expect(screen.queryByText("old.pdf")).toBeNull()
   })
 
-  it("shows Uploaded label when video status is uploaded", () => {
+  it("removes the video via picker", () => {
+    renderDialog()
+    goToAttachments("Remove video")
+
+    const video = new File(["v"], "lesson.mp4", { type: "video/mp4" })
+    selectFiles([video])
+    expect(screen.getByText("lesson.mp4")).toBeDefined()
+
+    fireEvent.click(screen.getByRole("button", { name: /delete video/i }))
+    expect(screen.queryByText("lesson.mp4")).toBeNull()
+  })
+
+  it("removes the PDF via picker", () => {
+    renderDialog()
+    goToAttachments("Remove PDF")
+
+    const pdf = new File(["p"], "notes.pdf", { type: "application/pdf" })
+    selectFiles([pdf])
+    expect(screen.getByText("notes.pdf")).toBeDefined()
+
+    fireEvent.click(screen.getByRole("button", { name: /delete document/i }))
+    expect(screen.queryByText("notes.pdf")).toBeNull()
+  })
+
+  it("does not allow replacing an already uploaded video", () => {
     renderDialog({ videoStatus: "uploaded" })
-    fireEvent.change(getTitleInput(), {
-      target: { value: "Has video" },
-    })
-    fireEvent.click(getNextButton())
+    goToAttachments("Locked video")
 
-    expect(screen.getByText("Uploaded")).toBeDefined()
+    const video = new File(["v"], "new.mp4", { type: "video/mp4" })
+    selectFiles([video])
+
+    expect(
+      screen.getByText("The video is already uploaded and cannot be replaced here.")
+    ).toBeDefined()
   })
 
-  it("shows Failed label when document status is failed", () => {
-    renderDialog({ documentStatus: "failed" })
-    fireEvent.change(getTitleInput(), {
-      target: { value: "Failed doc" },
-    })
-    fireEvent.click(getNextButton())
+  it("does not allow replacing an already uploaded PDF", () => {
+    renderDialog({ documentStatus: "uploaded" })
+    goToAttachments("Locked PDF")
 
-    expect(screen.getByText("Failed")).toBeDefined()
+    const pdf = new File(["p"], "new.pdf", { type: "application/pdf" })
+    selectFiles([pdf])
+
+    expect(
+      screen.getByText("The PDF is already uploaded and cannot be replaced here.")
+    ).toBeDefined()
+  })
+
+  it("does not dismiss while an upload is active", () => {
+    const onOpenChange = vi.fn()
+    renderDialog({ onOpenChange, uploading: true })
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }))
+    expect(onOpenChange).not.toHaveBeenCalledWith(false)
   })
 
   it("shows Retry PDF when only document status is failed", () => {
     renderDialog({ documentStatus: "failed" })
-    fireEvent.change(getTitleInput(), {
-      target: { value: "Retry doc" },
-    })
-    fireEvent.click(getNextButton())
+    goToAttachments("Retry doc")
 
     expect(
       screen.getByRole("button", { name: "Retry PDF" })
@@ -200,10 +249,7 @@ describe("CreateItemDialog", () => {
 
   it("shows Retry video when only video status is failed", () => {
     renderDialog({ videoStatus: "failed" })
-    fireEvent.change(getTitleInput(), {
-      target: { value: "Retry vid" },
-    })
-    fireEvent.click(getNextButton())
+    goToAttachments("Retry vid")
 
     expect(
       screen.getByRole("button", { name: "Retry video" })
@@ -212,98 +258,19 @@ describe("CreateItemDialog", () => {
 
   it("shows Retry failed uploads when both statuses are failed", () => {
     renderDialog({ videoStatus: "failed", documentStatus: "failed" })
-    fireEvent.change(getTitleInput(), {
-      target: { value: "All failed" },
-    })
-    fireEvent.click(getNextButton())
+    goToAttachments("All failed")
 
     expect(
       screen.getByRole("button", { name: "Retry failed uploads" })
     ).toBeDefined()
   })
 
-  it("replaces filename when a new valid file is selected", () => {
-    renderDialog()
-
-    fireEvent.change(getTitleInput(), {
-      target: { value: "Replace" },
-    })
-    fireEvent.click(getNextButton())
-
-    const first = new File(["v1"], "first.mp4", { type: "video/mp4" })
-    fireEvent.change(getFileInput("create-item-video"), {
-      target: { files: [first] },
-    })
-
-    expect(screen.getByText("first.mp4")).toBeDefined()
-
-    const second = new File(["v2"], "second.mp4", { type: "video/mp4" })
-    fireEvent.change(getFileInput("create-item-video"), {
-      target: { files: [second] },
-    })
-
-    expect(screen.getByText("second.mp4")).toBeDefined()
-    expect(screen.queryByText("first.mp4")).toBeNull()
-  })
-
-  it("shows Optional when no attachment is selected", () => {
-    renderDialog()
-
-    fireEvent.change(getTitleInput(), {
-      target: { value: "No files" },
-    })
-    fireEvent.click(getNextButton())
-
-    const optionals = screen.getAllByText("Optional")
-    expect(optionals.length).toBe(2)
-  })
-
-  it("shows Selected when a video file is picked", () => {
-    renderDialog()
-
-    fireEvent.change(getTitleInput(), {
-      target: { value: "Has video" },
-    })
-    fireEvent.click(getNextButton())
-
-    const video = new File(["video"], "lesson.mp4", { type: "video/mp4" })
-    fireEvent.change(getFileInput("create-item-video"), {
-      target: { files: [video] },
-    })
-
-    expect(screen.getByText("Selected")).toBeDefined()
-    expect(screen.getAllByText("Optional").length).toBe(1)
-  })
-
-  it("shows Selected when a document file is picked", () => {
-    renderDialog()
-
-    fireEvent.change(getTitleInput(), {
-      target: { value: "Has doc" },
-    })
-    fireEvent.click(getNextButton())
-
-    const doc = new File(["pdf"], "notes.pdf", { type: "application/pdf" })
-    fireEvent.change(getFileInput("create-item-document"), {
-      target: { files: [doc] },
-    })
-
-    expect(screen.getByText("Selected")).toBeDefined()
-    expect(screen.getAllByText("Optional").length).toBe(1)
-  })
-
   it("resets state on programmatic close and reopen", () => {
     const { rerender } = renderDialog()
 
-    fireEvent.change(getTitleInput(), {
-      target: { value: "Stale title" },
-    })
-    fireEvent.click(getNextButton())
-
-    const video = new File(["video"], "lesson.mp4", { type: "video/mp4" })
-    fireEvent.change(getFileInput("create-item-video"), {
-      target: { files: [video] },
-    })
+    goToAttachments("Stale title")
+    const video = new File(["v"], "lesson.mp4", { type: "video/mp4" })
+    selectFiles([video])
     expect(screen.getByText("lesson.mp4")).toBeDefined()
 
     rerender(

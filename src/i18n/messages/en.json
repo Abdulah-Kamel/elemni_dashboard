@@ -426,7 +426,17 @@
     "create_item_with_two_files": "Create item with 2 files",
     "retry_video": "Retry video",
     "retry_document": "Retry PDF",
-    "retry_failed_uploads": "Retry failed uploads"
+    "retry_failed_uploads": "Retry failed uploads",
+    "attachment_picker_label": "Choose video and PDF",
+    "attachment_picker_hint": "Select up to one video and one PDF.",
+    "too_many_attachments": "Choose no more than two files.",
+    "duplicate_video": "Choose only one video.",
+    "duplicate_document": "Choose only one PDF.",
+    "unsupported_attachment": "Choose a video or PDF file.",
+    "video_already_uploaded": "The video is already uploaded and cannot be replaced here.",
+    "document_already_uploaded": "The PDF is already uploaded and cannot be replaced here.",
+    "remove_video": "Remove video",
+    "remove_document": "Remove PDF"
   },
   "account": {
     "name": "Name"

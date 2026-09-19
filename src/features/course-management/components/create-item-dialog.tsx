@@ -1,9 +1,8 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { useLocale, useTranslations } from "next-intl"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
-import { FileDropzone } from "@/components/ui/file-dropzone"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -17,14 +16,13 @@ import {
 } from "@/components/ui/dialog"
 import { Check, Loader2 } from "lucide-react"
 import {
-  validateItemUploadFile,
+  mergeItemAttachmentFiles,
+  getItemAttachmentType,
+  type UploadType,
 } from "../item-upload-validation"
+import { ItemAttachmentsPicker, type AttachmentUploadStatus } from "./item-attachments-picker"
 
-export type AttachmentUploadStatus =
-  | "idle"
-  | "uploading"
-  | "uploaded"
-  | "failed"
+export type { AttachmentUploadStatus } from "./item-attachments-picker"
 
 export type CreateItemPayload = {
   title: string
@@ -55,14 +53,12 @@ export function CreateItemDialog({
   videoProgress,
   error,
 }: CreateItemDialogProps) {
-  const locale = useLocale()
   const t = useTranslations("items")
   const [step, setStep] = useState<Step>(1)
   const [title, setTitle] = useState("")
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [documentFile, setDocumentFile] = useState<File | null>(null)
-  const [videoError, setVideoError] = useState<string | null>(null)
-  const [documentError, setDocumentError] = useState<string | null>(null)
+  const [attachmentError, setAttachmentError] = useState<string | null>(null)
   const wasOpenRef = useRef(false)
 
   useEffect(() => {
@@ -77,38 +73,50 @@ export function CreateItemDialog({
     setTitle("")
     setVideoFile(null)
     setDocumentFile(null)
-    setVideoError(null)
-    setDocumentError(null)
+    setAttachmentError(null)
   }, [open])
 
-  const handleVideoFile = useCallback(
-    (selected: File | null) => {
-      if (!selected) return
-      if (videoStatus === "uploaded") return
-      const error = validateItemUploadFile(selected, "video")
-      if (error) {
-        setVideoError(t(error))
+  const handleFilesSelect = useCallback(
+    (files: File[]) => {
+      if (
+        videoStatus === "uploaded" &&
+        files.some((file) => getItemAttachmentType(file) === "video")
+      ) {
+        setAttachmentError(t("video_already_uploaded"))
         return
       }
-      setVideoError(null)
-      setVideoFile(selected)
+      if (
+        documentStatus === "uploaded" &&
+        files.some((file) => getItemAttachmentType(file) === "document")
+      ) {
+        setAttachmentError(t("document_already_uploaded"))
+        return
+      }
+
+      const result = mergeItemAttachmentFiles(
+        { videoFile, documentFile },
+        files
+      )
+      if (result.error) {
+        setAttachmentError(t(result.error))
+        return
+      }
+      setAttachmentError(null)
+      setVideoFile(result.selection.videoFile)
+      setDocumentFile(result.selection.documentFile)
     },
-    [videoStatus, t]
+    [documentFile, documentStatus, t, videoFile, videoStatus]
   )
 
-  const handleDocumentFile = useCallback(
-    (selected: File | null) => {
-      if (!selected) return
-      if (documentStatus === "uploaded") return
-      const error = validateItemUploadFile(selected, "document")
-      if (error) {
-        setDocumentError(t(error))
-        return
-      }
-      setDocumentError(null)
-      setDocumentFile(selected)
+  const handleRemove = useCallback(
+    (type: UploadType) => {
+      if (type === "video" && videoStatus === "uploaded") return
+      if (type === "document" && documentStatus === "uploaded") return
+      setAttachmentError(null)
+      if (type === "video") setVideoFile(null)
+      else setDocumentFile(null)
     },
-    [documentStatus, t]
+    [videoStatus, documentStatus]
   )
 
   const hasAttachment = videoFile !== null || documentFile !== null
@@ -149,8 +157,7 @@ export function CreateItemDialog({
           setTitle("")
           setVideoFile(null)
           setDocumentFile(null)
-          setVideoError(null)
-          setDocumentError(null)
+          setAttachmentError(null)
         }
       }}
     >
@@ -223,63 +230,17 @@ export function CreateItemDialog({
               <p role="alert" className="text-sm text-destructive">{error}</p>
             )}
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium">
-                  {t("upload_video")}
-                </Label>
-                {videoStatus === "uploaded" && (
-                  <span className="text-xs text-muted-foreground">{t("attachment_uploaded")}</span>
-                )}
-                {videoStatus === "failed" && (
-                  <span className="text-xs text-destructive">{t("attachment_failed")}</span>
-                )}
-                {videoStatus === "idle" && (
-                  <span className="text-xs text-muted-foreground">
-                    {videoFile ? t("attachment_selected") : t("attachment_optional")}
-                  </span>
-                )}
-              </div>
-              <FileDropzone
-                onFileSelect={handleVideoFile}
-                locale={locale}
-                accept="video/*"
-                inputId="create-item-video"
-                selectedFile={videoFile}
-                disabled={uploading || videoStatus === "uploaded"}
-                error={videoError ?? undefined}
-                description="MP4, MOV, WebM up to 500MB"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium">
-                  {t("upload_document")}
-                </Label>
-                {documentStatus === "uploaded" && (
-                  <span className="text-xs text-muted-foreground">{t("attachment_uploaded")}</span>
-                )}
-                {documentStatus === "failed" && (
-                  <span className="text-xs text-destructive">{t("attachment_failed")}</span>
-                )}
-                {documentStatus === "idle" && (
-                  <span className="text-xs text-muted-foreground">
-                    {documentFile ? t("attachment_selected") : t("attachment_optional")}
-                  </span>
-                )}
-              </div>
-              <FileDropzone
-                onFileSelect={handleDocumentFile}
-                locale={locale}
-                accept=".pdf,application/pdf"
-                inputId="create-item-document"
-                selectedFile={documentFile}
-                disabled={uploading || documentStatus === "uploaded"}
-                error={documentError ?? undefined}
-                description="PDF files only"
-              />
-            </div>
+            <ItemAttachmentsPicker
+              videoFile={videoFile}
+              documentFile={documentFile}
+              videoStatus={videoStatus}
+              documentStatus={documentStatus}
+              videoProgress={videoProgress}
+              disabled={uploading}
+              error={attachmentError}
+              onFilesSelect={handleFilesSelect}
+              onRemove={handleRemove}
+            />
 
             {!hasAttachment && (
               <p role="alert" className="text-xs text-destructive">
