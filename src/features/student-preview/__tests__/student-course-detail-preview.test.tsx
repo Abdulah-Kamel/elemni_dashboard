@@ -296,7 +296,7 @@ describe("StudentCourseDetailPreview", () => {
     // Subscribe button should not render (price = "200" but no sections, still shows subscribe)
   });
 
-  it("shows empty state when all sections have 0 lessons", () => {
+  it("shows an empty chapter before lessons are added", () => {
     const zeroLessonsModel: StudentCoursePreviewModel = {
       ...baseModel,
       sections: [{ id: 99, title: "وحدة فارغة", lessons: [] }],
@@ -304,7 +304,8 @@ describe("StudentCourseDetailPreview", () => {
     render(
       <StudentCourseDetailPreview model={zeroLessonsModel} locale="ar" viewer="guest" interactionMode="local-only" />
     );
-    expect(screen.getByText("محتوى الكورس غير متاح حالياً")).toBeDefined();
+    expect(screen.getByText("وحدة فارغة")).toBeDefined();
+    expect(screen.queryByText("محتوى الكورس غير متاح حالياً")).toBeNull();
   });
 
   it("shows subscription requirements for public lesson items", () => {

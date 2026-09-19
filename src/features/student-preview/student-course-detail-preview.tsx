@@ -1,7 +1,7 @@
 "use client"
 /* eslint-disable @next/next/no-img-element -- preview renderers use native <img> for object URLs per spec */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import type {
   StudentCoursePreviewModel,
   StudentPreviewSection,
@@ -239,13 +239,9 @@ export function StudentCourseDetailPreview({
   const onSelectNode = onSelectNodeProp ?? bridge.selectNode
   const previewSelectionRef = useRef(false)
   const sections = model.sections
-  const sectionsWithLessons = useMemo(
-    () => sections.filter((s) => s.lessons.length),
-    [sections]
-  )
-  const hasContent = sectionsWithLessons.length > 0
+  const hasContent = sections.length > 0
 
-  const firstSection = sectionsWithLessons[0]
+  const firstSection = sections[0]
   const firstLesson = firstSection?.lessons[0]
 
   const [expandedChapterId, setExpandedChapterId] = useState<
@@ -275,7 +271,7 @@ export function StudentCourseDetailPreview({
     setExpandedChapterId((prev) => {
       const isOpening = prev !== chapterId
       if (isOpening) {
-        const section = sectionsWithLessons.find((s) => s.id === chapterId)
+        const section = sections.find((s) => s.id === chapterId)
         setExpandedLessonId(section?.lessons[0]?.id ?? null)
       }
       return isOpening ? chapterId : null
@@ -307,14 +303,14 @@ export function StudentCourseDetailPreview({
 
     const selectedSection =
       selectedNode.chapterId !== undefined
-        ? sectionsWithLessons.find(
+        ? sections.find(
             (section) => String(section.id) === String(selectedNode.chapterId)
           )
         : selectedNode.type === "chapter"
-          ? sectionsWithLessons.find(
+          ? sections.find(
               (section) => String(section.id) === String(selectedNode.id)
             )
-          : sectionsWithLessons.find((section) =>
+          : sections.find((section) =>
               section.lessons.some((lesson) =>
                 selectedNode.type === "lesson"
                   ? String(lesson.id) === String(selectedNode.id)
@@ -347,7 +343,7 @@ export function StudentCourseDetailPreview({
     }, 0)
 
     return () => window.clearTimeout(timeout)
-  }, [sectionsWithLessons, selectedNode])
+  }, [sections, selectedNode])
 
   const fieldEditLabels: Record<CourseBuilderField, string> =
     lang === "ar"
@@ -541,7 +537,7 @@ export function StudentCourseDetailPreview({
 
           {hasContent ? (
             <div className="space-y-3">
-              {sectionsWithLessons.map((section, sectionIndex) => (
+              {sections.map((section, sectionIndex) => (
                 <Section
                   key={`${section.id}-${sectionIndex}`}
                   section={section}
