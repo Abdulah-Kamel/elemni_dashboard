@@ -93,7 +93,7 @@ export function CourseList({
   return (
     <div className="space-y-5">
       <div className="flex animate-slide-up flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative w-full sm:max-w-md">
+        <div className="relative">
           <Search
             className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-on-surface-muted"
             aria-hidden="true"
