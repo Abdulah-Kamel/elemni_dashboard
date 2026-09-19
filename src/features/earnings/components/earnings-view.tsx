@@ -744,7 +744,7 @@ function EmptyState({
 }) {
   return (
     <div className="flex min-h-60 items-center justify-center p-8 text-center">
-      <div className="max-w-md">
+      <div>
         <div className="mx-auto flex size-11 items-center justify-center rounded-xl bg-primary-tint text-primary">
           <Icon className="size-5" aria-hidden="true" />
         </div>

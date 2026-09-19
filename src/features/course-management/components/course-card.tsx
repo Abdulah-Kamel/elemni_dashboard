@@ -6,10 +6,8 @@ import { useState } from "react"
 import { BookOpen, Layers3 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Badge } from "@/components/ui/badge"
-import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import type { CourseOut } from "@/features/shell/schema"
-import { CourseCardActions } from "./course-card-actions"
 
 function formatPrice(price: string, locale: string): string {
   const num = Number(price)
@@ -24,7 +22,6 @@ function formatPrice(price: string, locale: string): string {
 
 export function CourseCard({
   course,
-  teacherProfileId,
   locale,
   gradeName,
   streamName,
@@ -117,23 +114,6 @@ export function CourseCard({
               ? t("free")
               : formatPrice(course.price, locale)}
           </span>
-        </div>
-
-        <div className="mt-auto flex items-center gap-2 border-t border-border pt-3">
-          <Link
-            href={`/${locale}/courses/${course.id}`}
-            className={cn(
-              buttonVariants({ variant: "outline", size: "default" }),
-              "flex-1 bg-surface font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-            )}
-          >
-            {t("manage")}
-          </Link>
-          <CourseCardActions
-            courseId={course.id}
-            isPublished={course.is_published}
-            teacherProfileId={teacherProfileId}
-          />
         </div>
       </div>
     </article>

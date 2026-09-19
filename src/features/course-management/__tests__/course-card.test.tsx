@@ -106,7 +106,7 @@ describe("CourseCard", () => {
     ).toBe("https://cdn.example.com/courses/1")
   })
 
-  it("renders curriculum names and a manage link", () => {
+  it("renders curriculum names and links to the course", () => {
     renderWithIntl(
       <CourseCard
         course={mockCourse}
@@ -119,7 +119,11 @@ describe("CourseCard", () => {
     expect(screen.getByText("الصف الأول الثانوي")).toBeTruthy()
     expect(screen.getByText("علمي")).toBeTruthy()
     expect(
-      screen.getByRole("link", { name: "إدارة الدورة" }).getAttribute("href")
+      screen
+        .getByRole("link", {
+          name: `إدارة الدورة: ${mockCourse.title}`,
+        })
+        .getAttribute("href")
     ).toBe("/ar/courses/1")
   })
 })
