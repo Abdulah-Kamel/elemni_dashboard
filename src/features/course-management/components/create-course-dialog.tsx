@@ -167,7 +167,6 @@ export function CreateCourseDialog({
                 subjects={subjects}
                 grades={grades}
                 streams={streams}
-                mode="create"
                 onChange={setFormValues}
                 errors={apiErrors}
                 disabled={submitting}

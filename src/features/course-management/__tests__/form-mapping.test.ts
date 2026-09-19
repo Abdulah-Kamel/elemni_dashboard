@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
   formValuesToCourseCreate,
-  formValuesToCourseUpdate,
 } from "@/features/course-management/schema";
 import type { CourseFormValues } from "@/features/course-management/schema";
 
@@ -50,47 +49,5 @@ describe("formValuesToCourseCreate", () => {
     const form = { ...validForm, price: "" };
     const result = formValuesToCourseCreate(form);
     expect(result.price).toBe("0.00");
-  });
-});
-
-describe("formValuesToCourseUpdate", () => {
-  const validForm: CourseFormValues = {
-    title: "الجبر - الصف الأول الثانوي",
-    description: "مقدمة في الجبر",
-    price: "150.00",
-    subjectId: 1,
-    gradeId: 3,
-    streamId: 1,
-    useChapters: true,
-  };
-
-  it("includes title, description, and price", () => {
-    const result = formValuesToCourseUpdate(validForm);
-    expect(result.title).toBe(validForm.title);
-    expect(result.description).toBe(validForm.description);
-    expect(result.price).toBe(validForm.price);
-  });
-
-  it("includes placement fields", () => {
-    const result = formValuesToCourseUpdate(validForm);
-    expect(result.subject_id).toBe(validForm.subjectId);
-    expect(result.grade_id).toBe(validForm.gradeId);
-    expect(result.stream_id).toBe(validForm.streamId);
-  });
-
-  it("includes use_chapters", () => {
-    const result = formValuesToCourseUpdate(validForm);
-    expect(result.use_chapters).toBe(true);
-  });
-
-  it("does not include is_published when not set", () => {
-    const result = formValuesToCourseUpdate(validForm);
-    expect(result).not.toHaveProperty("is_published");
-  });
-
-  it("includes is_published when set", () => {
-    const form = { ...validForm, isPublished: true };
-    const result = formValuesToCourseUpdate(form);
-    expect(result.is_published).toBe(true);
   });
 });

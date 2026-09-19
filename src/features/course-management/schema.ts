@@ -74,7 +74,6 @@ export const courseFormSchema = z.object({
   gradeId: z.number().int({ message: "الصف مطلوب" }),
   streamId: z.number().int({ message: "الشعبة مطلوبة" }),
   useChapters: z.boolean().default(false),
-  isPublished: z.boolean().optional(),
 })
 export type CourseFormValues = z.infer<typeof courseFormSchema>
 
@@ -114,20 +113,4 @@ export function formValuesToCourseCreate(
     is_published: false,
     use_chapters: values.useChapters,
   }
-}
-
-export function formValuesToCourseUpdate(
-  values: CourseFormValues
-): CourseUpdate {
-  const update: CourseUpdate = {}
-  if (values.title) update.title = values.title
-  if (values.description !== undefined)
-    update.description = values.description ?? null
-  if (values.price) update.price = formatCoursePrice(values.price)
-  if (Number.isInteger(values.subjectId)) update.subject_id = values.subjectId
-  if (Number.isInteger(values.gradeId)) update.grade_id = values.gradeId
-  if (Number.isInteger(values.streamId)) update.stream_id = values.streamId
-  if (values.isPublished !== undefined) update.is_published = values.isPublished
-  if (values.useChapters !== undefined) update.use_chapters = values.useChapters
-  return update
 }

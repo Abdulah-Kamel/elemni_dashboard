@@ -22,7 +22,6 @@ const emptyForm: CourseFormValues = {
   gradeId: null as unknown as number,
   streamId: null as unknown as number,
   useChapters: false,
-  isPublished: false,
 }
 
 export function CourseForm({
@@ -33,7 +32,6 @@ export function CourseForm({
   onChange,
   errors,
   disabled,
-  mode,
 }: {
   initialValues?: Partial<CourseFormValues>
   subjects: SubjectOut[]
@@ -42,7 +40,6 @@ export function CourseForm({
   onChange: (values: CourseFormValues) => void
   errors?: Record<string, string>
   disabled?: boolean
-  mode: "create" | "edit"
 }) {
   const t = useTranslations("courses")
   const [values, setValues] = useState<CourseFormValues>({
@@ -129,26 +126,6 @@ export function CourseForm({
           </div>
         </RadioGroup>
       </div>
-
-      {mode === "edit" && (
-        <div className="space-y-2">
-          <Label>{t("published_status")}</Label>
-          <RadioGroup
-            value={values.isPublished ? "published" : "draft"}
-            onValueChange={(v) => update({ isPublished: v === "published" })}
-            disabled={disabled}
-          >
-            <div className="flex items-center gap-2">
-              <RadioGroupItem value="draft" id="draft" />
-              <Label htmlFor="draft">{t("draft")}</Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <RadioGroupItem value="published" id="published" />
-              <Label htmlFor="published">{t("published")}</Label>
-            </div>
-          </RadioGroup>
-        </div>
-      )}
     </div>
   )
 }

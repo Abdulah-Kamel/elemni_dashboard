@@ -55,7 +55,6 @@ describe("Locale switch preserves form input", () => {
           subjects={mockSubjects}
           grades={mockGrades}
           streams={mockStreams}
-          mode="create"
           onChange={() => {}}
           disabled={false}
         />
@@ -71,7 +70,6 @@ describe("Locale switch preserves form input", () => {
           subjects={mockSubjects}
           grades={mockGrades}
           streams={mockStreams}
-          mode="create"
           onChange={() => {}}
           disabled={false}
         />
@@ -96,7 +94,6 @@ describe("Locale switch preserves form input", () => {
           subjects={mockSubjects}
           grades={mockGrades}
           streams={mockStreams}
-          mode="edit"
           onChange={() => {}}
           disabled={false}
         />
@@ -122,7 +119,6 @@ describe("Locale switch preserves form input", () => {
           subjects={mockSubjects}
           grades={mockGrades}
           streams={mockStreams}
-          mode="edit"
           onChange={() => {}}
           disabled={false}
         />

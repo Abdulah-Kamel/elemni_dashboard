@@ -7,7 +7,6 @@ import {
   gradeOutSchema,
   streamOutSchema,
   formValuesToCourseCreate,
-  formValuesToCourseUpdate,
 } from "@/features/course-management/schema";
 import type { CourseFormValues } from "@/features/course-management/schema";
 
@@ -359,42 +358,5 @@ describe("formValuesToCourseCreate", () => {
 
     const result = formValuesToCourseCreate(formValues);
     expect(result.price).toBe("0.00");
-  });
-});
-
-describe("formValuesToCourseUpdate", () => {
-  it("includes only changed fields", () => {
-    const formValues: CourseFormValues = {
-      title: "Updated Title",
-      description: null,
-      price: "200.00",
-      subjectId: 1,
-      gradeId: 2,
-      streamId: 3,
-      useChapters: false,
-    };
-
-    const result = formValuesToCourseUpdate(formValues);
-
-    expect(result.title).toBe("Updated Title");
-    expect(result.description).toBeNull();
-    expect(result.price).toBe("200.00");
-  });
-
-  it("includes placement fields", () => {
-    const formValues: CourseFormValues = {
-      title: "Test",
-      description: null,
-      price: "100.00",
-      subjectId: 1,
-      gradeId: 2,
-      streamId: 3,
-      useChapters: false,
-    };
-
-    const result = formValuesToCourseUpdate(formValues);
-    expect(result.subject_id).toBe(formValues.subjectId);
-    expect(result.grade_id).toBe(formValues.gradeId);
-    expect(result.stream_id).toBe(formValues.streamId);
   });
 });

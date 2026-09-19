@@ -65,178 +65,95 @@ const mockStreams = [
 ]
 
 describe("CourseForm", () => {
-  describe("create mode", () => {
-    it("renders title field", () => {
-      renderWithIntl(
-        <CourseForm
-          subjects={mockSubjects}
-          grades={mockGrades}
-          streams={mockStreams}
-          mode="create"
-          onChange={() => {}}
-          disabled={false}
-        />
-      )
-      expect(screen.getByLabelText("عنوان الدورة")).toBeTruthy()
-    })
-
-    it("renders description field", () => {
-      renderWithIntl(
-        <CourseForm
-          subjects={mockSubjects}
-          grades={mockGrades}
-          streams={mockStreams}
-          mode="create"
-          onChange={() => {}}
-          disabled={false}
-        />
-      )
-      expect(screen.getByLabelText("الوصف")).toBeTruthy()
-    })
-
-    it("renders price field", () => {
-      renderWithIntl(
-        <CourseForm
-          subjects={mockSubjects}
-          grades={mockGrades}
-          streams={mockStreams}
-          mode="create"
-          onChange={() => {}}
-          disabled={false}
-        />
-      )
-      expect(screen.getByLabelText("السعر (ج.م)")).toBeTruthy()
-    })
-
-    it("renders subject select", () => {
-      renderWithIntl(
-        <CourseForm
-          subjects={mockSubjects}
-          grades={mockGrades}
-          streams={mockStreams}
-          mode="create"
-          onChange={() => {}}
-          disabled={false}
-        />
-      )
-      expect(screen.getAllByText("المادة").length).toBeGreaterThan(0)
-    })
-
-    it("renders grade select", () => {
-      renderWithIntl(
-        <CourseForm
-          subjects={mockSubjects}
-          grades={mockGrades}
-          streams={mockStreams}
-          mode="create"
-          onChange={() => {}}
-          disabled={false}
-        />
-      )
-      expect(screen.getAllByText("الصف").length).toBeGreaterThan(0)
-    })
-
-    it("renders stream select", () => {
-      renderWithIntl(
-        <CourseForm
-          subjects={mockSubjects}
-          grades={mockGrades}
-          streams={mockStreams}
-          mode="create"
-          onChange={() => {}}
-          disabled={false}
-        />
-      )
-      expect(screen.getAllByText("الشعبة").length).toBeGreaterThan(0)
-    })
-
-    it("renders chapters vs flat toggle", () => {
-      renderWithIntl(
-        <CourseForm
-          subjects={mockSubjects}
-          grades={mockGrades}
-          streams={mockStreams}
-          mode="create"
-          onChange={() => {}}
-          disabled={false}
-        />
-      )
-      expect(screen.getAllByText("دورة بالفصول").length).toBeGreaterThan(0)
-      expect(screen.getAllByText("دورة بقائمة دروس").length).toBeGreaterThan(0)
-    })
+  it("renders title field", () => {
+    renderWithIntl(
+      <CourseForm
+        subjects={mockSubjects}
+        grades={mockGrades}
+        streams={mockStreams}
+        onChange={() => {}}
+        disabled={false}
+      />
+    )
+    expect(screen.getByLabelText("عنوان الدورة")).toBeTruthy()
   })
 
-  describe("edit mode", () => {
-    it("renders title field with initial value", () => {
-      renderWithIntl(
-        <CourseForm
-          initialValues={{
-            title: "دورة الجبر",
-            description: "مقدمة",
-            price: "100.00",
-            subjectId: 1,
-            gradeId: 3,
-            streamId: 1,
-            useChapters: false,
-          }}
-          subjects={mockSubjects}
-          grades={mockGrades}
-          streams={mockStreams}
-          mode="edit"
-          onChange={() => {}}
-          disabled={false}
-        />
-      )
-      expect(screen.getByDisplayValue("دورة الجبر")).toBeTruthy()
-    })
+  it("renders description field", () => {
+    renderWithIntl(
+      <CourseForm
+        subjects={mockSubjects}
+        grades={mockGrades}
+        streams={mockStreams}
+        onChange={() => {}}
+        disabled={false}
+      />
+    )
+    expect(screen.getByLabelText("الوصف")).toBeTruthy()
+  })
 
-    it("renders editable curriculum placement controls", () => {
-      renderWithIntl(
-        <CourseForm
-          initialValues={{
-            title: "دورة الجبر",
-            description: "مقدمة",
-            price: "100.00",
-            subjectId: 1,
-            gradeId: 3,
-            streamId: 1,
-            useChapters: false,
-          }}
-          subjects={mockSubjects}
-          grades={mockGrades}
-          streams={mockStreams}
-          mode="edit"
-          onChange={() => {}}
-          disabled={false}
-        />
-      )
-      expect(screen.getAllByText("المادة").length).toBeGreaterThan(0)
-      expect(screen.getAllByText("الصف").length).toBeGreaterThan(0)
-      expect(screen.getAllByText("الشعبة").length).toBeGreaterThan(0)
-    })
+  it("renders price field", () => {
+    renderWithIntl(
+      <CourseForm
+        subjects={mockSubjects}
+        grades={mockGrades}
+        streams={mockStreams}
+        onChange={() => {}}
+        disabled={false}
+      />
+    )
+    expect(screen.getByLabelText("السعر (ج.م)")).toBeTruthy()
+  })
 
-    it("allows changing organization mode in edit mode", () => {
-      renderWithIntl(
-        <CourseForm
-          initialValues={{
-            title: "دورة الجبر",
-            description: "مقدمة",
-            price: "100.00",
-            subjectId: 1,
-            gradeId: 3,
-            streamId: 1,
-            useChapters: false,
-          }}
-          subjects={mockSubjects}
-          grades={mockGrades}
-          streams={mockStreams}
-          mode="edit"
-          onChange={() => {}}
-          disabled={false}
-        />
-      )
-      expect(screen.getAllByText("دورة بالفصول").length).toBeGreaterThan(0)
-      expect(screen.getAllByText("دورة بقائمة دروس").length).toBeGreaterThan(0)
-    })
+  it("renders subject select", () => {
+    renderWithIntl(
+      <CourseForm
+        subjects={mockSubjects}
+        grades={mockGrades}
+        streams={mockStreams}
+        onChange={() => {}}
+        disabled={false}
+      />
+    )
+    expect(screen.getAllByText("المادة").length).toBeGreaterThan(0)
+  })
+
+  it("renders grade select", () => {
+    renderWithIntl(
+      <CourseForm
+        subjects={mockSubjects}
+        grades={mockGrades}
+        streams={mockStreams}
+        onChange={() => {}}
+        disabled={false}
+      />
+    )
+    expect(screen.getAllByText("الصف").length).toBeGreaterThan(0)
+  })
+
+  it("renders stream select", () => {
+    renderWithIntl(
+      <CourseForm
+        subjects={mockSubjects}
+        grades={mockGrades}
+        streams={mockStreams}
+        onChange={() => {}}
+        disabled={false}
+      />
+    )
+    expect(screen.getAllByText("الشعبة").length).toBeGreaterThan(0)
+  })
+
+  it("renders chapters vs flat toggle", () => {
+    renderWithIntl(
+      <CourseForm
+        subjects={mockSubjects}
+        grades={mockGrades}
+        streams={mockStreams}
+        onChange={() => {}}
+        disabled={false}
+      />
+    )
+    expect(screen.getAllByText("دورة بالفصول").length).toBeGreaterThan(0)
+    expect(screen.getAllByText("دورة بقائمة دروس").length).toBeGreaterThan(0)
   })
 })
