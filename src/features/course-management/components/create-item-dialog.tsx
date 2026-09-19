@@ -66,11 +66,7 @@ export function CreateItemDialog({
   const wasOpenRef = useRef(false)
 
   useEffect(() => {
-    if (!open) {
-      wasOpenRef.current = false
-      return
-    }
-    if (wasOpenRef.current) return
+    if (!open || wasOpenRef.current) return
 
     wasOpenRef.current = true
     setStep(1)
@@ -158,7 +154,7 @@ export function CreateItemDialog({
         <DialogHeader>
           <div className="flex items-center justify-between gap-3">
             <div>
-              <DialogTitle>{t("create_placeholder")}</DialogTitle>
+              <DialogTitle>{stepTitle}</DialogTitle>
               <DialogDescription className="mt-1">
                 {stepDescription}
               </DialogDescription>
@@ -234,6 +230,11 @@ export function CreateItemDialog({
                 {videoStatus === "failed" && (
                   <span className="text-xs text-destructive">{t("attachment_failed")}</span>
                 )}
+                {videoStatus === "idle" && (
+                  <span className="text-xs text-muted-foreground">
+                    {videoFile ? t("attachment_selected") : t("attachment_optional")}
+                  </span>
+                )}
               </div>
               <FileDropzone
                 onFileSelect={handleVideoFile}
@@ -257,6 +258,11 @@ export function CreateItemDialog({
                 )}
                 {documentStatus === "failed" && (
                   <span className="text-xs text-destructive">{t("attachment_failed")}</span>
+                )}
+                {documentStatus === "idle" && (
+                  <span className="text-xs text-muted-foreground">
+                    {documentFile ? t("attachment_selected") : t("attachment_optional")}
+                  </span>
                 )}
               </div>
               <FileDropzone

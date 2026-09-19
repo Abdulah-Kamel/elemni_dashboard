@@ -100,7 +100,7 @@ function renderItemList() {
 }
 
 function getTitleInput() {
-  return document.getElementById("create-item-title") as HTMLInputElement
+  return screen.getByRole("textbox", { name: "Item title" }) as HTMLInputElement
 }
 
 beforeEach(() => {

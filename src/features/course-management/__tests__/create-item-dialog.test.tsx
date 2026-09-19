@@ -28,7 +28,7 @@ function renderDialog(
 }
 
 function getTitleInput() {
-  return document.getElementById("create-item-title") as HTMLInputElement
+  return screen.getByRole("textbox", { name: "Item title" }) as HTMLInputElement
 }
 
 function getNextButton() {
@@ -77,7 +77,7 @@ describe("CreateItemDialog", () => {
     })
     fireEvent.click(getNextButton())
 
-    const createBtn = screen.getByRole("button", { name: "Create item" })
+    const createBtn = screen.getByRole("button", { name: "Create item" }) as HTMLButtonElement
     expect(createBtn.disabled).toBe(true)
     expect(screen.getByText("Add at least one video or PDF.")).toBeDefined()
   })
@@ -244,5 +244,51 @@ describe("CreateItemDialog", () => {
 
     expect(screen.getByText("second.mp4")).toBeDefined()
     expect(screen.queryByText("first.mp4")).toBeNull()
+  })
+
+  it("shows Optional when no attachment is selected", () => {
+    renderDialog()
+
+    fireEvent.change(getTitleInput(), {
+      target: { value: "No files" },
+    })
+    fireEvent.click(getNextButton())
+
+    const optionals = screen.getAllByText("Optional")
+    expect(optionals.length).toBe(2)
+  })
+
+  it("shows Selected when a video file is picked", () => {
+    renderDialog()
+
+    fireEvent.change(getTitleInput(), {
+      target: { value: "Has video" },
+    })
+    fireEvent.click(getNextButton())
+
+    const video = new File(["video"], "lesson.mp4", { type: "video/mp4" })
+    fireEvent.change(getFileInput("create-item-video"), {
+      target: { files: [video] },
+    })
+
+    expect(screen.getByText("Selected")).toBeDefined()
+    expect(screen.getAllByText("Optional").length).toBe(1)
+  })
+
+  it("shows Selected when a document file is picked", () => {
+    renderDialog()
+
+    fireEvent.change(getTitleInput(), {
+      target: { value: "Has doc" },
+    })
+    fireEvent.click(getNextButton())
+
+    const doc = new File(["pdf"], "notes.pdf", { type: "application/pdf" })
+    fireEvent.change(getFileInput("create-item-document"), {
+      target: { files: [doc] },
+    })
+
+    expect(screen.getByText("Selected")).toBeDefined()
+    expect(screen.getAllByText("Optional").length).toBe(1)
   })
 })
