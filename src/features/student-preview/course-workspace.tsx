@@ -77,6 +77,7 @@ const COPY = {
     saving: "جاري الحفظ...",
     saved: "تم حفظ التغييرات",
     saveError: "تعذر حفظ التغييرات. حاول مرة أخرى.",
+    error_upstream: "الخدمة غير متاحة مؤقتًا",
   },
   en: {
     edit: "Edit Course",
@@ -90,6 +91,7 @@ const COPY = {
     saving: "Saving...",
     saved: "Changes saved",
     saveError: "Could not save the changes. Try again.",
+    error_upstream: "Service temporarily unavailable",
   },
 }
 
@@ -172,6 +174,8 @@ function CourseWorkspaceContent({
   const [structureConfirmationOpen, setStructureConfirmationOpen] = useState(false)
   const [archived, setArchived] = useState(isArchived ?? false)
   const [published, setPublished] = useState(isPublished ?? false)
+  const [archivePending, setArchivePending] = useState(false)
+  const [archiveError, setArchiveError] = useState<string | null>(null)
   const { update } = useCourseMutations(teacherProfileId ?? 0)
 
   const coverPreviewUrl = useMemo(
@@ -347,6 +351,8 @@ function CourseWorkspaceContent({
   )
 
   const handleArchive = useCallback(async () => {
+    setArchiveError(null)
+    setArchivePending(true)
     try {
       const updated = await update.mutateAsync({
         courseId,
@@ -354,22 +360,36 @@ function CourseWorkspaceContent({
       })
       setArchived(updated.is_archived)
       setPublished(updated.is_published)
-    } catch {
-      // Archive failure retains prior local state.
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : copy.error_upstream
+      setArchiveError(message)
+    } finally {
+      setArchivePending(false)
     }
-  }, [courseId, update])
+  }, [courseId, copy.error_upstream, update])
 
   const handleUnarchive = useCallback(async () => {
+    setArchiveError(null)
+    setArchivePending(true)
     try {
       const updated = await update.mutateAsync({
         courseId,
         data: { is_archived: false },
       })
       setArchived(updated.is_archived)
-    } catch {
-      // Unarchive failure retains prior local state.
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : copy.error_upstream
+      setArchiveError(message)
+    } finally {
+      setArchivePending(false)
     }
-  }, [courseId, update])
+  }, [courseId, copy.error_upstream, update])
 
   const editor = (
     <div className="space-y-6 p-4">
@@ -398,13 +418,18 @@ function CourseWorkspaceContent({
               />
               <ArchiveCourseControl
                 isArchived={archived}
-                pending={saveStatus === "saving"}
+                pending={archivePending}
                 onArchive={() => void handleArchive()}
                 onUnarchive={() => void handleUnarchive()}
               />
             </div>
           )}
         </div>
+        {archiveError && (
+          <p role="alert" className="text-sm text-destructive">
+            {archiveError}
+          </p>
+        )}
         <CourseEditorField field="title">
           {(controlClassName) => (
             <>

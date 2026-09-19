@@ -551,6 +551,115 @@ describe("CourseWorkspace", () => {
     expect(screen.queryByRole("button", { name: "Unarchive course" })).toBeNull()
   })
 
+  it("shows inline error when archive mutation fails", async () => {
+    updateMutation.mutateAsync.mockRejectedValueOnce(new Error("Server error"))
+    render(
+      <CourseWorkspace
+        {...editableWorkspaceProps}
+        model={mockModel}
+        locale="en"
+        teacherProfileId={7}
+        isPublished
+        isArchived={false}
+      />,
+      "en"
+    )
+    fireEvent.click(screen.getByRole("button", { name: "Archive course" }))
+    fireEvent.click(screen.getByRole("button", { name: "Confirm archive" }))
+    await waitFor(() => expect(screen.getByRole("alert")).toBeDefined())
+    expect(screen.getByRole("alert").textContent).toBe("Server error")
+  })
+
+  it("shows inline error when unarchive mutation fails", async () => {
+    updateMutation.mutateAsync.mockRejectedValueOnce(new Error("Unarchive failed"))
+    render(
+      <CourseWorkspace
+        {...editableWorkspaceProps}
+        model={mockModel}
+        locale="en"
+        teacherProfileId={7}
+        isPublished={false}
+        isArchived
+      />,
+      "en"
+    )
+    fireEvent.click(screen.getByRole("button", { name: "Unarchive course" }))
+    await waitFor(() => expect(screen.getByRole("alert")).toBeDefined())
+    expect(screen.getByRole("alert").textContent).toBe("Unarchive failed")
+  })
+
+  it("falls back to generic error when archive fails with no message", async () => {
+    updateMutation.mutateAsync.mockRejectedValueOnce({})
+    render(
+      <CourseWorkspace
+        {...editableWorkspaceProps}
+        model={mockModel}
+        locale="en"
+        teacherProfileId={7}
+        isPublished
+        isArchived={false}
+      />,
+      "en"
+    )
+    fireEvent.click(screen.getByRole("button", { name: "Archive course" }))
+    fireEvent.click(screen.getByRole("button", { name: "Confirm archive" }))
+    await waitFor(() => expect(screen.getByRole("alert")).toBeDefined())
+    expect(screen.getByRole("alert").textContent).toBe(
+      "Service temporarily unavailable"
+    )
+  })
+
+  it("clears archive error before a new archive request", async () => {
+    updateMutation.mutateAsync
+      .mockRejectedValueOnce(new Error("First error"))
+      .mockResolvedValue({ is_archived: true, is_published: false, img: null })
+    render(
+      <CourseWorkspace
+        {...editableWorkspaceProps}
+        model={mockModel}
+        locale="en"
+        teacherProfileId={7}
+        isPublished
+        isArchived={false}
+      />,
+      "en"
+    )
+    fireEvent.click(screen.getByRole("button", { name: "Archive course" }))
+    fireEvent.click(screen.getByRole("button", { name: "Confirm archive" }))
+    await waitFor(() => expect(screen.getByRole("alert")).toBeDefined())
+    expect(screen.getByRole("alert").textContent).toBe("First error")
+    fireEvent.click(screen.getByRole("button", { name: "Archive course" }))
+    fireEvent.click(screen.getByRole("button", { name: "Confirm archive" }))
+    await waitFor(() => expect(screen.queryByRole("alert")).toBeNull())
+  })
+
+  it("disables archive button while archive request is pending", async () => {
+    let resolvePromise: (value: unknown) => void
+    updateMutation.mutateAsync.mockImplementation(
+      () => new Promise((resolve) => { resolvePromise = resolve })
+    )
+    render(
+      <CourseWorkspace
+        {...editableWorkspaceProps}
+        model={mockModel}
+        locale="en"
+        teacherProfileId={7}
+        isPublished
+        isArchived={false}
+      />,
+      "en"
+    )
+    fireEvent.click(screen.getByRole("button", { name: "Archive course" }))
+    fireEvent.click(screen.getByRole("button", { name: "Confirm archive" }))
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Archive course" }).getAttribute("disabled")).not.toBeNull()
+    )
+    resolvePromise!({ is_archived: true, is_published: false, img: null })
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Unarchive course" })).toBeDefined()
+    )
+  })
+
   it("disables publish switch while archived", () => {
     render(
       <CourseWorkspace
