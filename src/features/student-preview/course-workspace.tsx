@@ -188,74 +188,6 @@ function CourseWorkspaceContent({
     setSaveError(null)
   }, [])
 
-  const handleSave = useCallback(async () => {
-    if (!canSave || teacherProfileId == null) {
-      setSaveStatus("error")
-      setSaveError(copy.saveError)
-      return
-    }
-
-    const trimmedTitle = title.trim()
-    if (!trimmedTitle) {
-      setSaveStatus("error")
-      setSaveError(
-        lang === "ar" ? "عنوان الكورس مطلوب." : "A course title is required."
-      )
-      return
-    }
-
-    if (useChapters !== savedUseChapters) {
-      setStructureConfirmationOpen(true)
-      return
-    }
-
-    setSaveStatus("saving")
-    setSaveError(null)
-
-    try {
-      const body: CourseUpdate = {
-        title: trimmedTitle,
-        description: description.trim() || null,
-        price: formatCoursePrice(price),
-      }
-
-      if (subjectId !== null) body.subject_id = subjectId
-      if (gradeId !== null) body.grade_id = gradeId
-      if (streamId !== null) body.stream_id = streamId
-
-      if (coverFile) {
-        body.img = await uploadCourseCover(courseId, coverFile)
-      }
-
-      const updatedCourse = await update.mutateAsync({ courseId, data: body })
-      setSavedCoverUrl(updatedCourse.img ?? savedCoverUrl)
-      setCoverFile(null)
-      setSaveStatus("saved")
-    } catch (error) {
-      const message =
-        error instanceof Error && error.message ? error.message : copy.saveError
-      setSaveStatus("error")
-      setSaveError(message)
-    }
-  }, [
-    canSave,
-    copy.saveError,
-    courseId,
-    coverFile,
-    description,
-    lang,
-    price,
-    savedCoverUrl,
-    subjectId,
-    gradeId,
-    streamId,
-    teacherProfileId,
-    title,
-    update,
-    useChapters,
-    savedUseChapters,
-  ])
-
   const performSave = useCallback(async () => {
     if (!canSave || teacherProfileId == null) {
       setSaveStatus("error")
@@ -332,6 +264,39 @@ function CourseWorkspaceContent({
     teacherProfileId,
     title,
     update,
+    useChapters,
+    savedUseChapters,
+  ])
+
+  const handleSave = useCallback(async () => {
+    if (!canSave || teacherProfileId == null) {
+      setSaveStatus("error")
+      setSaveError(copy.saveError)
+      return
+    }
+
+    const trimmedTitle = title.trim()
+    if (!trimmedTitle) {
+      setSaveStatus("error")
+      setSaveError(
+        lang === "ar" ? "عنوان الكورس مطلوب." : "A course title is required."
+      )
+      return
+    }
+
+    if (useChapters !== savedUseChapters) {
+      setStructureConfirmationOpen(true)
+      return
+    }
+
+    await performSave()
+  }, [
+    canSave,
+    copy.saveError,
+    lang,
+    performSave,
+    teacherProfileId,
+    title,
     useChapters,
     savedUseChapters,
   ])
