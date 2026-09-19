@@ -69,6 +69,12 @@ describe("getItemAttachmentType", () => {
       getItemAttachmentType(new File(["t"], "a.txt", { type: "text/plain" }))
     ).toBeNull()
   })
+
+  it("returns null for .mp4 with non-video MIME (MIME-first classification)", () => {
+    expect(
+      getItemAttachmentType(new File(["x"], "fake.mp4", { type: "text/plain" }))
+    ).toBeNull()
+  })
 })
 
 describe("mergeItemAttachmentFiles", () => {
@@ -148,6 +154,26 @@ describe("mergeItemAttachmentFiles", () => {
     const result = mergeItemAttachmentFiles(current, [txt])
     expect(result.error).toBeTruthy()
     expect(result.selection).toBe(current)
+  })
+
+  it("returns exact current object reference on unsupported_attachment", () => {
+    const current: ItemAttachmentSelection = {
+      videoFile: video,
+      documentFile: pdf,
+    }
+    const fake = new File(["x"], "fake.mp4", { type: "text/plain" })
+    const result = mergeItemAttachmentFiles(current, [fake])
+    expect(result.selection).toBe(current)
+    expect(result.error).toBe("unsupported_attachment")
+  })
+
+  it("detects duplicate video across different MIME subtypes (mp4 + webm)", () => {
+    const webm = new File(["v"], "lesson.webm", { type: "video/webm" })
+    const current: ItemAttachmentSelection = { videoFile: null, documentFile: null }
+    expect(mergeItemAttachmentFiles(current, [video, webm])).toEqual({
+      selection: current,
+      error: "duplicate_video",
+    })
   })
 
   it("rejects oversized video without mutating current", () => {
