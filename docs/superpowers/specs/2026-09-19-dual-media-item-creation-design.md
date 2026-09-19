@@ -10,7 +10,8 @@ This is a dashboard-only change. No backend source files, tests, schemas, endpoi
 
 ### In Scope
 
-- Replace the create-item type choice with independent video and PDF attachment rows.
+- Replace the create-item type choice with one multi-file picker that accepts video and PDF files.
+- Enforce at most one video and one PDF per item.
 - Require at least one attachment before submission.
 - Upload both selected files sequentially to the same item.
 - Preserve successful work when a later upload fails.
@@ -56,12 +57,19 @@ The teacher enters a required title using the existing 200-character limit. Cont
 
 ### Step 2: Attachments
 
-Show a compact attachment checklist with two independent rows:
+Show one upload dropzone backed by a single file input with `multiple` enabled. The input accepts video MIME types and PDF documents.
 
-- Video, optional
-- PDF document, optional
+Valid selections are:
 
-Each row allows the teacher to choose, replace, or remove its file before submission. A selected row displays the filename. The final action is disabled until at least one valid file is selected.
+- one video
+- one PDF
+- one video and one PDF
+
+Reject more than two files, two videos, two PDFs, unsupported file types, and videos larger than 500 MB. Errors are displayed inline without discarding the previous valid selection.
+
+Selecting files again merges by attachment type. A newly selected video replaces the pending video while preserving the pending PDF; a newly selected PDF replaces the pending PDF while preserving the pending video. Confirmed uploads remain locked during retry and cannot be replaced.
+
+Selected files appear beneath the shared dropzone as separate video and PDF rows. Each row displays its filename, status, and remove action before upload. The final action is disabled until at least one valid file is selected.
 
 The primary action reads `Create item` when one file is selected and `Create item with 2 files` when both are selected. Equivalent Arabic copy is required.
 
@@ -104,6 +112,8 @@ Uploads are sequential, with video first and PDF second. A retry resumes from th
 The existing backend already supports the required state and operations:
 
 - video and document references coexist on one item
+- each item stores at most one video reference and one document path
+- a second video replaces the existing video, and a second document replaces the existing document
 - video and document uploads use independent endpoint flows
 - confirming one attachment does not clear the other
 - deleting one attachment does not remove the other reference
@@ -118,9 +128,12 @@ This design intentionally relies on that existing behavior and makes no backend 
 - Requires at least one attachment.
 - Accepts video only.
 - Accepts PDF only.
-- Accepts both video and PDF.
+- Accepts one video and one PDF in a single file-selection action.
+- Adds the missing attachment type when files are selected incrementally.
+- Replaces only the newly selected attachment type while preserving the other type.
+- Rejects more than two files, two videos, and two PDFs.
 - Rejects invalid video files, oversized videos, and non-PDF documents using existing constraints.
-- Shows selected filenames and allows replacing or removing each selection.
+- Shows both selected filenames under one dropzone and allows removing each pending selection.
 - Prevents dismissal while an upload is active.
 - Provides English and Arabic labels for new states and actions.
 
@@ -148,6 +161,8 @@ Run dashboard unit tests, TypeScript checking, and linting. No backend test suit
 ## Success Criteria
 
 - A teacher can create an item with only a video, only a PDF, or both.
+- The creation UI uses one upload input for all supported files.
+- One item never accepts more than one selected video and one selected PDF.
 - Selecting both creates exactly one item and associates both uploads with it.
 - Video uploads before PDF when both are selected.
 - A second-upload failure never discards the first successful attachment.
