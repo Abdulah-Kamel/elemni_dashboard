@@ -40,6 +40,24 @@ export const mockCourses: CourseOut[] = [
     created_at: "2026-07-01T10:00:00Z",
     bunny_collection_id: null,
   },
+  {
+    id: 3,
+    title: "Archived Chemistry",
+    description: "archived course",
+    price: "0.00",
+    is_published: false,
+    is_archived: true,
+    use_chapters: false,
+    total_duration_minutes: null,
+    subject_id: 3,
+    subject_name: "الكيمياء",
+    teacher_profile_id: 7,
+    grade_id: 5,
+    stream_id: 1,
+    created_by_id: 7,
+    created_at: "2026-08-01T10:00:00Z",
+    bunny_collection_id: null,
+  },
 ];
 
 export const mockSubjects = [

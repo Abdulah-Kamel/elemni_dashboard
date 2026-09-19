@@ -563,6 +563,7 @@
     "filter_all": "All",
     "filter_published": "Published",
     "filter_draft": "Draft",
+    "filter_archived": "Archived",
     "search_placeholder": "Search courses...",
     "no_results": "No courses match your search",
     "no_results_hint": "Try another search term or change the status filter.",

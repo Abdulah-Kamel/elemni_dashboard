@@ -563,6 +563,7 @@
     "filter_all": "الكل",
     "filter_published": "منشور",
     "filter_draft": "مسودة",
+    "filter_archived": "مؤرشف",
     "search_placeholder": "ابحث في الدورات...",
     "no_results": "لا توجد دورات تطابق بحثك",
     "no_results_hint": "جرّب عبارة بحث أخرى أو غيّر تصفية الحالة.",

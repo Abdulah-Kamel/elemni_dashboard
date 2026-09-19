@@ -69,12 +69,14 @@ export function CourseCard({
           <Badge
             className={cn(
               "border-0 shadow-xs",
-              course.is_published
-                ? "bg-success-tint text-success"
-                : "bg-surface/95 text-on-surface-muted"
+              course.is_archived
+                ? "bg-warning-tint text-warning"
+                : course.is_published
+                  ? "bg-success-tint text-success"
+                  : "bg-surface/95 text-on-surface-muted"
             )}
           >
-            {course.is_published ? t("published") : t("draft")}
+            {course.is_archived ? t("archived") : course.is_published ? t("published") : t("draft")}
           </Badge>
         </span>
       </Link>

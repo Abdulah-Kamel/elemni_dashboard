@@ -167,6 +167,89 @@ describe("CourseList", () => {
       expect(screen.getByText("الجبر - الصف الأول الثانوي")).toBeTruthy()
       expect(screen.queryByText("الهندسة - الصف الثاني الثانوي")).toBeNull()
     })
+
+    it("filters courses by archived status", () => {
+      renderWithIntl(
+        <CourseList
+          courses={mockCourses}
+          teacherProfileId={1}
+          error={null}
+          isEmpty={false}
+          locale="ar"
+        />
+      )
+
+      fireEvent.click(screen.getByRole("button", { name: "مؤرشف" }))
+      expect(screen.getByText("Archived Chemistry")).toBeTruthy()
+      expect(screen.queryByText("الجبر - الصف الأول الثانوي")).toBeNull()
+    })
+
+    it("all filter includes archived courses", () => {
+      renderWithIntl(
+        <CourseList
+          courses={mockCourses}
+          teacherProfileId={1}
+          error={null}
+          isEmpty={false}
+          locale="ar"
+        />
+      )
+
+      fireEvent.click(screen.getByRole("button", { name: "الكل" }))
+      expect(screen.getByText("الجبر - الصف الأول الثانوي")).toBeTruthy()
+      expect(screen.getByText("Archived Chemistry")).toBeTruthy()
+    })
+
+    it("published filter excludes archived courses", () => {
+      renderWithIntl(
+        <CourseList
+          courses={mockCourses}
+          teacherProfileId={1}
+          error={null}
+          isEmpty={false}
+          locale="ar"
+        />
+      )
+
+      fireEvent.click(screen.getByRole("button", { name: "منشور" }))
+      expect(screen.getByText("الجبر - الصف الأول الثانوي")).toBeTruthy()
+      expect(screen.queryByText("Archived Chemistry")).toBeNull()
+    })
+
+    it("draft filter excludes archived courses", () => {
+      renderWithIntl(
+        <CourseList
+          courses={mockCourses}
+          teacherProfileId={1}
+          error={null}
+          isEmpty={false}
+          locale="ar"
+        />
+      )
+
+      fireEvent.click(screen.getByRole("button", { name: "مسودة" }))
+      expect(screen.getByText("الهندسة - الصف الثاني الثانوي")).toBeTruthy()
+      expect(screen.queryByText("Archived Chemistry")).toBeNull()
+    })
+
+    it("search composes with archived filter", () => {
+      renderWithIntl(
+        <CourseList
+          courses={mockCourses}
+          teacherProfileId={1}
+          error={null}
+          isEmpty={false}
+          locale="ar"
+        />
+      )
+
+      fireEvent.click(screen.getByRole("button", { name: "مؤرشف" }))
+      fireEvent.change(screen.getByRole("searchbox"), {
+        target: { value: "Chemistry" },
+      })
+      expect(screen.getByText("Archived Chemistry")).toBeTruthy()
+      expect(screen.queryByText("الجبر - الصف الأول الثانوي")).toBeNull()
+    })
   })
 })
 

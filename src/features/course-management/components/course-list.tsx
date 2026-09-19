@@ -12,9 +12,9 @@ import { useCoursesQuery } from "@/features/course-management/hooks/use-course-m
 import { CourseCard } from "./course-card"
 import { EmptyState } from "./empty-state"
 
-type StatusFilter = "all" | "published" | "draft"
+type StatusFilter = "all" | "published" | "draft" | "archived"
 
-const FILTERS: StatusFilter[] = ["all", "published", "draft"]
+const FILTERS: StatusFilter[] = ["all", "published", "draft", "archived"]
 
 const STAGGER = ["animate-stagger-1", "animate-stagger-2", "animate-stagger-3", "animate-stagger-4", "animate-stagger-5", "animate-stagger-6"]
 
@@ -51,7 +51,9 @@ export function CourseList({
     return currentCourses.filter((course) => {
       const matchesStatus =
         status === "all" ||
-        (status === "published" ? course.is_published : !course.is_published)
+        (status === "archived" && course.is_archived) ||
+        (status === "published" && !course.is_archived && course.is_published) ||
+        (status === "draft" && !course.is_archived && !course.is_published)
       if (!matchesStatus) return false
       if (!term) return true
 

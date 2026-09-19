@@ -109,6 +109,19 @@ describe("CourseCard", () => {
     ).toBe("https://cdn.example.com/courses/1")
   })
 
+  it("shows archived instead of draft or published", () => {
+    renderWithIntl(
+      <CourseCard
+        course={{ ...mockCourse, is_archived: true, is_published: false }}
+        teacherProfileId={7}
+        locale="ar"
+      />
+    )
+    expect(screen.getByText("مؤرشفة")).toBeTruthy()
+    expect(screen.queryByText("مسودة")).toBeNull()
+    expect(screen.queryByText("منشور")).toBeNull()
+  })
+
   it("renders curriculum names and links to the course", () => {
     renderWithIntl(
       <CourseCard
