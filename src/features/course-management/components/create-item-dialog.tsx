@@ -66,7 +66,11 @@ export function CreateItemDialog({
   const wasOpenRef = useRef(false)
 
   useEffect(() => {
-    if (!open || wasOpenRef.current) return
+    if (!open) {
+      wasOpenRef.current = false
+      return
+    }
+    if (wasOpenRef.current) return
 
     wasOpenRef.current = true
     setStep(1)

@@ -291,4 +291,53 @@ describe("CreateItemDialog", () => {
     expect(screen.getByText("Selected")).toBeDefined()
     expect(screen.getAllByText("Optional").length).toBe(1)
   })
+
+  it("resets state on programmatic close and reopen", () => {
+    const { rerender } = renderDialog()
+
+    fireEvent.change(getTitleInput(), {
+      target: { value: "Stale title" },
+    })
+    fireEvent.click(getNextButton())
+
+    const video = new File(["video"], "lesson.mp4", { type: "video/mp4" })
+    fireEvent.change(getFileInput("create-item-video"), {
+      target: { files: [video] },
+    })
+    expect(screen.getByText("lesson.mp4")).toBeDefined()
+
+    rerender(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <CreateItemDialog
+          open={false}
+          onOpenChange={vi.fn()}
+          onSubmit={vi.fn()}
+          uploading={false}
+          videoStatus="idle"
+          documentStatus="idle"
+          videoProgress={0}
+          error={null}
+        />
+      </NextIntlClientProvider>
+    )
+
+    rerender(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <CreateItemDialog
+          open={true}
+          onOpenChange={vi.fn()}
+          onSubmit={vi.fn()}
+          uploading={false}
+          videoStatus="idle"
+          documentStatus="idle"
+          videoProgress={0}
+          error={null}
+        />
+      </NextIntlClientProvider>
+    )
+
+    expect(getTitleInput().value).toBe("")
+    expect(screen.queryByText("lesson.mp4")).toBeNull()
+    expect(screen.getByRole("button", { name: "Next" })).toBeDefined()
+  })
 })
