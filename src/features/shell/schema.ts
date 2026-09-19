@@ -26,7 +26,9 @@ export const courseOutSchema = z.object({
   img: z.string().nullable().optional(),
   price: z.string(),
   is_published: z.boolean(),
+  is_archived: z.boolean(),
   use_chapters: z.boolean(),
+  total_duration_minutes: z.number().int().nonnegative().nullable(),
   subject_id: z.number().int().nullable(),
   subject_name: z.string().nullable().optional(),
   teacher_profile_id: z.number().int(),
@@ -34,6 +36,7 @@ export const courseOutSchema = z.object({
   stream_id: z.number().int(),
   created_by_id: z.number().int().nullable(),
   created_at: z.string().datetime(),
+  bunny_collection_id: z.string().nullable(),
 })
 export type CourseOut = z.infer<typeof courseOutSchema>
 

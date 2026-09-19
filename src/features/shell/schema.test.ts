@@ -74,7 +74,9 @@ describe("zod schemas (data-model.md §1 + contracts/openapi.json)", () => {
       description: null,
       price: "0.00",
       is_published: false,
+      is_archived: false,
       use_chapters: true,
+      total_duration_minutes: null,
       subject_id: null,
       subject_name: null,
       teacher_profile_id: 1,
@@ -82,6 +84,7 @@ describe("zod schemas (data-model.md §1 + contracts/openapi.json)", () => {
       stream_id: 1,
       created_by_id: null,
       created_at: "2026-01-01T00:00:00Z",
+      bunny_collection_id: null,
     };
 
     it("parses a valid CourseOut", () => {
@@ -98,6 +101,56 @@ describe("zod schemas (data-model.md §1 + contracts/openapi.json)", () => {
     it("rejects missing title", () => {
       const { title: _, ...noTitle } = validCourse;
       expect(() => courseOutSchema.parse(noTitle)).toThrow();
+    });
+
+    it("parses archive, duration, and collection fields from CourseOut", () => {
+      const course = courseOutSchema.parse({
+        id: 1,
+        title: "Physics",
+        description: null,
+        img: null,
+        price: "0.00",
+        is_published: false,
+        is_archived: true,
+        use_chapters: false,
+        total_duration_minutes: 95,
+        subject_id: 2,
+        subject_name: "Physics",
+        teacher_profile_id: 7,
+        grade_id: 3,
+        stream_id: 1,
+        created_by_id: 9,
+        created_at: "2026-09-19T12:00:00Z",
+        bunny_collection_id: "collection-123",
+      });
+
+      expect(course.is_archived).toBe(true);
+      expect(course.total_duration_minutes).toBe(95);
+      expect(course.bunny_collection_id).toBe("collection-123");
+    });
+
+    it("parses nullable fields as null", () => {
+      const course = courseOutSchema.parse({
+        id: 2,
+        title: "Math",
+        description: null,
+        price: "0.00",
+        is_published: false,
+        is_archived: false,
+        use_chapters: false,
+        total_duration_minutes: null,
+        subject_id: null,
+        teacher_profile_id: 1,
+        grade_id: 1,
+        stream_id: 1,
+        created_by_id: null,
+        created_at: "2026-09-19T12:00:00Z",
+        bunny_collection_id: null,
+      });
+
+      expect(course.is_archived).toBe(false);
+      expect(course.total_duration_minutes).toBeNull();
+      expect(course.bunny_collection_id).toBeNull();
     });
   });
 

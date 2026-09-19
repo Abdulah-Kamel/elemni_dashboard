@@ -21,7 +21,9 @@ const mockCourse: CourseOut = {
   description: "مقدمة في الجبر",
   price: "150.00",
   is_published: true,
+  is_archived: false,
   use_chapters: true,
+  total_duration_minutes: null,
   subject_id: 1,
   subject_name: "الرياضيات",
   teacher_profile_id: 7,
@@ -29,6 +31,7 @@ const mockCourse: CourseOut = {
   stream_id: 1,
   created_by_id: 7,
   created_at: "2026-06-15T08:00:00Z",
+  bunny_collection_id: null,
 }
 
 describe("CourseCard", () => {

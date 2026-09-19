@@ -10,7 +10,9 @@ export const mockCourses: CourseOut[] = [
     description: "مقدمة في الجبر",
     price: "150.00",
     is_published: true,
+    is_archived: false,
     use_chapters: true,
+    total_duration_minutes: null,
     subject_id: 1,
     subject_name: "الرياضيات",
     teacher_profile_id: 7,
@@ -18,6 +20,7 @@ export const mockCourses: CourseOut[] = [
     stream_id: 1,
     created_by_id: 7,
     created_at: "2026-06-15T08:00:00Z",
+    bunny_collection_id: null,
   },
   {
     id: 2,
@@ -25,7 +28,9 @@ export const mockCourses: CourseOut[] = [
     description: "أساسيات الهندسة",
     price: "0.00",
     is_published: false,
+    is_archived: false,
     use_chapters: false,
+    total_duration_minutes: null,
     subject_id: 1,
     subject_name: "الرياضيات",
     teacher_profile_id: 7,
@@ -33,6 +38,7 @@ export const mockCourses: CourseOut[] = [
     stream_id: 1,
     created_by_id: 7,
     created_at: "2026-07-01T10:00:00Z",
+    bunny_collection_id: null,
   },
 ];
 
@@ -106,7 +112,9 @@ export const handlers = [
       description: (body.description as string) ?? null,
       price: String(body.price ?? "0.00"),
       is_published: false,
+      is_archived: false,
       use_chapters: Boolean(body.use_chapters),
+      total_duration_minutes: null,
       subject_id: body.subject_id as number,
       subject_name: "الرياضيات",
       teacher_profile_id: 7,
@@ -114,6 +122,7 @@ export const handlers = [
       stream_id: body.stream_id as number,
       created_by_id: 7,
       created_at: new Date().toISOString(),
+      bunny_collection_id: null,
     };
     return HttpResponse.json(newCourse, { status: 201 });
   }),

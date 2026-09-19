@@ -147,13 +147,16 @@ describe("API client (Article II / FR-005)", () => {
           description: null,
           price: "0.00",
           is_published: false,
+          is_archived: false,
           use_chapters: true,
+          total_duration_minutes: null,
           subject_id: null,
           teacher_profile_id: 1,
           grade_id: 1,
           stream_id: 1,
           created_by_id: null,
           created_at: "2026-01-01T00:00:00Z",
+          bunny_collection_id: null,
         })
       }),
       http.post(`${mockApiUrl}/api/v1/auth/refresh`, () => {

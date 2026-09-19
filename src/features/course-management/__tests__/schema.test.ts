@@ -127,6 +127,18 @@ describe("courseUpdateSchema (contracts/openapi.json)", () => {
     expect(result.grade_id).toBe(2);
     expect(result.stream_id).toBe(3);
   });
+
+  it("accepts archive state in a partial update", () => {
+    expect(courseUpdateSchema.parse({ is_archived: true })).toEqual({
+      is_archived: true,
+    });
+  });
+
+  it("preserves explicit clear and zero values", () => {
+    expect(
+      courseUpdateSchema.parse({ description: null, price: 0 })
+    ).toEqual({ description: null, price: 0 });
+  });
 });
 
 describe("courseFormSchema (camelCase, Arabic validation)", () => {

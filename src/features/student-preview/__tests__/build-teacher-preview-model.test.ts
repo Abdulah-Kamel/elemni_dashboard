@@ -25,7 +25,9 @@ const baseCourse: CourseOut = {
   img: 'https://cdn.example.com/cover.jpg',
   price: '99.00',
   is_published: true,
+  is_archived: false,
   use_chapters: false,
+  total_duration_minutes: null,
   subject_id: 10,
   subject_name: 'رياضيات',
   teacher_profile_id: 1,
@@ -33,6 +35,7 @@ const baseCourse: CourseOut = {
   stream_id: 30,
   created_by_id: null,
   created_at: '2024-01-01T00:00:00Z',
+  bunny_collection_id: null,
 };
 
 describe('buildTeacherPreviewModel', () => {

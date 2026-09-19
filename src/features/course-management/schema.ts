@@ -52,6 +52,7 @@ export const courseUpdateSchema = z.object({
   grade_id: z.number().int().optional(),
   stream_id: z.number().int().optional(),
   is_published: z.boolean().nullable().optional(),
+  is_archived: z.boolean().nullable().optional(),
   use_chapters: z.boolean().nullable().optional(),
 })
 export type CourseUpdate = z.infer<typeof courseUpdateSchema>
