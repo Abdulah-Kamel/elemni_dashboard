@@ -51,3 +51,40 @@
   --border-strong: #DDD9E8;
   --border-subtle: #E8E5F0;
 }
+
+/* Match the dashboard theme when previews are rendered inside .dark. */
+.dark .student-preview {
+  --page: #0B132B;
+  --surface: #0F172A;
+  --surface-raised: #162033;
+  --surface-muted: #162033;
+  --surface-subtle: #1E293B;
+  --surface-strong: #273449;
+  --surface-sunken: #0B132B;
+
+  --on-surface: #F8FAFC;
+  --on-surface-strong: #F8FAFC;
+  --on-surface-body: #CBD5E1;
+  --on-surface-muted: #94A3B8;
+  --on-surface-subtle: #64748B;
+  --on-primary: #0B132B;
+  --on-primary-tint: #BAE6FD;
+
+  --brand-indigo: #38BDF8;
+  --brand-indigo-deep: #0EA5E9;
+  --brand-indigo-tint: #0C2A44;
+  --brand-indigo-border: #164E63;
+  --brand-indigo-icon: #64748B;
+  --brand-indigo-near-black: #F8FAFC;
+
+  --brand-amber: #FB923C;
+  --brand-amber-tint: #422006;
+  --brand-emerald: #4ADE80;
+  --brand-emerald-tint: #14532D;
+  --brand-rose: #F87171;
+  --brand-rose-tint: #450A0A;
+
+  --border: #1E293B;
+  --border-strong: #334155;
+  --border-subtle: #273449;
+}

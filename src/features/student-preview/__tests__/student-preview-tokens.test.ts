@@ -45,7 +45,10 @@ describe("student-preview token scoping", () => {
     let insideScope = false;
     for (const line of lines) {
       const trimmed = line.trim();
-      if (trimmed.startsWith(".student-preview")) {
+      if (
+        trimmed.startsWith(".student-preview") ||
+        trimmed.startsWith(".dark .student-preview")
+      ) {
         insideScope = true;
       }
       if (insideScope) {
@@ -67,7 +70,9 @@ describe("student-preview token scoping", () => {
     const topLevelSelectors = css.match(/^(?!\s)[.#:][\w-.,\s]*\{/gm);
     if (topLevelSelectors) {
       const nonStudent = topLevelSelectors.filter(
-        (s) => !s.startsWith(".student-preview")
+        (s) =>
+          !s.startsWith(".student-preview") &&
+          !s.startsWith(".dark .student-preview")
       );
       expect(nonStudent).toEqual([]);
     }
@@ -90,6 +95,14 @@ describe("student-preview token scoping", () => {
 
     it("surface-raised is #FFFFFF", () => {
       expect(tokens.get("surface-raised")).toBe("#FFFFFF");
+    });
+
+    it("defines a dark palette for previews inside the dashboard dark theme", () => {
+      const darkBlock =
+        css.match(/\.dark\s+\.student-preview\s*\{([^}]+)\}/)?.[1] ?? "";
+      expect(darkBlock).toContain("--page: #0B132B;");
+      expect(darkBlock).toContain("--surface: #0F172A;");
+      expect(darkBlock).toContain("--on-surface: #F8FAFC;");
     });
 
     it("surface-muted is #F0F9FF", () => {
