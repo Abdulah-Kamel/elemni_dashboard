@@ -2,12 +2,9 @@
 
 import { useCallback, useRef, useState } from "react"
 import { useTranslations } from "next-intl"
-import { Upload, X, FileIcon, Loader2 } from "lucide-react"
+import { Upload, X, FileIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import {
-  getItemAttachmentType,
-  type UploadType,
-} from "../item-upload-validation"
+import { type UploadType } from "../item-upload-validation"
 
 export type AttachmentUploadStatus =
   | "idle"

@@ -183,6 +183,53 @@ describe("ItemAttachmentsPicker", () => {
     expect(region.tabIndex).toBe(-1)
   })
 
+  it("opens file dialog on Enter keydown", () => {
+    const { container } = renderPicker()
+    const region = container.querySelector('[role="button"]') as HTMLElement
+    const input = container.querySelector(
+      "#create-item-attachments"
+    ) as HTMLInputElement
+    const spy = vi.spyOn(input, "click")
+
+    fireEvent.keyDown(region, { key: "Enter" })
+
+    expect(spy).toHaveBeenCalledTimes(1)
+  })
+
+  it("opens file dialog on Space keydown", () => {
+    const { container } = renderPicker()
+    const region = container.querySelector('[role="button"]') as HTMLElement
+    const input = container.querySelector(
+      "#create-item-attachments"
+    ) as HTMLInputElement
+    const spy = vi.spyOn(input, "click")
+
+    fireEvent.keyDown(region, { key: " " })
+
+    expect(spy).toHaveBeenCalledTimes(1)
+  })
+
+  it("does not open file dialog on unrelated key", () => {
+    const { container } = renderPicker()
+    const region = container.querySelector('[role="button"]') as HTMLElement
+    const input = container.querySelector(
+      "#create-item-attachments"
+    ) as HTMLInputElement
+    const spy = vi.spyOn(input, "click")
+
+    fireEvent.keyDown(region, { key: "Tab" })
+
+    expect(spy).not.toHaveBeenCalled()
+  })
+
+  it("is focusable and lacks aria-disabled when enabled", () => {
+    const { container } = renderPicker({ disabled: false })
+    const region = container.querySelector('[role="button"]') as HTMLElement
+
+    expect(region.tabIndex).toBe(0)
+    expect(region.getAttribute("aria-disabled")).toBeNull()
+  })
+
   it("forwards drop events to onFilesSelect", () => {
     const onFilesSelect = vi.fn()
     const { container } = renderPicker({ onFilesSelect })
