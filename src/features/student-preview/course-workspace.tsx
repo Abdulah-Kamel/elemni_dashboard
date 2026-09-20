@@ -45,6 +45,7 @@ import { PublishSwitch } from "@/features/course-management/components/publish-s
 import { ArchiveCourseControl } from "@/features/course-management/components/archive-course-control"
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
+import { useRouter } from "@/i18n/routing"
 
 interface CourseWorkspaceProps {
   model: StudentCoursePreviewModel
@@ -177,6 +178,7 @@ function CourseWorkspaceContent({
   const [archivePending, setArchivePending] = useState(false)
   const [archiveError, setArchiveError] = useState<string | null>(null)
   const { update } = useCourseMutations(teacherProfileId ?? 0)
+  const router = useRouter()
 
   const coverPreviewUrl = useMemo(
     () => (coverFile ? URL.createObjectURL(coverFile) : null),
@@ -237,6 +239,7 @@ function CourseWorkspaceContent({
         } catch {
           // Curriculum refresh is best-effort after structure change.
         }
+        router.refresh()
       }
     } catch (error) {
       const message =
@@ -258,6 +261,7 @@ function CourseWorkspaceContent({
     update,
     useChapters,
     savedUseChapters,
+    router,
   ])
 
   const handleSave = useCallback(async () => {

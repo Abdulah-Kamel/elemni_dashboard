@@ -11,6 +11,7 @@ const publishMutation = vi.hoisted(() => ({ mutateAsync: vi.fn(), isPending: fal
 const unpublishMutation = vi.hoisted(() => ({ mutateAsync: vi.fn(), isPending: false }))
 const mockedUploadCourseCover = vi.hoisted(() => vi.fn())
 const mockedLoadCoursePreviewCurriculum = vi.hoisted(() => vi.fn())
+const mockedRouterRefresh = vi.hoisted(() => vi.fn())
 
 vi.mock("@/features/course-management/hooks/use-course-management-queries", () => ({
   useCourseMutations: () => ({
@@ -26,6 +27,10 @@ vi.mock("@/features/course-management/upload-course-cover", () => ({
 
 vi.mock("../server-actions", () => ({
   loadCoursePreviewCurriculum: mockedLoadCoursePreviewCurriculum,
+}))
+
+vi.mock("@/i18n/routing", () => ({
+  useRouter: () => ({ refresh: mockedRouterRefresh }),
 }))
 
 function render(ui: React.ReactNode, locale: string = "ar") {
@@ -135,6 +140,7 @@ describe("CourseWorkspace", () => {
     unpublishMutation.mutateAsync.mockReset()
     mockedLoadCoursePreviewCurriculum.mockReset()
     mockedLoadCoursePreviewCurriculum.mockResolvedValue({ success: true, data: [] })
+    mockedRouterRefresh.mockReset()
   })
 
   it("renders editor and preview", () => {
@@ -425,7 +431,7 @@ describe("CourseWorkspace", () => {
     expect(updateMutation.mutateAsync).not.toHaveBeenCalled()
   })
 
-  it("confirms structure change and reloads curriculum", async () => {
+  it("confirms structure change and refreshes the server-rendered curriculum", async () => {
     mockedLoadCoursePreviewCurriculum.mockResolvedValue({ success: true, data: mockSections })
     render(
       <CourseWorkspace
@@ -453,6 +459,7 @@ describe("CourseWorkspace", () => {
     await waitFor(() =>
       expect(mockedLoadCoursePreviewCurriculum).toHaveBeenCalledWith(42)
     )
+    expect(mockedRouterRefresh).toHaveBeenCalledOnce()
   })
 
   it("warns about removing chapter groupings when switching to flat", async () => {
