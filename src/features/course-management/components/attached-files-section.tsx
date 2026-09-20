@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useRef } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -14,8 +14,8 @@ import {
 } from "@/features/course-management/items-actions"
 import { uploadToPresignedUrl } from "@/lib/upload"
 import { uploadVideoToBunnyTus } from "@/lib/tus-upload"
-import { UploadDialog } from "./upload-dialog"
 import type { ItemOut } from "@/features/course-management/items-schema"
+import { validateItemUploadFile } from "../item-upload-validation"
 
 type UploadType = "video" | "document"
 
@@ -25,6 +25,7 @@ export function AttachedFilesSection({
   courseId,
   lessonId,
   onUpdateTitle,
+  itemTitle,
   onDeleteRequest,
   deletingMedia,
 }: {
@@ -33,14 +34,18 @@ export function AttachedFilesSection({
   courseId: number
   lessonId: number
   onUpdateTitle: (title: string) => Promise<void>
+  itemTitle: string
   onDeleteRequest: (type: UploadType) => void
   deletingMedia: UploadType | null
 }) {
   const t = useTranslations("items")
-  const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
-  const [uploadDialogType, setUploadDialogType] = useState<UploadType>("video")
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
+  const [validationError, setValidationError] = useState<string | null>(null)
+  const inputRefs = useRef<Record<UploadType, HTMLInputElement | null>>({
+    video: null,
+    document: null,
+  })
 
   const hasVideo = Boolean(item.bunny_stream_id)
   const hasDocument = Boolean(item.document_path)
@@ -52,13 +57,13 @@ export function AttachedFilesSection({
         ? "status_failed"
         : "status_processing"
 
-  const openUploadDialog = useCallback(
+  const openUploadInput = useCallback(
     (type: UploadType) => {
       if (uploading || deletingMedia) return
-      setUploadDialogType(type)
-      setUploadDialogOpen(true)
+      setValidationError(null)
+      inputRefs.current[type]?.click()
     },
-    [uploading, deletingMedia]
+    [deletingMedia, uploading]
   )
 
   const handleUpload = useCallback(
@@ -99,7 +104,6 @@ export function AttachedFilesSection({
           }
 
           onUpdate(confirmResult.data)
-          setUploadDialogOpen(false)
           toast.success(t("upload_success_processing"))
         } else {
           const urlResult = await requestUploadUrl(
@@ -128,7 +132,6 @@ export function AttachedFilesSection({
           )
           if (confirmResult.success) {
             onUpdate(confirmResult.data)
-            setUploadDialogOpen(false)
             toast.success(t("upload_success"))
           } else {
             toast.error(confirmResult.error.message || t("upload_error"))
@@ -144,9 +147,47 @@ export function AttachedFilesSection({
     [courseId, lessonId, item.id, item.title, onUpdate, onUpdateTitle, t]
   )
 
+  const handleFileSelected = useCallback(
+    (type: UploadType, file: File | undefined) => {
+      if (!file) return
+      const validationKey = validateItemUploadFile(file, type)
+      if (validationKey) {
+        setValidationError(t(validationKey))
+        return
+      }
+      setValidationError(null)
+      void handleUpload(file, itemTitle, type)
+    },
+    [handleUpload, itemTitle, t]
+  )
+
   return (
     <div className="space-y-2">
       <h4 className="text-sm font-medium">{t("attached_files")}</h4>
+
+      {(["video", "document"] as const).map((type) => (
+        <input
+          key={type}
+          ref={(element) => {
+            inputRefs.current[type] = element
+          }}
+          id={`item-${item.id}-${type}-upload`}
+          type="file"
+          accept={type === "video" ? "video/*" : ".pdf,application/pdf"}
+          className="sr-only"
+          disabled={uploading || deletingMedia !== null}
+          onChange={(event) => {
+            handleFileSelected(type, event.target.files?.[0])
+            event.target.value = ""
+          }}
+        />
+      ))}
+
+      {validationError && (
+        <p role="alert" className="text-sm text-destructive">
+          {validationError}
+        </p>
+      )}
 
       {/* Video row */}
       <div className="flex items-center justify-between rounded-md border p-2">
@@ -184,12 +225,12 @@ export function AttachedFilesSection({
               variant="outline"
               className="h-8 gap-1.5 px-2"
               disabled={uploading || deletingMedia !== null}
-              onClick={() => openUploadDialog("video")}
-              aria-label={t("add_video")}
-              title={t("add_video")}
+              onClick={() => openUploadInput("video")}
+              aria-label={t("upload_video")}
+              title={t("upload_video")}
             >
               <Plus className="size-3.5" aria-hidden="true" />
-              <span>{t("add_video")}</span>
+              <span>{t("upload_video")}</span>
             </Button>
           )}
         </div>
@@ -236,27 +277,22 @@ export function AttachedFilesSection({
               variant="outline"
               className="h-8 gap-1.5 px-2"
               disabled={uploading || deletingMedia !== null}
-              onClick={() => openUploadDialog("document")}
-              aria-label={t("add_document")}
-              title={t("add_document")}
+              onClick={() => openUploadInput("document")}
+              aria-label={t("upload_document")}
+              title={t("upload_document")}
             >
               <Plus className="size-3.5" aria-hidden="true" />
-              <span>{t("add_document")}</span>
+              <span>{t("upload_document")}</span>
             </Button>
           )}
         </div>
       </div>
 
-      <UploadDialog
-        open={uploadDialogOpen}
-        onOpenChange={setUploadDialogOpen}
-        type={uploadDialogType}
-        itemTitle={item.title}
-        uploading={uploading}
-        progress={uploadProgress}
-        allowTypeSelection={false}
-        onUpload={handleUpload}
-      />
+      <div className="sr-only" aria-live="polite">
+        {uploading
+          ? t("uploading_progress", { progress: uploadProgress })
+          : null}
+      </div>
     </div>
   )
 }

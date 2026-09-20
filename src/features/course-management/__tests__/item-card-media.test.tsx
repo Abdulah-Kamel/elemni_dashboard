@@ -84,6 +84,17 @@ describe("ItemCard media slots", () => {
     expect(screen.queryByRole("button", { name: "Upload Video" })).toBeNull()
   })
 
+  it("opens a direct file input from the row upload action", () => {
+    render(<StatefulItemCard initialItem={videoOnlyItem} />)
+
+    fireEvent.click(screen.getByRole("button", { name: "Upload Document" }))
+
+    expect(screen.queryByText("Give this lesson item a clear name.")).toBeNull()
+    expect(
+      document.querySelector("#item-303-quick-document-upload")
+    ).toBeDefined()
+  })
+
   it("removes only the document and reopens its upload slot via edit dialog", async () => {
     const itemWithBothMedia: ItemOut = {
       ...videoOnlyItem,
@@ -109,7 +120,7 @@ describe("ItemCard media slots", () => {
       expect(actions.deleteItemDocument).toHaveBeenCalledWith(101, 202, 303)
     })
     expect(
-      within(editDialog).getByRole("button", { name: "Add document" })
+      within(editDialog).getByRole("button", { name: "Upload Document" })
     ).toBeDefined()
   })
 
@@ -120,7 +131,9 @@ describe("ItemCard media slots", () => {
     expect(within(dialog).getByText("Attached files")).toBeDefined()
     expect(within(dialog).getByText("Video")).toBeDefined()
     expect(within(dialog).getByText("Document")).toBeDefined()
-    expect(within(dialog).queryByRole("button", { name: /^Delete$/ })).toBeNull()
+    expect(
+      within(dialog).queryByRole("button", { name: /^Delete$/ })
+    ).toBeNull()
   })
 
   it("updates the item row after saving its title from the edit dialog", async () => {
@@ -135,7 +148,9 @@ describe("ItemCard media slots", () => {
     })
     fireEvent.click(within(dialog).getByRole("button", { name: "Save" }))
 
-    await waitFor(() => expect(screen.getByText(updatedItem.title)).toBeDefined())
+    await waitFor(() =>
+      expect(screen.getByText(updatedItem.title)).toBeDefined()
+    )
   })
 
   it("row does not expose Delete video or Delete document buttons", () => {
@@ -146,9 +161,7 @@ describe("ItemCard media slots", () => {
     render(<StatefulItemCard initialItem={itemWithBothMedia} />)
 
     expect(screen.queryByRole("button", { name: "Delete video" })).toBeNull()
-    expect(
-      screen.queryByRole("button", { name: "Delete document" })
-    ).toBeNull()
+    expect(screen.queryByRole("button", { name: "Delete document" })).toBeNull()
   })
 
   it("row still exposes Delete button for the item", () => {
@@ -182,28 +195,15 @@ describe("ItemCard media slots", () => {
     await waitFor(() => expect(onDelete).toHaveBeenCalledWith(videoOnlyItem.id))
   })
 
-  it("opens upload dialog from edit dialog when slot empty", async () => {
+  it("opens a direct file input from the edit dialog when a slot is empty", () => {
     render(<StatefulItemCard initialItem={videoOnlyItem} />)
     fireEvent.click(screen.getByRole("button", { name: "Edit item" }))
     const dialog = screen.getByRole("dialog")
     fireEvent.click(
-      within(dialog).getByRole("button", { name: "Add document" })
+      within(dialog).getByRole("button", { name: "Upload Document" })
     )
-    // Expect UploadDialog to open (we can check for its title)
-    await waitFor(() => {
-      expect(
-        screen.getByText("Give this lesson item a clear name.")
-      ).toBeDefined()
-    })
-    const uploadDialog = screen.getAllByRole("dialog").at(-1)
-    expect(uploadDialog).toBeDefined()
-    fireEvent.click(within(uploadDialog!).getByRole("button", { name: "Next" }))
-    expect(
-      within(uploadDialog!).queryByRole("button", { name: "Upload Video" })
-    ).toBeNull()
-    expect(
-      within(uploadDialog!).getByRole("button", { name: /^Upload Document/ })
-    ).toBeDefined()
+    expect(screen.queryByText("Give this lesson item a clear name.")).toBeNull()
+    expect(document.querySelector("#item-303-document-upload")).toBeDefined()
   })
 
   it("deleting one asset leaves the other attached in edit dialog", async () => {
@@ -235,7 +235,7 @@ describe("ItemCard media slots", () => {
     // After deletion, edit dialog should still be open with video row present
     expect(within(dialog).getByText("Video")).toBeDefined()
     expect(
-      within(dialog).getByRole("button", { name: "Add document" })
+      within(dialog).getByRole("button", { name: "Upload Document" })
     ).toBeDefined()
   })
 })

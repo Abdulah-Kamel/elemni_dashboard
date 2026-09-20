@@ -31,22 +31,34 @@ function getTitleInput() {
   return screen.getByRole("textbox", { name: "Item title" }) as HTMLInputElement
 }
 
-function getNextButton() {
-  return screen.getByRole("button", { name: "Next" })
-}
-
 function goToAttachments(title: string) {
   fireEvent.change(getTitleInput(), { target: { value: title } })
-  fireEvent.click(getNextButton())
 }
 
 function selectFiles(files: File[]) {
-  fireEvent.change(document.getElementById("create-item-attachments")!, {
-    target: { files },
-  })
+  for (const file of files) {
+    const type = file.type.startsWith("video/") ? "video" : "document"
+    fireEvent.change(document.getElementById(`create-item-${type}-upload`)!, {
+      target: { files: [file] },
+    })
+  }
 }
 
 describe("CreateItemDialog", () => {
+  it("shows separate direct upload controls for video and document", () => {
+    renderDialog()
+
+    expect(screen.getByRole("textbox", { name: "Item title" })).toBeDefined()
+    expect(screen.getByText("Attached files")).toBeDefined()
+    expect(screen.getByText("Video")).toBeDefined()
+    expect(screen.getByText("Document")).toBeDefined()
+    expect(screen.getByRole("button", { name: "Upload Video" })).toBeDefined()
+    expect(
+      screen.getByRole("button", { name: "Upload Document" })
+    ).toBeDefined()
+    expect(screen.queryByRole("button", { name: "Next" })).toBeNull()
+  })
+
   it("submits one payload after selecting video and PDF together", () => {
     const onSubmit = vi.fn()
     renderDialog({ onSubmit })
@@ -66,7 +78,7 @@ describe("CreateItemDialog", () => {
     })
   })
 
-  it("shows an error and preserves files when two videos are selected", () => {
+  it("replaces a selected video without removing the document", () => {
     renderDialog()
     goToAttachments("Duplicate videos")
     const pdf = new File(["pdf"], "notes.pdf", { type: "application/pdf" })
@@ -76,11 +88,11 @@ describe("CreateItemDialog", () => {
       new File(["two"], "two.mp4", { type: "video/mp4" }),
     ])
 
-    expect(screen.getByText("Choose only one video.")).toBeDefined()
+    expect(screen.queryByText("Choose only one video.")).toBeNull()
     expect(screen.getByText("notes.pdf")).toBeDefined()
   })
 
-  it("shows an error for two PDFs", () => {
+  it("replaces a selected PDF", () => {
     renderDialog()
     goToAttachments("Two PDFs")
     selectFiles([
@@ -88,27 +100,13 @@ describe("CreateItemDialog", () => {
       new File(["b"], "b.pdf", { type: "application/pdf" }),
     ])
 
-    expect(screen.getByText("Choose only one PDF.")).toBeDefined()
+    expect(screen.queryByText("Choose only one PDF.")).toBeNull()
   })
 
-  it("shows an error for more than two files", () => {
+  it("shows an error for an unsupported file", () => {
     renderDialog()
-    goToAttachments("Too many")
-    selectFiles([
-      new File(["v"], "v.mp4", { type: "video/mp4" }),
-      new File(["a"], "a.pdf", { type: "application/pdf" }),
-      new File(["b"], "b.txt", { type: "text/plain" }),
-    ])
-
-    expect(screen.getByText("Choose no more than two files.")).toBeDefined()
-  })
-
-  it("shows an error for unsupported files", () => {
-    renderDialog()
-    goToAttachments("Bad file")
-    selectFiles([
-      new File(["t"], "readme.txt", { type: "text/plain" }),
-    ])
+    goToAttachments("Bad files")
+    selectFiles([new File(["b"], "notes.txt", { type: "text/plain" })])
 
     expect(screen.getByText("Choose a video or PDF file.")).toBeDefined()
   })
@@ -214,7 +212,9 @@ describe("CreateItemDialog", () => {
     selectFiles([video])
 
     expect(
-      screen.getByText("The video is already uploaded and cannot be replaced here.")
+      screen.getByText(
+        "The video is already uploaded and cannot be replaced here."
+      )
     ).toBeDefined()
   })
 
@@ -226,7 +226,9 @@ describe("CreateItemDialog", () => {
     selectFiles([pdf])
 
     expect(
-      screen.getByText("The PDF is already uploaded and cannot be replaced here.")
+      screen.getByText(
+        "The PDF is already uploaded and cannot be replaced here."
+      )
     ).toBeDefined()
   })
 
@@ -242,18 +244,14 @@ describe("CreateItemDialog", () => {
     renderDialog({ documentStatus: "failed" })
     goToAttachments("Retry doc")
 
-    expect(
-      screen.getByRole("button", { name: "Retry PDF" })
-    ).toBeDefined()
+    expect(screen.getByRole("button", { name: "Retry PDF" })).toBeDefined()
   })
 
   it("shows Retry video when only video status is failed", () => {
     renderDialog({ videoStatus: "failed" })
     goToAttachments("Retry vid")
 
-    expect(
-      screen.getByRole("button", { name: "Retry video" })
-    ).toBeDefined()
+    expect(screen.getByRole("button", { name: "Retry video" })).toBeDefined()
   })
 
   it("shows Retry failed uploads when both statuses are failed", () => {
@@ -305,6 +303,6 @@ describe("CreateItemDialog", () => {
 
     expect(getTitleInput().value).toBe("")
     expect(screen.queryByText("lesson.mp4")).toBeNull()
-    expect(screen.getByRole("button", { name: "Next" })).toBeDefined()
+    expect(screen.getByRole("button", { name: "Create item" })).toBeDefined()
   })
 })

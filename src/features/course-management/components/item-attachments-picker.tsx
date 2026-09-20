@@ -2,15 +2,12 @@
 
 import { useCallback, useRef, useState } from "react"
 import { useTranslations } from "next-intl"
-import { Upload, X, FileIcon } from "lucide-react"
+import { Upload, X, FileIcon, FileVideo, FileText, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { type UploadType } from "../item-upload-validation"
 
 export type AttachmentUploadStatus =
-  | "idle"
-  | "uploading"
-  | "uploaded"
-  | "failed"
+  "idle" | "uploading" | "uploaded" | "failed"
 
 type ItemAttachmentsPickerProps = {
   videoFile: File | null
@@ -22,6 +19,7 @@ type ItemAttachmentsPickerProps = {
   error: string | null
   onFilesSelect: (files: File[]) => void
   onRemove: (type: UploadType) => void
+  separateInputs?: boolean
 }
 
 function StatusLabel({ status }: { status: AttachmentUploadStatus }) {
@@ -36,9 +34,7 @@ function StatusLabel({ status }: { status: AttachmentUploadStatus }) {
   }
   if (status === "failed") {
     return (
-      <span className="text-xs text-destructive">
-        {t("attachment_failed")}
-      </span>
+      <span className="text-xs text-destructive">{t("attachment_failed")}</span>
     )
   }
   return null
@@ -102,9 +98,16 @@ export function ItemAttachmentsPicker({
   error,
   onFilesSelect,
   onRemove,
+  separateInputs = false,
 }: ItemAttachmentsPickerProps) {
   const t = useTranslations("items")
   const inputRef = useRef<HTMLInputElement>(null)
+  const separateInputRefs = useRef<Record<UploadType, HTMLInputElement | null>>(
+    {
+      video: null,
+      document: null,
+    }
+  )
   const dragDepthRef = useRef(0)
   const [dragOver, setDragOver] = useState(false)
 
@@ -130,6 +133,15 @@ export function ItemAttachmentsPicker({
       if (files.length > 0) {
         onFilesSelect(files)
       }
+      event.target.value = ""
+    },
+    [onFilesSelect]
+  )
+
+  const handleSeparateInputChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0]
+      if (file) onFilesSelect([file])
       event.target.value = ""
     },
     [onFilesSelect]
@@ -182,44 +194,116 @@ export function ItemAttachmentsPicker({
 
   return (
     <div className="w-full space-y-3">
-      <input
-        ref={inputRef}
-        id="create-item-attachments"
-        type="file"
-        accept="video/*,.pdf,application/pdf"
-        multiple
-        onChange={handleInputChange}
-        disabled={disabled}
-        className="sr-only"
-      />
+      {separateInputs ? (
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium">{t("attached_files")}</h4>
+          {(["video", "document"] as const).map((type) => {
+            const isVideo = type === "video"
+            const file = isVideo ? videoFile : documentFile
+            const id = `create-item-${type}-upload`
+            const Icon = isVideo ? FileVideo : FileText
+            return (
+              <div
+                key={type}
+                className="flex items-center justify-between rounded-md border p-2"
+              >
+                <input
+                  ref={(element) => {
+                    separateInputRefs.current[type] = element
+                  }}
+                  id={id}
+                  type="file"
+                  accept={isVideo ? "video/*" : ".pdf,application/pdf"}
+                  onChange={handleSeparateInputChange}
+                  disabled={disabled}
+                  className="sr-only"
+                />
+                <div className="flex min-w-0 items-center gap-2">
+                  <Icon className="size-4 shrink-0" />
+                  <span className="text-sm">
+                    {isVideo ? t("type_video") : t("type_document")}
+                  </span>
+                  {file ? (
+                    <span className="min-w-0 truncate text-xs text-muted-foreground">
+                      {file.name}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">
+                      {t("not_attached")}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1">
+                  {file && (
+                    <button
+                      type="button"
+                      onClick={() => onRemove(type)}
+                      aria-label={
+                        isVideo ? t("delete_video") : t("delete_document")
+                      }
+                      disabled={disabled}
+                      className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    aria-controls={id}
+                    onClick={() => separateInputRefs.current[type]?.click()}
+                    disabled={disabled}
+                    className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-border px-2 text-sm font-medium transition-colors hover:bg-muted"
+                  >
+                    <Plus className="size-3.5" aria-hidden="true" />
+                    {isVideo ? t("upload_video") : t("upload_document")}
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      ) : (
+        <>
+          <input
+            ref={inputRef}
+            id="create-item-attachments"
+            type="file"
+            accept="video/*,.pdf,application/pdf"
+            multiple
+            onChange={handleInputChange}
+            disabled={disabled}
+            className="sr-only"
+          />
 
-      <div
-        role="button"
-        tabIndex={disabled ? -1 : 0}
-        aria-label={t("drop_or_click")}
-        aria-disabled={disabled || undefined}
-        onClick={handleBrowse}
-        onKeyDown={handleKeyDown}
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragEnter={handleDragEnter}
-        onDragLeave={handleDragLeave}
-        className={cn(
-          "flex min-h-24 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-6 text-center transition-colors hover:bg-muted/40 focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-primary/20 focus-visible:outline-none",
-          dragOver ? "border-primary bg-primary/5" : "border-border",
-          disabled && "cursor-not-allowed opacity-50 hover:bg-transparent"
-        )}
-      >
-        <span className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <Upload className="size-4" />
-        </span>
-        <p className="text-sm font-medium text-foreground">
-          {t("drop_or_click")}
-        </p>
-        <span className="text-xs text-muted-foreground">
-          {t("video_accept")}
-        </span>
-      </div>
+          <div
+            role="button"
+            tabIndex={disabled ? -1 : 0}
+            aria-label={t("drop_or_click")}
+            aria-disabled={disabled || undefined}
+            onClick={handleBrowse}
+            onKeyDown={handleKeyDown}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+            className={cn(
+              "flex min-h-24 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-6 text-center transition-colors hover:bg-muted/40 focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-primary/20 focus-visible:outline-none",
+              dragOver ? "border-primary bg-primary/5" : "border-border",
+              disabled && "cursor-not-allowed opacity-50 hover:bg-transparent"
+            )}
+          >
+            <span className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Upload className="size-4" />
+            </span>
+            <p className="text-sm font-medium text-foreground">
+              {t("drop_or_click")}
+            </p>
+            <span className="text-xs text-muted-foreground">
+              {t("video_accept")}
+            </span>
+          </div>
+        </>
+      )}
 
       {error && (
         <p role="alert" className="text-sm text-destructive">
@@ -227,7 +311,7 @@ export function ItemAttachmentsPicker({
         </p>
       )}
 
-      {hasVideo && videoFile && (
+      {!separateInputs && hasVideo && videoFile && (
         <SelectedRow
           file={videoFile}
           type="video"
@@ -238,7 +322,7 @@ export function ItemAttachmentsPicker({
         />
       )}
 
-      {hasDocument && documentFile && (
+      {!separateInputs && hasDocument && documentFile && (
         <SelectedRow
           file={documentFile}
           type="document"

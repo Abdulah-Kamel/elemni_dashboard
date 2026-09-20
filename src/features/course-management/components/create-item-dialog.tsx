@@ -14,13 +14,16 @@ import {
   DialogTitle,
   DialogClose,
 } from "@/components/ui/dialog"
-import { Check, Loader2 } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import {
   mergeItemAttachmentFiles,
   getItemAttachmentType,
   type UploadType,
 } from "../item-upload-validation"
-import { ItemAttachmentsPicker, type AttachmentUploadStatus } from "./item-attachments-picker"
+import {
+  ItemAttachmentsPicker,
+  type AttachmentUploadStatus,
+} from "./item-attachments-picker"
 
 export type { AttachmentUploadStatus } from "./item-attachments-picker"
 
@@ -41,8 +44,6 @@ type CreateItemDialogProps = {
   error: string | null
 }
 
-type Step = 1 | 2
-
 export function CreateItemDialog({
   open,
   onOpenChange,
@@ -54,7 +55,6 @@ export function CreateItemDialog({
   error,
 }: CreateItemDialogProps) {
   const t = useTranslations("items")
-  const [step, setStep] = useState<Step>(1)
   const [title, setTitle] = useState("")
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [documentFile, setDocumentFile] = useState<File | null>(null)
@@ -69,7 +69,6 @@ export function CreateItemDialog({
     if (wasOpenRef.current) return
 
     wasOpenRef.current = true
-    setStep(1)
     setTitle("")
     setVideoFile(null)
     setDocumentFile(null)
@@ -136,15 +135,6 @@ export function CreateItemDialog({
     onSubmit({ title: trimmed, videoFile, documentFile })
   }, [title, uploading, hasAttachment, onSubmit, videoFile, documentFile])
 
-  const stepTitle =
-    step === 1
-      ? t("create_placeholder")
-      : t("create_attachments")
-  const stepDescription =
-    step === 1
-      ? t("create_placeholder")
-      : t("create_attachments_desc")
-
   return (
     <Dialog
       open={open}
@@ -153,7 +143,6 @@ export function CreateItemDialog({
         onOpenChange(nextOpen)
         if (!nextOpen) {
           wasOpenRef.current = false
-          setStep(1)
           setTitle("")
           setVideoFile(null)
           setDocumentFile(null)
@@ -163,52 +152,12 @@ export function CreateItemDialog({
     >
       <DialogContent className="!w-[calc(100vw-2rem)] !max-w-none sm:!w-[42rem]">
         <DialogHeader>
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <DialogTitle>{stepTitle}</DialogTitle>
-              <DialogDescription className="mt-1">
-                {stepDescription}
-              </DialogDescription>
-            </div>
-            <span className="shrink-0 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-              {t("create_step_count", { step })}
-            </span>
-          </div>
+          <DialogTitle>{t("create")}</DialogTitle>
+          <DialogDescription className="mt-1">
+            {t("create_attachments_desc")}
+          </DialogDescription>
         </DialogHeader>
-
-        <div className="flex items-center gap-2" aria-label={stepTitle}>
-          {[1, 2].map((stepNumber) => {
-            const complete = stepNumber < step
-            const active = stepNumber === step
-            return (
-              <div
-                key={stepNumber}
-                className="flex min-w-0 flex-1 items-center gap-2"
-              >
-                <span
-                  className={`grid size-8 shrink-0 place-items-center rounded-full border text-xs font-bold ${
-                    complete
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : active
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {complete ? (
-                    <Check className="size-4" aria-hidden="true" />
-                  ) : (
-                    stepNumber
-                  )}
-                </span>
-                {stepNumber < 2 && (
-                  <span className="h-px min-w-3 flex-1 bg-border" />
-                )}
-              </div>
-            )
-          })}
-        </div>
-
-        {step === 1 && (
+        <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="create-item-title">{t("create_placeholder")}</Label>
             <Input
@@ -222,33 +171,32 @@ export function CreateItemDialog({
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm transition outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
             />
           </div>
-        )}
 
-        {step === 2 && (
-          <div className="space-y-4">
-            {error && (
-              <p role="alert" className="text-sm text-destructive">{error}</p>
-            )}
+          {error && (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
 
-            <ItemAttachmentsPicker
-              videoFile={videoFile}
-              documentFile={documentFile}
-              videoStatus={videoStatus}
-              documentStatus={documentStatus}
-              videoProgress={videoProgress}
-              disabled={uploading}
-              error={attachmentError}
-              onFilesSelect={handleFilesSelect}
-              onRemove={handleRemove}
-            />
+          <ItemAttachmentsPicker
+            videoFile={videoFile}
+            documentFile={documentFile}
+            videoStatus={videoStatus}
+            documentStatus={documentStatus}
+            videoProgress={videoProgress}
+            disabled={uploading}
+            error={attachmentError}
+            onFilesSelect={handleFilesSelect}
+            onRemove={handleRemove}
+            separateInputs
+          />
 
-            {!hasAttachment && (
-              <p role="alert" className="text-xs text-destructive">
-                {t("select_one_attachment")}
-              </p>
-            )}
-          </div>
-        )}
+          {!hasAttachment && (
+            <p role="alert" className="text-xs text-destructive">
+              {t("select_one_attachment")}
+            </p>
+          )}
+        </div>
 
         {uploading && (
           <div
@@ -268,44 +216,21 @@ export function CreateItemDialog({
               </Button>
             }
           />
-          {step > 1 && (
-            <Button
-              type="button"
-              variant="outline"
-              disabled={uploading}
-              onClick={() => setStep((current) => (current - 1) as Step)}
-            >
-              {t("back")}
-            </Button>
-          )}
-          {step === 1 ? (
-            <Button
-              type="button"
-              disabled={uploading || !title.trim()}
-              onClick={() => setStep(2)}
-            >
-              {t("next")}
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              onClick={handleAction}
-              disabled={!title.trim() || uploading || !hasAttachment}
-              className="gap-1.5"
-            >
-              {uploading ? (
-                <>
-                  <Loader2
-                    className="size-3.5 animate-spin"
-                    aria-hidden="true"
-                  />
-                  {t("uploading")}
-                </>
-              ) : (
-                actionLabel
-              )}
-            </Button>
-          )}
+          <Button
+            type="button"
+            onClick={handleAction}
+            disabled={!title.trim() || uploading || !hasAttachment}
+            className="gap-1.5"
+          >
+            {uploading ? (
+              <>
+                <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
+                {t("uploading")}
+              </>
+            ) : (
+              actionLabel
+            )}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

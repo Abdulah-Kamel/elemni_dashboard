@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -36,8 +36,8 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { UploadDialog } from "./upload-dialog"
 import { AttachedFilesSection } from "./attached-files-section"
+import { validateItemUploadFile } from "../item-upload-validation"
 import type { ItemOut } from "@/features/course-management/items-schema"
 import { useCourseBuilderBridge } from "@/features/course-management/course-builder-bridge"
 import { useItemMutations } from "@/features/course-management/hooks/use-course-management-queries"
@@ -127,10 +127,9 @@ export function ItemCard({
   const [deletingMedia, setDeletingMedia] = useState<
     "video" | "document" | null
   >(null)
-  const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
-  const [uploadDialogType, setUploadDialogType] = useState<
-    "video" | "document"
-  >("video")
+  const quickUploadRefs = useRef<
+    Record<"video" | "document", HTMLInputElement | null>
+  >({ video: null, document: null })
   const [editTitle, setEditTitle] = useState(item.title)
   const [error, setError] = useState<string | null>(null)
   const submitting =
@@ -168,12 +167,11 @@ export function ItemCard({
     return () => window.cancelAnimationFrame(frame)
   }, [enabled, isSelected, item.id])
 
-  const openUploadDialog = useCallback(
+  const openUploadInput = useCallback(
     (uploadType: "video" | "document") => {
       const alreadyAttached = uploadType === "video" ? hasVideo : hasDocument
       if (alreadyAttached || uploading || deletingMedia) return
-      setUploadDialogType(uploadType)
-      setUploadDialogOpen(true)
+      quickUploadRefs.current[uploadType]?.click()
     },
     [deletingMedia, hasDocument, hasVideo, uploading]
   )
@@ -219,7 +217,6 @@ export function ItemCard({
         }
 
         onUpdate(confirmResult.data)
-        setUploadDialogOpen(false)
         toast.success(t("upload_success_processing"))
       } catch {
         toast.error(t("upload_error"))
@@ -270,7 +267,6 @@ export function ItemCard({
         )
         if (confirmResult.success) {
           onUpdate(confirmResult.data)
-          setUploadDialogOpen(false)
           toast.success(t("upload_success"))
         } else {
           toast.error(confirmResult.error.message || t("upload_error"))
@@ -294,6 +290,19 @@ export function ItemCard({
       }
     },
     [handleDocUpload, handleVideoUpload]
+  )
+
+  const handleQuickUpload = useCallback(
+    (uploadType: "video" | "document", file: File | undefined) => {
+      if (!file) return
+      const validationKey = validateItemUploadFile(file, uploadType)
+      if (validationKey) {
+        toast.error(t(validationKey))
+        return
+      }
+      void handleUpload(file, item.title, uploadType)
+    },
+    [handleUpload, item.title, t]
   )
 
   const handleSave = useCallback(async () => {
@@ -427,13 +436,36 @@ export function ItemCard({
       )}
 
       <div className="flex items-center gap-0.5 transition-opacity md:opacity-0 md:group-focus-within:opacity-100 md:group-hover:opacity-100">
+        {(["video", "document"] as const).map((uploadType) => (
+          <input
+            key={uploadType}
+            ref={(element) => {
+              quickUploadRefs.current[uploadType] = element
+            }}
+            id={`item-${item.id}-quick-${uploadType}-upload`}
+            type="file"
+            accept={uploadType === "video" ? "video/*" : ".pdf,application/pdf"}
+            className="sr-only"
+            disabled={uploading || deletingMedia !== null}
+            onChange={(event) => {
+              handleQuickUpload(uploadType, event.target.files?.[0])
+              event.target.value = ""
+            }}
+          />
+        ))}
+        <span className="sr-only" aria-live="polite">
+          {uploading
+            ? t("uploading_progress", { progress: uploadProgress })
+            : null}
+        </span>
+
         {!hasVideo && (
           <Button
             size="icon"
             variant="ghost"
             className="size-6"
             disabled={uploading || deletingMedia !== null}
-            onClick={() => openUploadDialog("video")}
+            onClick={() => openUploadInput("video")}
             aria-label={t("upload_video")}
             title={t("upload_video")}
           >
@@ -446,7 +478,7 @@ export function ItemCard({
             variant="ghost"
             className="size-6"
             disabled={uploading || deletingMedia !== null}
-            onClick={() => openUploadDialog("document")}
+            onClick={() => openUploadInput("document")}
             aria-label={t("upload_document")}
             title={t("upload_document")}
           >
@@ -479,16 +511,6 @@ export function ItemCard({
           <Trash2 className="size-3.5" />
         </Button>
       </div>
-
-      <UploadDialog
-        open={uploadDialogOpen}
-        onOpenChange={setUploadDialogOpen}
-        type={uploadDialogType}
-        itemTitle={item.title}
-        uploading={uploading}
-        progress={uploadProgress}
-        onUpload={handleUpload}
-      />
 
       <Dialog
         open={mediaToDelete !== null}
@@ -567,6 +589,7 @@ export function ItemCard({
               onUpdate={onUpdate}
               courseId={courseId}
               lessonId={lessonId}
+              itemTitle={editTitle}
               onUpdateTitle={handleUpdateTitle}
               onDeleteRequest={(mediaType) => {
                 setError(null)

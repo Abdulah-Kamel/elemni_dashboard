@@ -49,34 +49,41 @@ const mutations = vi.hoisted(() => ({
 }))
 
 vi.mock("@/features/course-management/items-actions", () => ({
-  requestVideoUpload: (...args: unknown[]) => actions.requestVideoUpload(...args),
-  confirmVideoUpload: (...args: unknown[]) => actions.confirmVideoUpload(...args),
+  requestVideoUpload: (...args: unknown[]) =>
+    actions.requestVideoUpload(...args),
+  confirmVideoUpload: (...args: unknown[]) =>
+    actions.confirmVideoUpload(...args),
   requestUploadUrl: (...args: unknown[]) => actions.requestUploadUrl(...args),
   confirmUpload: (...args: unknown[]) => actions.confirmUpload(...args),
 }))
 
 vi.mock("@/lib/tus-upload", () => ({
-  uploadVideoToBunnyTus: (...args: unknown[]) => uploads.uploadVideoToBunnyTus(...args),
+  uploadVideoToBunnyTus: (...args: unknown[]) =>
+    uploads.uploadVideoToBunnyTus(...args),
 }))
 
 vi.mock("@/lib/upload", () => ({
-  uploadToPresignedUrl: (...args: unknown[]) => uploads.uploadToPresignedUrl(...args),
+  uploadToPresignedUrl: (...args: unknown[]) =>
+    uploads.uploadToPresignedUrl(...args),
 }))
 
-vi.mock("@/features/course-management/hooks/use-course-management-queries", () => ({
-  useItemsQuery: () => ({
-    data: [],
-    isPending: false,
-    isError: false,
-    error: null,
-  }),
-  useItemMutations: () => ({
-    create: mutations.create,
-    update: { mutateAsync: vi.fn() },
-    reorder: { mutateAsync: vi.fn() },
-    remove: { mutateAsync: vi.fn() },
-  }),
-}))
+vi.mock(
+  "@/features/course-management/hooks/use-course-management-queries",
+  () => ({
+    useItemsQuery: () => ({
+      data: [],
+      isPending: false,
+      isError: false,
+      error: null,
+    }),
+    useItemMutations: () => ({
+      create: mutations.create,
+      update: { mutateAsync: vi.fn() },
+      reorder: { mutateAsync: vi.fn() },
+      remove: { mutateAsync: vi.fn() },
+    }),
+  })
+)
 
 function renderItemList() {
   const queryClient = new QueryClient({
@@ -87,12 +94,7 @@ function renderItemList() {
     <NextIntlClientProvider locale="en" messages={messages}>
       <QueryClientProvider client={queryClient}>
         <CourseBuilderBridgeProvider enabled={false}>
-          <ItemList
-            initialItems={[]}
-            courseId={1}
-            lessonId={2}
-            error={null}
-          />
+          <ItemList initialItems={[]} courseId={1} lessonId={2} error={null} />
         </CourseBuilderBridgeProvider>
       </QueryClientProvider>
     </NextIntlClientProvider>
@@ -143,16 +145,19 @@ describe("ItemList creation integration", () => {
     fireEvent.change(getTitleInput(), {
       target: { value: "Lesson resources" },
     })
-    fireEvent.click(screen.getByRole("button", { name: "Next" }))
-
-    fireEvent.change(document.getElementById("create-item-attachments")!, {
-      target: { files: [videoFile, pdfFile] },
+    fireEvent.change(document.getElementById("create-item-video-upload")!, {
+      target: { files: [videoFile] },
+    })
+    fireEvent.change(document.getElementById("create-item-document-upload")!, {
+      target: { files: [pdfFile] },
     })
     fireEvent.click(
       screen.getByRole("button", { name: "Create item with 2 files" })
     )
 
-    await waitFor(() => expect(mutations.create.mutateAsync).toHaveBeenCalledOnce())
+    await waitFor(() =>
+      expect(mutations.create.mutateAsync).toHaveBeenCalledOnce()
+    )
     expect(mutations.create.mutateAsync).toHaveBeenCalledWith({
       title: "Lesson resources",
     })
@@ -172,10 +177,11 @@ describe("ItemList creation integration", () => {
     fireEvent.change(getTitleInput(), {
       target: { value: "Lesson resources" },
     })
-    fireEvent.click(screen.getByRole("button", { name: "Next" }))
-
-    fireEvent.change(document.getElementById("create-item-attachments")!, {
-      target: { files: [videoFile, pdfFile] },
+    fireEvent.change(document.getElementById("create-item-video-upload")!, {
+      target: { files: [videoFile] },
+    })
+    fireEvent.change(document.getElementById("create-item-document-upload")!, {
+      target: { files: [pdfFile] },
     })
     fireEvent.click(
       screen.getByRole("button", { name: "Create item with 2 files" })
@@ -185,13 +191,9 @@ describe("ItemList creation integration", () => {
       expect(screen.getByRole("button", { name: "Retry PDF" })).toBeDefined()
     )
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Retry PDF" })
-    )
+    fireEvent.click(screen.getByRole("button", { name: "Retry PDF" }))
 
-    await waitFor(() =>
-      expect(actions.confirmUpload).toHaveBeenCalledOnce()
-    )
+    await waitFor(() => expect(actions.confirmUpload).toHaveBeenCalledOnce())
     expect(mutations.create.mutateAsync).toHaveBeenCalledOnce()
     expect(actions.requestVideoUpload).toHaveBeenCalledOnce()
     expect(actions.requestUploadUrl).toHaveBeenCalledTimes(2)
