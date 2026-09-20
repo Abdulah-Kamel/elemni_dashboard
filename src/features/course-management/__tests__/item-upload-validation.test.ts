@@ -37,11 +37,12 @@ describe("validateItemUploadFile", () => {
     ).toBe("invalid_document")
   })
 
-  it("rejects videos larger than 500 MB", () => {
-    const file = new File(["video"], "large.mp4", { type: "video/mp4" })
-    Object.defineProperty(file, "size", { value: 500 * 1024 * 1024 + 1 })
+  it("accepts videos larger than the former 500 MB limit", () => {
+    const file = new File([new Uint8Array(501 * 1024 * 1024)], "lesson.mp4", {
+      type: "video/mp4",
+    })
 
-    expect(validateItemUploadFile(file, "video")).toBe("video_too_large")
+    expect(validateItemUploadFile(file, "video")).toBeNull()
   })
 })
 
@@ -176,18 +177,17 @@ describe("mergeItemAttachmentFiles", () => {
     })
   })
 
-  it("rejects oversized video without mutating current", () => {
+  it("accepts oversized video and replaces current videoFile", () => {
     const current: ItemAttachmentSelection = {
       videoFile: video,
       documentFile: pdf,
     }
-    const large = new File(["v"], "large.mp4", { type: "video/mp4" })
-    Object.defineProperty(large, "size", {
-      value: 500 * 1024 * 1024 + 1,
+    const large = new File([new Uint8Array(501 * 1024 * 1024)], "large.mp4", {
+      type: "video/mp4",
     })
     expect(mergeItemAttachmentFiles(current, [large])).toEqual({
-      selection: current,
-      error: "video_too_large",
+      selection: { videoFile: large, documentFile: pdf },
+      error: null,
     })
   })
 })
