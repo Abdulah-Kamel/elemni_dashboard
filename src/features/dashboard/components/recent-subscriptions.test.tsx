@@ -48,32 +48,34 @@ function subscription(overrides: Partial<TeacherSubscription> = {}) {
   return { ...baseSubscription, ...overrides }
 }
 
-it("renders at most five newest subscriptions as a semantic list", () => {
-  const subscriptions = Array.from({ length: 6 }, (_, index) =>
-    subscription({
-      enrollment_id: index + 1,
-      student_name: `Student ${index + 1}`,
-    })
-  )
-  render(<RecentSubscriptions subscriptions={subscriptions} />)
+describe("RecentSubscriptions", () => {
+  it("renders at most five newest subscriptions as a semantic list", () => {
+    const subscriptions = Array.from({ length: 6 }, (_, index) =>
+      subscription({
+        enrollment_id: index + 1,
+        student_name: `Student ${index + 1}`,
+      })
+    )
+    render(<RecentSubscriptions subscriptions={subscriptions} />)
 
-  expect(screen.getByRole("heading", { name: "Recent subscriptions" })).toBeDefined()
-  expect(screen.getByRole("list").children).toHaveLength(5)
-  expect(screen.getByText("Student 1")).toBeDefined()
-  expect(screen.queryByText("Student 6")).toBeNull()
-  expect(screen.getAllByText("Subscribed to Physics")).toHaveLength(5)
-  expect(screen.getAllByText("completed")).toHaveLength(5)
-  expect(screen.getAllByText(/250\.00/)).toHaveLength(5)
-  expect(screen.getAllByText("Sep 21, 2026")).toHaveLength(5)
-  expect(screen.getByRole("link", { name: "View all students" }).getAttribute("href")).toBe("/students")
-})
+    expect(screen.getByRole("heading", { name: "Recent subscriptions" })).toBeDefined()
+    expect(screen.getByRole("list").children).toHaveLength(5)
+    expect(screen.getByText("Student 1")).toBeDefined()
+    expect(screen.queryByText("Student 6")).toBeNull()
+    expect(screen.getAllByText("Subscribed to Physics")).toHaveLength(5)
+    expect(screen.getAllByText("completed")).toHaveLength(5)
+    expect(screen.getAllByText(/250\.00/)).toHaveLength(5)
+    expect(screen.getAllByText("Sep 21, 2026")).toHaveLength(5)
+    expect(screen.getByRole("link", { name: "View all students" }).getAttribute("href")).toBe("/students")
+  })
 
-it("distinguishes empty and unavailable states without fabricated rows", () => {
-  const { rerender } = render(<RecentSubscriptions subscriptions={[]} />)
-  expect(screen.getByText("No subscription activity yet.")).toBeDefined()
-  expect(screen.queryByRole("list")).toBeNull()
+  it("distinguishes empty and unavailable states without fabricated rows", () => {
+    const { rerender } = render(<RecentSubscriptions subscriptions={[]} />)
+    expect(screen.getByText("No subscription activity yet.")).toBeDefined()
+    expect(screen.queryByRole("list")).toBeNull()
 
-  rerender(<RecentSubscriptions subscriptions={null} />)
-  expect(screen.getByText("Recent subscriptions could not be loaded.")).toBeDefined()
-  expect(screen.queryByRole("list")).toBeNull()
+    rerender(<RecentSubscriptions subscriptions={null} />)
+    expect(screen.getByText("Recent subscriptions could not be loaded.")).toBeDefined()
+    expect(screen.queryByRole("list")).toBeNull()
+  })
 })

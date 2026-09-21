@@ -150,4 +150,44 @@ describe("loadDashboardOverview", () => {
       },
     })
   })
+
+  it("returns unauthorized when top-courses rejects Unauthorized while recent subscriptions succeeds", async () => {
+    mocks.getTeacherAnalytics.mockResolvedValue(summary)
+    mocks.listTopEarningCourses.mockRejectedValue({
+      type: "Unauthorized",
+      status: 401,
+    })
+    mocks.listRecentTeacherSubscriptions.mockResolvedValue(subscriptions)
+
+    await expect(loadDashboardOverview({})).resolves.toEqual({
+      kind: "unauthorized",
+    })
+  })
+
+  it("returns error when all three requests reject non-authorization failures", async () => {
+    mocks.getTeacherAnalytics.mockRejectedValue({
+      type: "Upstream",
+      status: 503,
+      message: "Service unavailable",
+    })
+    mocks.listTopEarningCourses.mockRejectedValue({
+      type: "Upstream",
+      status: 502,
+      message: "Bad gateway",
+    })
+    mocks.listRecentTeacherSubscriptions.mockRejectedValue({
+      type: "Upstream",
+      status: 500,
+      message: "Internal error",
+    })
+
+    await expect(loadDashboardOverview({})).resolves.toEqual({
+      kind: "error",
+      error: {
+        type: "Upstream",
+        status: 503,
+        message: "Service unavailable",
+      },
+    })
+  })
 })
