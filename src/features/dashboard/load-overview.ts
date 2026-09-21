@@ -22,40 +22,49 @@ export type DashboardResult =
 
 type DashboardFilters = { start?: string; end?: string }
 
-async function loadRecentSubscriptions() {
-  try {
-    return await listRecentTeacherSubscriptions()
-  } catch (error) {
-    if (isUnauthorized(error)) throw error
-    return null
-  }
-}
-
 export async function loadDashboardOverview(
   filters: DashboardFilters
 ): Promise<DashboardResult> {
-  try {
-    const [summary, topCourses, recentSubscriptions] = await Promise.all([
+  const [summaryResult, topCoursesResult, recentSubscriptionsResult] =
+    await Promise.allSettled([
       getTeacherAnalytics(filters),
       listTopEarningCourses({ ...filters, limit: 5 }),
-      loadRecentSubscriptions(),
+      listRecentTeacherSubscriptions(),
     ])
-    return { kind: "ready", summary, topCourses, recentSubscriptions }
-  } catch (error) {
-    if (isUnauthorized(error)) return { kind: "unauthorized" }
-    const apiError = error as Error & {
-      type?: ApiError["type"]
-      status?: number
-    }
+
+  const results = [summaryResult, topCoursesResult, recentSubscriptionsResult]
+  if (results.some((r) => r.status === "rejected" && isUnauthorized(r.reason))) {
+    return { kind: "unauthorized" }
+  }
+
+  if (summaryResult.status === "rejected") {
     return {
       kind: "error",
-      error: {
-        type: apiError.type ?? "Upstream",
-        status: apiError.status ?? 0,
-        message: apiError.message ?? "Error",
-      } as ApiError,
+      error: toApiError(summaryResult.reason),
     }
   }
+
+  let recentSubscriptions: TeacherSubscription[] | null = null
+  if (recentSubscriptionsResult.status === "fulfilled") {
+    recentSubscriptions = recentSubscriptionsResult.value
+  }
+
+  return {
+    kind: "ready",
+    summary: summaryResult.value,
+    topCourses:
+      topCoursesResult.status === "fulfilled" ? topCoursesResult.value : [],
+    recentSubscriptions,
+  }
+}
+
+function toApiError(error: unknown): ApiError {
+  const e = error as Error & { type?: ApiError["type"]; status?: number }
+  return {
+    type: e.type ?? "Upstream",
+    status: e.status ?? 0,
+    message: e.message ?? "Error",
+  } as ApiError
 }
 
 function isUnauthorized(error: unknown) {

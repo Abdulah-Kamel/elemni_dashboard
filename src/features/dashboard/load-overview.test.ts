@@ -110,4 +110,25 @@ describe("loadDashboardOverview", () => {
       },
     })
   })
+
+  it("returns unauthorized when analytics rejects Upstream and subscriptions rejects Unauthorized", async () => {
+    mocks.getTeacherAnalytics.mockRejectedValue({
+      type: "Upstream",
+      status: 503,
+      message: "Service unavailable",
+    })
+    mocks.listTopEarningCourses.mockRejectedValue({
+      type: "Upstream",
+      status: 503,
+      message: "Service unavailable",
+    })
+    mocks.listRecentTeacherSubscriptions.mockRejectedValue({
+      type: "Unauthorized",
+      status: 401,
+    })
+
+    await expect(loadDashboardOverview({})).resolves.toEqual({
+      kind: "unauthorized",
+    })
+  })
 })
