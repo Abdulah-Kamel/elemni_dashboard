@@ -231,6 +231,13 @@
         "top_course_concentration_description": "The leading course accounts for {value} of teacher earnings in this period."
       },
       "unavailable": "Not enough data"
+    },
+    "recent_subscriptions": {
+      "title": "Recent subscriptions",
+      "view_all": "View all students",
+      "subscribed_to": "Subscribed to {course}",
+      "empty": "No subscription activity yet.",
+      "unavailable": "Recent subscriptions could not be loaded."
     }
   },
   "earnings": {

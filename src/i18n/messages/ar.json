@@ -231,6 +231,13 @@
         "top_course_concentration_description": "تمثل الدورة الأعلى ربحًا {value} من أرباح المعلم خلال هذه الفترة."
       },
       "unavailable": "لا توجد بيانات كافية"
+    },
+    "recent_subscriptions": {
+      "title": "أحدث الاشتراكات",
+      "view_all": "عرض كل الطلاب",
+      "subscribed_to": "اشترك في {course}",
+      "empty": "لا يوجد نشاط اشتراكات حتى الآن.",
+      "unavailable": "تعذر تحميل أحدث الاشتراكات."
     }
   },
   "earnings": {
