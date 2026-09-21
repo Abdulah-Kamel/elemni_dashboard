@@ -30,3 +30,15 @@ export async function listTeacherSubscriptions(): Promise<TeacherSubscription[]>
 
   return items
 }
+
+export async function listRecentTeacherSubscriptions(): Promise<
+  TeacherSubscription[]
+> {
+  const result = await apiFetch(
+    `${endpoints.teachers.subscriptions}?payment_status=all&skip=0&limit=5`,
+    teacherSubscriptionsPageSchema,
+    { tags: ["teacher-subscriptions"] }
+  )
+
+  return result.items
+}
