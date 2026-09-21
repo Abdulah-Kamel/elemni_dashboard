@@ -7,36 +7,73 @@ import type {
   TopEarningCourse,
 } from "@/features/analytics/schema"
 
-vi.mock("next-intl", () => ({
-  useTranslations: vi.fn().mockReturnValue((key: string) => {
-    const messages: Record<string, string> = {
-      title: "Dashboard",
-      subtitle: "Overview",
-      "filters.range": "Date Range",
-      "filters.all_time": "All Time",
-      "filters.choose": "Choose date range",
-      "filters.dialog_title": "Select Range",
-      "filters.dialog_description": "Pick a start and end date",
-      "filters.apply": "Apply",
-      "filters.reset": "Reset",
-      "filters.cancel": "Cancel",
-      "stats.teacher_earnings": "Teacher Earnings",
-      "stats.total_revenue": "Total Revenue",
-      "stats.subscriptions": "Subscriptions",
-      "stats.active_courses": "Active Courses",
-      "stats.archived_courses": "Archived Courses",
-      "top_courses.title": "Top Earning Courses",
-      "top_courses.subtitle": "Ranked by teacher earnings",
-      "top_courses.headers.course": "Course",
-      "top_courses.headers.price": "Price",
-      "top_courses.headers.earnings": "Earnings",
-      "top_courses.headers.subscriptions": "Subscriptions",
-      "top_courses.empty": "No courses",
-    }
-    return messages[key] ?? key
-  }),
-  useLocale: vi.fn().mockReturnValue("ar"),
-}))
+vi.mock("next-intl", () => {
+  const analysisMessages: Record<string, string> = {
+    title: "Performance analysis",
+    subtitle: "What the selected period shows about your teaching business.",
+    "business.title": "Business performance",
+    "business.teacher_share": "Teacher share",
+    "business.teacher_share_description":
+      "Teacher earnings account for {value} of gross revenue in this period.",
+    "business.earnings_per_subscription": "Earnings per subscription",
+    "business.earnings_per_subscription_description":
+      "Average teacher earnings were {value} per completed subscription.",
+    "portfolio.title": "Portfolio health",
+    "portfolio.active_ratio": "Active-course share",
+    "portfolio.active_ratio_description":
+      "{active} of {total} courses are active ({value}).",
+    "portfolio.top_course_concentration": "Leading-course share",
+    "portfolio.top_course_concentration_description":
+      "The leading course accounts for {value} of teacher earnings in this period.",
+    unavailable: "Not enough data",
+  }
+  const analyticsMessages: Record<string, string> = {
+    title: "Dashboard",
+    subtitle: "Overview",
+    "filters.range": "Date Range",
+    "filters.all_time": "All Time",
+    "filters.choose": "Choose date range",
+    "filters.dialog_title": "Select Range",
+    "filters.dialog_description": "Pick a start and end date",
+    "filters.apply": "Apply",
+    "filters.reset": "Reset",
+    "filters.cancel": "Cancel",
+    "stats.teacher_earnings": "Teacher Earnings",
+    "stats.total_revenue": "Total Revenue",
+    "stats.subscriptions": "Subscriptions",
+    "stats.active_courses": "Active Courses",
+    "stats.archived_courses": "Archived Courses",
+    "top_courses.title": "Top Earning Courses",
+    "top_courses.subtitle": "Ranked by teacher earnings",
+    "top_courses.headers.course": "Course",
+    "top_courses.headers.price": "Price",
+    "top_courses.headers.earnings": "Earnings",
+    "top_courses.headers.subscriptions": "Subscriptions",
+    "top_courses.empty": "No courses",
+  }
+
+  const nsMap: Record<string, Record<string, string>> = {
+    analytics: analyticsMessages,
+    "analytics.analysis": analysisMessages,
+  }
+
+  return {
+    useTranslations: vi.fn().mockImplementation((namespace?: string) => {
+      const messages = nsMap[namespace ?? "analytics"] ?? analyticsMessages
+      return (
+        key: string,
+        values?: Record<string, string | number>
+      ) => {
+        const template = messages[key] ?? key
+        return template.replace(
+          /\{(\w+)\}/g,
+          (_, name: string) => String(values?.[name] ?? `{${name}}`)
+        )
+      }
+    }),
+    useLocale: vi.fn().mockReturnValue("ar"),
+  }
+})
 
 vi.mock("@/i18n/routing", () => ({
   Link: ({
@@ -110,11 +147,11 @@ const topCourses: TopEarningCourse[] = [
 ]
 
 const filteredSummary: TeacherAnalytics = {
-  total_earnings: 500.0,
-  sum_earning_money: 500.0,
+  total_earnings: 360.0,
+  sum_earning_money: 360.0,
   total_revenue: 600.0,
-  student_subscription_count: 5,
-  subscription_count: 5,
+  student_subscription_count: 6,
+  subscription_count: 6,
   active_courses_count: 3,
   archived_courses_count: 1,
   archieved_courses_count: 1,
@@ -128,8 +165,8 @@ const filteredTopCourses: TopEarningCourse[] = [
     title: "Physics 101",
     name: "Physics 101",
     price: 75.0,
-    earning_amount: 250.0,
-    total_earnings: 250.0,
+    earning_amount: 180.0,
+    total_earnings: 180.0,
     student_subscription_count: 3,
     subscribed_students_count: 3,
   },
@@ -183,6 +220,10 @@ describe("TeacherAnalyticsView", () => {
     expect(screen.getByText("Dashboard")).toBeDefined()
     expect(screen.getByText("Advanced Math")).toBeDefined()
     expect(screen.getByText(/1,000\.00/)).toBeDefined()
+    expect(
+      screen.getByRole("heading", { name: "Performance analysis" })
+    ).toBeDefined()
+    expect(screen.getByText(/Teacher earnings account for/)).toBeDefined()
   })
 
   it("passes onApply and onReset callbacks so no Link/native fallback is used", async () => {
@@ -237,6 +278,22 @@ describe("TeacherAnalyticsView", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Physics 101")).toBeDefined()
+    })
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Teacher earnings account for 60/i)
+      ).toBeDefined()
+    })
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Average teacher earnings were/)
+      ).toBeDefined()
+    })
+    await waitFor(() => {
+      expect(
+        screen.getByText(/leading course accounts for 50/i)
+      ).toBeDefined()
     })
   })
 
@@ -322,5 +379,41 @@ describe("TeacherAnalyticsView", () => {
     })) {
       expect(cell.className).toContain("text-center")
     }
+  })
+
+  it("renders zero totals with empty course list showing KPI headings, analysis, and empty messages", async () => {
+    const zeroSummary: TeacherAnalytics = {
+      total_earnings: 0,
+      sum_earning_money: 0,
+      total_revenue: 0,
+      student_subscription_count: 0,
+      subscription_count: 0,
+      active_courses_count: 0,
+      archived_courses_count: 0,
+      archieved_courses_count: 0,
+      start_date: null,
+      end_date: null,
+    }
+
+    getTeacherAnalyticsAction.mockResolvedValue({
+      summary: zeroSummary,
+      topCourses: [],
+    })
+
+    renderWithQuery(
+      <TeacherAnalyticsView
+        summary={zeroSummary}
+        topCourses={[]}
+        filters={{}}
+      />
+    )
+
+    expect(screen.getByText("Teacher Earnings")).toBeDefined()
+    expect(screen.getByText("Total Revenue")).toBeDefined()
+    expect(
+      screen.getByRole("heading", { name: "Performance analysis" })
+    ).toBeDefined()
+    expect(screen.getAllByText("Not enough data").length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText("No courses")).toBeDefined()
   })
 })

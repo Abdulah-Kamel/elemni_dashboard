@@ -22,6 +22,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { DateRangeFilterForm } from "@/features/analytics/components/date-range-filter-form"
+import { GuidedAnalysisSection } from "@/features/analytics/components/guided-analysis"
 import { getTeacherAnalyticsAction } from "@/features/analytics/actions"
 import type {
   TeacherAnalytics,
@@ -201,6 +202,12 @@ export function TeacherAnalyticsView({
           </Card>
         ))}
       </section>
+
+      <GuidedAnalysisSection
+        summary={displayedData.summary}
+        topCourses={displayedData.topCourses}
+        currency={currency}
+      />
 
       <Card className="animate-slide-up animate-stagger-6 rounded-2xl border border-border shadow-xs">
         <div className="border-b border-border px-md pt-md pb-3">
