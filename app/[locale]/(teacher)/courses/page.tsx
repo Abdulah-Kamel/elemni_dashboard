@@ -6,7 +6,9 @@ import {
   CourseList,
   CourseListSkeleton,
 } from "@/features/course-management/components/course-list"
-import { CreateCourseDialog } from "@/features/course-management/components/create-course-dialog"
+import { Link } from "@/i18n/routing"
+import { Button } from "@/components/ui/button"
+import { Plus } from "lucide-react"
 import type { CourseOut } from "@/features/shell/schema"
 import { Suspense } from "react"
 import { redirectToAuth } from "@/lib/auth/redirect"
@@ -97,7 +99,15 @@ export default async function CoursesPage({
           </h1>
           <p className="mt-1 text-sm text-on-surface-muted">{t("subtitle")}</p>
         </div>
-        <CreateCourseDialog teacherProfileId={teacherProfileId} />
+        <Button
+          id="create-course-trigger"
+          render={
+            <Link href="/courses/new">
+              <Plus data-icon="inline-start" />
+              {t("create")}
+            </Link>
+          }
+        />
       </div>
       <Suspense fallback={<CourseListSkeleton />}>
         <CourseListContent
