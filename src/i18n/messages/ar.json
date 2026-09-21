@@ -212,6 +212,25 @@
         "earnings": "الأرباح",
         "subscriptions": "الاشتراكات"
       }
+    },
+    "analysis": {
+      "title": "تحليل الأداء",
+      "subtitle": "ما توضحه الفترة المحددة عن نشاطك التعليمي.",
+      "business": {
+        "title": "أداء النشاط",
+        "teacher_share": "حصة المعلم",
+        "teacher_share_description": "تمثل أرباح المعلم {value} من إجمالي الإيرادات خلال هذه الفترة.",
+        "earnings_per_subscription": "الأرباح لكل اشتراك",
+        "earnings_per_subscription_description": "بلغ متوسط أرباح المعلم {value} لكل اشتراك مكتمل."
+      },
+      "portfolio": {
+        "title": "حالة الدورات",
+        "active_ratio": "نسبة الدورات النشطة",
+        "active_ratio_description": "عدد الدورات النشطة {active} من أصل {total} ({value}).",
+        "top_course_concentration": "حصة الدورة الأعلى ربحًا",
+        "top_course_concentration_description": "تمثل الدورة الأعلى ربحًا {value} من أرباح المعلم خلال هذه الفترة."
+      },
+      "unavailable": "لا توجد بيانات كافية"
     }
   },
   "earnings": {

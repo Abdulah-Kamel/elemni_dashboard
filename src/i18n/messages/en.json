@@ -212,6 +212,25 @@
         "earnings": "Earnings",
         "subscriptions": "Subscriptions"
       }
+    },
+    "analysis": {
+      "title": "Performance analysis",
+      "subtitle": "What the selected period shows about your teaching business.",
+      "business": {
+        "title": "Business performance",
+        "teacher_share": "Teacher share",
+        "teacher_share_description": "Teacher earnings account for {value} of gross revenue in this period.",
+        "earnings_per_subscription": "Earnings per subscription",
+        "earnings_per_subscription_description": "Average teacher earnings were {value} per completed subscription."
+      },
+      "portfolio": {
+        "title": "Portfolio health",
+        "active_ratio": "Active-course share",
+        "active_ratio_description": "{active} of {total} courses are active ({value}).",
+        "top_course_concentration": "Leading-course share",
+        "top_course_concentration_description": "The leading course accounts for {value} of teacher earnings in this period."
+      },
+      "unavailable": "Not enough data"
     }
   },
   "earnings": {
