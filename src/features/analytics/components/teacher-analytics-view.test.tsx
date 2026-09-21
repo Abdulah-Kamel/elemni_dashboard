@@ -6,6 +6,7 @@ import type {
   TeacherAnalytics,
   TopEarningCourse,
 } from "@/features/analytics/schema"
+import type { TeacherSubscription } from "@/features/students/schema"
 
 vi.mock("next-intl", () => {
   const analysisMessages: Record<string, string> = {
@@ -120,6 +121,35 @@ vi.mock(
   })
 )
 
+vi.mock("@/features/dashboard/components/recent-subscriptions", () => ({
+  RecentSubscriptions: ({
+    subscriptions,
+  }: {
+    subscriptions: TeacherSubscription[] | null
+  }) => (
+    <div data-testid="recent-subscriptions">
+      {subscriptions === null
+        ? "recent-unavailable"
+        : subscriptions.map((item) => item.student_name).join(",")}
+    </div>
+  ),
+}))
+
+const recentSubscriptions: TeacherSubscription[] = [
+  {
+    enrollment_id: 17,
+    purchased_at: "2026-09-21T10:00:00Z",
+    expires_at: "2027-09-21T10:00:00Z",
+    payment_status: "completed",
+    total_paid: 250,
+    currency: "EGP",
+    student_id: 4,
+    student_name: "Mona Ali",
+    student_email: "mona@example.com",
+    course: { id: 8, title: "Physics", price: 250 },
+  },
+]
+
 const summary: TeacherAnalytics = {
   total_earnings: 1000.0,
   sum_earning_money: 1000.0,
@@ -213,6 +243,7 @@ describe("TeacherAnalyticsView", () => {
       <TeacherAnalyticsView
         summary={summary}
         topCourses={topCourses}
+        recentSubscriptions={recentSubscriptions}
         filters={{}}
       />
     )
@@ -236,6 +267,7 @@ describe("TeacherAnalyticsView", () => {
       <TeacherAnalyticsView
         summary={summary}
         topCourses={topCourses}
+        recentSubscriptions={recentSubscriptions}
         filters={{}}
       />
     )
@@ -260,6 +292,7 @@ describe("TeacherAnalyticsView", () => {
       <TeacherAnalyticsView
         summary={summary}
         topCourses={topCourses}
+        recentSubscriptions={recentSubscriptions}
         filters={{}}
       />
     )
@@ -309,6 +342,7 @@ describe("TeacherAnalyticsView", () => {
       <TeacherAnalyticsView
         summary={filteredSummary}
         topCourses={filteredTopCourses}
+        recentSubscriptions={recentSubscriptions}
         filters={{ start: "2025-01-01", end: "2025-01-31" }}
       />
     )
@@ -340,6 +374,7 @@ describe("TeacherAnalyticsView", () => {
       <TeacherAnalyticsView
         summary={summary}
         topCourses={topCourses}
+        recentSubscriptions={recentSubscriptions}
         filters={{}}
       />
     )
@@ -360,6 +395,7 @@ describe("TeacherAnalyticsView", () => {
       <TeacherAnalyticsView
         summary={summary}
         topCourses={topCourses}
+        recentSubscriptions={recentSubscriptions}
         filters={{}}
       />
     )
@@ -404,6 +440,7 @@ describe("TeacherAnalyticsView", () => {
       <TeacherAnalyticsView
         summary={zeroSummary}
         topCourses={[]}
+        recentSubscriptions={recentSubscriptions}
         filters={{}}
       />
     )
@@ -415,5 +452,47 @@ describe("TeacherAnalyticsView", () => {
     ).toBeDefined()
     expect(screen.getAllByText("Not enough data").length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText("No courses")).toBeDefined()
+  })
+
+  it("keeps recent subscriptions unchanged when analytics filters update", async () => {
+    getTeacherAnalyticsAction.mockResolvedValue({
+      summary: filteredSummary,
+      topCourses: filteredTopCourses,
+    })
+    renderWithQuery(
+      <TeacherAnalyticsView
+        summary={summary}
+        topCourses={topCourses}
+        filters={{}}
+        recentSubscriptions={recentSubscriptions}
+      />
+    )
+
+    expect(screen.getByTestId("recent-subscriptions").textContent).toBe("Mona Ali")
+    const props = mockDateRangeFilterForm.mock.calls[0][0]
+    props.onApply!({ start: "2025-01-01", end: "2025-01-31" })
+
+    await waitFor(() => expect(screen.getByText("Physics 101")).toBeDefined())
+    expect(screen.getByTestId("recent-subscriptions").textContent).toBe("Mona Ali")
+  })
+
+  it("renders recent subscriptions as unavailable when null", async () => {
+    getTeacherAnalyticsAction.mockResolvedValue({
+      summary,
+      topCourses,
+    })
+
+    renderWithQuery(
+      <TeacherAnalyticsView
+        summary={summary}
+        topCourses={topCourses}
+        recentSubscriptions={null}
+        filters={{}}
+      />
+    )
+
+    expect(screen.getByTestId("recent-subscriptions").textContent).toBe(
+      "recent-unavailable"
+    )
   })
 })

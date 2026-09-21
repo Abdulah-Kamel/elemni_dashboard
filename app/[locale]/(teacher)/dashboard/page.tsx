@@ -2,61 +2,15 @@ import { setRequestLocale } from "next-intl/server"
 import { Placeholder } from "@/features/shell/components/placeholder"
 import { verifySession } from "@/lib/auth/dal"
 import { redirectToAuth } from "@/lib/auth/redirect"
-import {
-  getTeacherAnalytics,
-  listTopEarningCourses,
-} from "@/features/analytics/queries"
 import { Overview } from "@/features/dashboard/components/overview"
-import type { ApiError } from "@/lib/api/errors"
-import type {
-  TeacherAnalytics,
-  TopEarningCourse,
-} from "@/features/analytics/schema"
+import { loadDashboardOverview } from "@/features/dashboard/load-overview"
 
 export const dynamic = "force-dynamic"
-
-type DashboardResult =
-  | {
-      kind: "ready"
-      summary: TeacherAnalytics
-      topCourses: TopEarningCourse[]
-    }
-  | { kind: "error"; error: ApiError }
-  | { kind: "unauthorized" }
 
 function normalizeDateParam(value: string | string[] | undefined) {
   const candidate = Array.isArray(value) ? value[0] : value
   if (!candidate) return undefined
   return /^\d{4}-\d{2}-\d{2}$/.test(candidate) ? candidate : undefined
-}
-
-async function loadOverview(filters: {
-  start?: string
-  end?: string
-}): Promise<DashboardResult> {
-  try {
-    const [summary, topCourses] = await Promise.all([
-      getTeacherAnalytics(filters),
-      listTopEarningCourses({ ...filters, limit: 5 }),
-    ])
-    return { kind: "ready", summary, topCourses }
-  } catch (err) {
-    const error = err as Error & {
-      type?: ApiError["type"]
-      status?: number
-    }
-    if (error.type === "Unauthorized") {
-      return { kind: "unauthorized" }
-    }
-    return {
-      kind: "error",
-      error: {
-        type: error.type ?? "Upstream",
-        status: error.status ?? 0,
-        message: error.message ?? "Error",
-      } as ApiError,
-    }
-  }
 }
 
 export default async function DashboardPage({
@@ -79,7 +33,7 @@ export default async function DashboardPage({
     start: normalizeDateParam(query.start),
     end: normalizeDateParam(query.end),
   }
-  const result = await loadOverview(filters)
+  const result = await loadDashboardOverview(filters)
   if (result.kind === "ready") {
     const teacherFirstName = user.name.split(/\s+/)[0] ?? user.name
     return (
@@ -87,6 +41,7 @@ export default async function DashboardPage({
         teacherFirstName={teacherFirstName}
         summary={result.summary}
         topCourses={result.topCourses}
+        recentSubscriptions={result.recentSubscriptions}
         filters={filters}
       />
     )

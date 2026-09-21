@@ -24,14 +24,17 @@ import {
 import { DateRangeFilterForm } from "@/features/analytics/components/date-range-filter-form"
 import { GuidedAnalysisSection } from "@/features/analytics/components/guided-analysis"
 import { getTeacherAnalyticsAction } from "@/features/analytics/actions"
+import { RecentSubscriptions } from "@/features/dashboard/components/recent-subscriptions"
 import type {
   TeacherAnalytics,
   TopEarningCourse,
 } from "@/features/analytics/schema"
+import type { TeacherSubscription } from "@/features/students/schema"
 
 type Props = {
   summary: TeacherAnalytics
   topCourses: TopEarningCourse[]
+  recentSubscriptions: TeacherSubscription[] | null
   filters: {
     start?: string
     end?: string
@@ -45,6 +48,7 @@ type Props = {
 export function TeacherAnalyticsView({
   summary,
   topCourses,
+  recentSubscriptions,
   filters,
   title,
   subtitle,
@@ -276,6 +280,8 @@ export function TeacherAnalyticsView({
           </TableBody>
         </Table>
       </Card>
+
+      <RecentSubscriptions subscriptions={recentSubscriptions} />
     </div>
   )
 }
