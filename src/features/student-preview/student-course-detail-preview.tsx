@@ -218,6 +218,8 @@ interface StudentCourseDetailPreviewProps {
   selectedNode?: CourseBuilderNode | null
   onSelectNode?: (node: CourseBuilderNode) => void
   showEditAffordance?: boolean
+  /** Hides the curriculum content section for pre-creation previews. */
+  hideCurriculum?: boolean
 }
 
 export function StudentCourseDetailPreview({
@@ -226,6 +228,7 @@ export function StudentCourseDetailPreview({
   selectedNode: selectedNodeProp,
   onSelectNode: onSelectNodeProp,
   showEditAffordance = false,
+  hideCurriculum = false,
 }: StudentCourseDetailPreviewProps) {
   const lang = locale.toLowerCase().startsWith("ar") ? "ar" : "en"
   const copy = COURSE_PREVIEW_COPY[lang]
@@ -513,11 +516,12 @@ export function StudentCourseDetailPreview({
         </nav>
 
         {/* Content section */}
-        <section
-          id="course-preview-content"
-          className="scroll-mt-24 pt-8"
-          aria-labelledby="course-preview-content-title"
-        >
+        {!hideCurriculum && (
+          <section
+            id="course-preview-content"
+            className="scroll-mt-24 pt-8"
+            aria-labelledby="course-preview-content-title"
+          >
           <div className="mb-5 flex flex-wrap items-end justify-between gap-3 px-1">
             <h2
               id="course-preview-content-title"
@@ -563,6 +567,7 @@ export function StudentCourseDetailPreview({
             </div>
           )}
         </section>
+        )}
       </div>
     </div>
   )
