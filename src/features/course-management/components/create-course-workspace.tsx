@@ -96,6 +96,27 @@ export function CreateCourseWorkspace({
       gradeId: raw.gradeId ?? 0,
       streamId: raw.streamId ?? 0,
     }
+
+    if (current.subjectId === 0 || current.gradeId === 0 || current.streamId === 0) {
+      const coerced = {
+        ...current,
+        subjectId: current.subjectId === 0 ? (0.5 as unknown as number) : current.subjectId,
+        gradeId: current.gradeId === 0 ? (0.5 as unknown as number) : current.gradeId,
+        streamId: current.streamId === 0 ? (0.5 as unknown as number) : current.streamId,
+      }
+      const result = courseFormSchema.safeParse(coerced)
+      const fieldMap: Record<string, string> = {}
+      if (!current.title.trim()) fieldMap.title = t("title_required")
+      if (result.success === false) {
+        for (const issue of result.error.issues) {
+          const key = String(issue.path[0] ?? "")
+          if (key && !fieldMap[key]) fieldMap[key] = issue.message
+        }
+      }
+      setApiErrors(fieldMap)
+      return
+    }
+
     const parsed = courseFormSchema.safeParse(current)
     if (!parsed.success) {
       const fieldMap: Record<string, string> = {}
@@ -104,9 +125,6 @@ export function CreateCourseWorkspace({
         if (key === "title" && !fieldMap.title) fieldMap.title = t("title_required")
         else if (key && !fieldMap[key]) fieldMap[key] = issue.message
       }
-      if (current.subjectId === 0) fieldMap.subjectId = t("subject_label")
-      if (current.gradeId === 0) fieldMap.gradeId = t("grade_label")
-      if (current.streamId === 0) fieldMap.streamId = t("stream_label")
       setApiErrors(fieldMap)
       return
     }

@@ -25,12 +25,36 @@ vi.mock("sonner", () => ({
   toast: { success: vi.fn(), warning: vi.fn(), error: vi.fn() },
 }))
 
+vi.mock("../components/curriculum-picker", () => ({
+  CurriculumPicker({
+    onSubjectChange,
+    onGradeChange,
+    onStreamChange,
+    errors,
+  }: {
+    onSubjectChange: (id: number | null) => void
+    onGradeChange: (id: number | null) => void
+    onStreamChange: (id: number | null) => void
+    errors?: { subjectId?: string; gradeId?: string; streamId?: string }
+  }) {
+    return (
+      <div>
+        <button onClick={() => onSubjectChange(1)}>Select Subject</button>
+        <button onClick={() => onGradeChange(3)}>Select Grade</button>
+        <button onClick={() => onStreamChange(5)}>Select Stream</button>
+        {errors?.subjectId && <p>{errors.subjectId}</p>}
+        {errors?.gradeId && <p>{errors.gradeId}</p>}
+        {errors?.streamId && <p>{errors.streamId}</p>}
+      </div>
+    )
+  },
+}))
+
 const messages = {
   courses: {
     create_title: "Create a new course",
     create_subtitle: "Fill in the details.",
     save_and_continue: "Save and continue",
-    back_to_courses: "Back to courses",
     title_required: "Course title is required",
     title_label: "Course Title",
     description_label: "Description",
@@ -82,6 +106,12 @@ function renderWorkspace() {
   )
 }
 
+function selectCurriculum() {
+  fireEvent.click(screen.getByText("Select Subject"))
+  fireEvent.click(screen.getByText("Select Grade"))
+  fireEvent.click(screen.getByText("Select Stream"))
+}
+
 describe("CreateCourseWorkspace", () => {
   beforeEach(() => {
     Object.assign(URL, {
@@ -112,11 +142,26 @@ describe("CreateCourseWorkspace", () => {
     expect(createMutation.mutateAsync).not.toHaveBeenCalled()
   })
 
+  it("blocks save when curriculum selection is missing", async () => {
+    renderWorkspace()
+    fireEvent.change(screen.getByLabelText("Course Title"), {
+      target: { value: "Physics" },
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Save and continue" }))
+    await waitFor(() => {
+      expect(screen.getByText("المادة مطلوبة")).toBeDefined()
+      expect(screen.getByText("الصف مطلوب")).toBeDefined()
+      expect(screen.getByText("الشعبة مطلوبة")).toBeDefined()
+    })
+    expect(createMutation.mutateAsync).not.toHaveBeenCalled()
+  })
+
   it("creates the draft and navigates to the edit workspace", async () => {
     renderWorkspace()
     fireEvent.change(screen.getByLabelText("Course Title"), {
       target: { value: "Physics" },
     })
+    selectCurriculum()
     fireEvent.click(screen.getByRole("button", { name: "Save and continue" }))
     await waitFor(() =>
       expect(createMutation.mutateAsync).toHaveBeenCalledWith(
@@ -134,6 +179,7 @@ describe("CreateCourseWorkspace", () => {
     fireEvent.change(screen.getByLabelText("Course Title"), {
       target: { value: "Physics" },
     })
+    selectCurriculum()
     const file = new File(["cover"], "cover.png", { type: "image/png" })
     const input = document.querySelector('input[type="file"]') as HTMLInputElement
     fireEvent.change(input, { target: { files: [file] } })
