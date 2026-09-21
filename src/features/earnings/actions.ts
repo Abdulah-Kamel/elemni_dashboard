@@ -22,7 +22,7 @@ export async function getTeacherUsageAction(filters: TeacherUsageFilters) {
       const locale = requestHeaders.get("Accept-Language")?.startsWith("en")
         ? "en"
         : "ar"
-      await redirectToAuth(locale, `/${locale}/earnings`)
+      await redirectToAuth(locale, `/${locale}/usage`)
     }
     throw error
   }

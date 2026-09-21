@@ -8,10 +8,10 @@ vi.mock("next-intl", () => ({
       overview: "Overview",
       my_courses: "My Courses",
       students: "Students",
-      earnings: "Earnings",
-      profile: "Profile",
-      storage: "Storage",
-      settings: "Settings",
+       earnings: "Usage",
+       profile: "Profile",
+       storage: "Storage",
+       settings: "Settings",
       more: "More",
       catalog: "Catalog",
       teachers: "Teachers",
@@ -35,16 +35,19 @@ vi.mock("@/i18n/routing", () => ({
 }))
 
 describe("MobileBottomNav", () => {
-  it("renders all teacher nav items", () => {
+  it("renders the teacher navigation without removed destinations", () => {
     render(<MobileBottomNav />)
 
     expect(screen.queryByText("Overview")).not.toBeNull()
     expect(screen.queryByText("My Courses")).not.toBeNull()
     expect(screen.queryByText("Students")).not.toBeNull()
-    expect(screen.queryByText("Earnings")).not.toBeNull()
+    expect(screen.queryByText("Usage")).not.toBeNull()
     expect(screen.queryByText("Profile")).not.toBeNull()
-    expect(screen.queryByText("Storage")).not.toBeNull()
-    expect(screen.queryByText("Settings")).not.toBeNull()
+    expect(screen.queryByText("Storage")).toBeNull()
+    expect(screen.queryByText("Settings")).toBeNull()
+    expect(screen.getByRole("link", { name: "Usage" }).getAttribute("href")).toBe(
+      "/usage"
+    )
   })
 
   it("has minimum touch target size of 44px", () => {
@@ -60,7 +63,7 @@ describe("MobileBottomNav", () => {
   it("truncates long labels", () => {
     render(<MobileBottomNav />)
 
-    const labels = screen.getAllByText(/(Overview|My Courses|Students|Earnings|Profile|Storage|Settings)/)
+    const labels = screen.getAllByText(/(Overview|My Courses|Students|Usage|Profile)/)
     labels.forEach((label) => {
       expect(label.className).toContain("truncate")
       expect(label.className).toContain("max-w-[60px]")

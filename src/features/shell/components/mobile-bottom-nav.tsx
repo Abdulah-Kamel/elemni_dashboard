@@ -5,8 +5,6 @@ import {
   LayoutGrid,
   BookOpen,
   GraduationCap,
-  Cloud,
-  Settings,
   User,
   Layers,
   GitBranch,
@@ -23,10 +21,8 @@ const TEACHER_NAV = [
   { id: "overview", href: "/dashboard", icon: LayoutGrid },
   { id: "my_courses", href: "/courses", icon: BookOpen },
   { id: "students", href: "/students", icon: GraduationCap },
-  { id: "earnings", href: "/earnings", icon: ReceiptText },
+  { id: "earnings", href: "/usage", icon: ReceiptText },
   { id: "profile", href: "/profile", icon: User },
-  { id: "storage", href: "/storage", icon: Cloud },
-  { id: "settings", href: "/settings", icon: Settings },
 ] as const
 
 const ADMIN_NAV = [

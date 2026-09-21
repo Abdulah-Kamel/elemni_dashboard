@@ -324,7 +324,7 @@ export function EarningsView({ data, filters, locale }: EarningsViewProps) {
                 start: activeFilters.startDate,
                 end: activeFilters.endDate,
               }}
-              basePath="/earnings"
+               basePath="/usage"
               startParam="start_date"
               endParam="end_date"
               hiddenFields={{

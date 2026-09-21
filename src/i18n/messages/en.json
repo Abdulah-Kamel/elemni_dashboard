@@ -20,9 +20,9 @@
     "overview": "Overview",
     "my_courses": "My Courses",
     "student_roster": "Student Roster",
-    "earnings": "Earnings",
+    "earnings": "Usage",
     "lessons": "Lessons",
-    "students": "Students",
+    "students": "Students & Subscriptions",
     "storage": "Usage",
     "profile": "Profile",
     "settings": "Settings",
@@ -98,7 +98,7 @@
     "page_students": "Students",
     "page_analytics": "Analytics",
     "page_billing": "Billing",
-    "page_earnings": "Earnings",
+    "page_earnings": "Usage",
     "no_new_notifications": "No new notifications"
   },
   "placeholder": {
@@ -242,8 +242,8 @@
   },
   "earnings": {
     "eyebrow": "Usage ledger",
-    "title": "Earnings, without the guesswork",
-    "subtitle": "A transparent view of delivery usage and the balance it creates. Course-sale earnings remain in Analytics; this ledger covers CDN bandwidth and storage charges.",
+    "title": "Usage and charges, clearly tracked",
+    "subtitle": "Track CDN bandwidth and storage usage, calculated charges, and your current balance.",
     "pending_dues": "Current balance due",
     "pending_dues_hint": "This is the live amount recorded on your teacher profile. Filters below only change the usage period.",
     "summary_title": "Usage summary",

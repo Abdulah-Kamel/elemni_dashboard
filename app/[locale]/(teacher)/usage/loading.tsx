@@ -2,7 +2,7 @@ export default function EarningsLoading() {
   return (
     <div
       className="flex animate-pulse flex-col gap-5 p-1 sm:gap-6"
-      aria-label="Loading earnings"
+      aria-label="Loading usage"
     >
       <div className="h-64 rounded-3xl bg-surface-strong" />
       <div className="grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-2 xl:grid-cols-4">

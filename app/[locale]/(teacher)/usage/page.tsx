@@ -23,7 +23,7 @@ export default async function EarningsPage({
 
   const user = await verifySession()
   if (!user) {
-    return redirectToAuth(locale, `/${locale}/earnings`)
+    return redirectToAuth(locale, `/${locale}/usage`)
   }
 
   const query = await searchParams
@@ -34,7 +34,7 @@ export default async function EarningsPage({
     data = await getTeacherUsage(filters)
   } catch (err) {
     if ((err as { type?: string }).type === "Unauthorized") {
-      return redirectToAuth(locale, `/${locale}/earnings`)
+      return redirectToAuth(locale, `/${locale}/usage`)
     }
     return <Placeholder state="error" error={toPageError(err)} />
   }
