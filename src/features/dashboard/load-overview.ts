@@ -44,6 +44,13 @@ export async function loadDashboardOverview(
     }
   }
 
+  if (topCoursesResult.status === "rejected") {
+    return {
+      kind: "error",
+      error: toApiError(topCoursesResult.reason),
+    }
+  }
+
   let recentSubscriptions: TeacherSubscription[] | null = null
   if (recentSubscriptionsResult.status === "fulfilled") {
     recentSubscriptions = recentSubscriptionsResult.value
@@ -52,8 +59,7 @@ export async function loadDashboardOverview(
   return {
     kind: "ready",
     summary: summaryResult.value,
-    topCourses:
-      topCoursesResult.status === "fulfilled" ? topCoursesResult.value : [],
+    topCourses: topCoursesResult.value,
     recentSubscriptions,
   }
 }

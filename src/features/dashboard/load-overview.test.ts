@@ -131,4 +131,23 @@ describe("loadDashboardOverview", () => {
       kind: "unauthorized",
     })
   })
+
+  it("returns error when top-courses fails Upstream while summary succeeds", async () => {
+    mocks.getTeacherAnalytics.mockResolvedValue(summary)
+    mocks.listTopEarningCourses.mockRejectedValue({
+      type: "Upstream",
+      status: 502,
+      message: "Bad gateway",
+    })
+    mocks.listRecentTeacherSubscriptions.mockResolvedValue(subscriptions)
+
+    await expect(loadDashboardOverview({})).resolves.toEqual({
+      kind: "error",
+      error: {
+        type: "Upstream",
+        status: 502,
+        message: "Bad gateway",
+      },
+    })
+  })
 })
