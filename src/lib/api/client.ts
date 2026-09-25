@@ -36,7 +36,8 @@ function generateRequestId(): string {
 
 type FetchInit = {
   method?: string
-  body?: string
+  /** JSON string, or FormData for multipart uploads (Content-Type set by fetch). */
+  body?: string | FormData
   headers?: Record<string, string>
   tags?: string[]
   revalidate?: number
@@ -75,13 +76,15 @@ export async function apiFetch<T>(
     }
   }
 
-  if (init?.body) {
+  if (typeof init?.body === "string") {
     headers["Content-Type"] = headers["Content-Type"] ?? "application/json"
   }
 
   const url = `${env.API_URL}${path}`
   const start = performance.now()
-  logger.api(method, path, requestId, { bodySize: init?.body?.length })
+  logger.api(method, path, requestId, {
+    bodySize: typeof init?.body === "string" ? init.body.length : undefined,
+  })
 
   const attempt = async (
     requestHeaders: Record<string, string>

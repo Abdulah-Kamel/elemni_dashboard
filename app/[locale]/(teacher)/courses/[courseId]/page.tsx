@@ -19,6 +19,7 @@ import { CourseWorkspace } from "@/features/student-preview/course-workspace"
 import { buildCoursePreviewModel } from "@/features/student-preview/build-course-preview-model"
 import type { CourseFormValues } from "@/features/course-management/schema"
 import { loadCoursePreviewCurriculum } from "@/features/student-preview/server-actions"
+import { CourseTabs } from "@/features/course-tests/components/course-tabs"
 
 export const dynamic = "force-dynamic"
 
@@ -30,7 +31,6 @@ async function CourseEditor({
   locale: string
 }) {
   const t = await getTranslations({ locale, namespace: "courses" })
-  const testT = await getTranslations({ locale, namespace: "courseTests" })
   const ct = await getTranslations({ locale, namespace: "chapters" })
   const lt = await getTranslations({ locale, namespace: "lessons" })
 
@@ -138,13 +138,6 @@ async function CourseEditor({
   const editorActions = (
     <div dir="ltr" className="flex items-center gap-3">
       <Link
-        href={`/${locale}/courses/${courseId}/tests`}
-        dir={locale === "ar" ? "rtl" : "ltr"}
-        className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-border px-3 text-sm font-medium transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none"
-      >
-        {testT("title")}
-      </Link>
-      <Link
         href={`/${locale}/courses`}
         dir={locale === "ar" ? "rtl" : "ltr"}
         className="inline-flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none"
@@ -161,6 +154,7 @@ async function CourseEditor({
 
   return (
     <div className="space-y-6">
+      <CourseTabs courseId={courseId} active="content" className="animate-fade-in" />
       <section className="animate-slide-up rounded-2xl border border-border bg-card p-4 shadow-xs animate-stagger-2 sm:p-6">
         <CourseWorkspace
           model={buildCoursePreviewModel({

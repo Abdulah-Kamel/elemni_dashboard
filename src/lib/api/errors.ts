@@ -58,8 +58,10 @@ export class ApiErrorImpl extends Error {
   readonly retryAfter?: number;
   readonly fields?: string[];
   readonly causeTag?: "timeout" | "network" | "5xx";
+  /** Parsed JSON error body, for endpoints that return structured details (e.g. publish issues). */
+  readonly body?: unknown;
 
-  constructor(err: ApiError) {
+  constructor(err: ApiError, body?: unknown) {
     super(err.message);
     this.name = `ApiError:${err.type}`;
     this.type = err.type;
@@ -69,6 +71,7 @@ export class ApiErrorImpl extends Error {
     if ("retryAfter" in err) this.retryAfter = err.retryAfter;
     if ("fields" in err) this.fields = err.fields;
     if ("cause" in err) this.causeTag = err.cause;
+    this.body = body;
   }
 }
 
@@ -79,17 +82,19 @@ export async function toApiError(res: Response): Promise<ApiErrorImpl> {
 
   let message = `HTTP ${res.status}`;
   let fields: string[] | undefined;
+  let body: unknown;
 
   try {
-    const body = await res.json();
-    if (body?.detail) {
-      if (Array.isArray(body.detail)) {
-        message = body.detail.map((d: { msg?: string }) => d.msg).join("; ");
-        fields = body.detail
+    const json = await res.json();
+    body = json;
+    if (json?.detail) {
+      if (Array.isArray(json.detail)) {
+        message = json.detail.map((d: { msg?: string }) => d.msg).join("; ");
+        fields = json.detail
           .map((d: { loc?: string[] }) => (d.loc ? d.loc.join(".") : ""))
           .filter(Boolean);
-      } else if (typeof body.detail === "string") {
-        message = body.detail;
+      } else if (typeof json.detail === "string") {
+        message = json.detail;
       }
     }
   } catch {
@@ -127,5 +132,5 @@ export async function toApiError(res: Response): Promise<ApiErrorImpl> {
       break;
   }
 
-  return new ApiErrorImpl(err);
+  return new ApiErrorImpl(err, body);
 }

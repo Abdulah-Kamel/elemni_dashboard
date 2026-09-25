@@ -71,6 +71,34 @@ export const endpoints = {
         `/api/v1/courses/${courseId}/lessons/${lessonId}/items/${itemId}/document`,
     },
   },
+  teacherTests: {
+    list: (courseId: number) => `/api/v1/teacher/courses/${courseId}/tests`,
+    stats: (courseId: number) =>
+      `/api/v1/teacher/courses/${courseId}/tests/stats`,
+    courseItems: (courseId: number) =>
+      `/api/v1/teacher/courses/${courseId}/items`,
+    detail: (testId: number) => `/api/v1/teacher/tests/${testId}`,
+    duplicate: (testId: number) => `/api/v1/teacher/tests/${testId}/duplicate`,
+    publish: (testId: number) => `/api/v1/teacher/tests/${testId}/publish`,
+    unpublish: (testId: number) => `/api/v1/teacher/tests/${testId}/unpublish`,
+    archive: (testId: number) => `/api/v1/teacher/tests/${testId}/archive`,
+    questions: (testId: number) => `/api/v1/teacher/tests/${testId}/questions`,
+    questionsOrder: (testId: number) =>
+      `/api/v1/teacher/tests/${testId}/questions/order`,
+    question: (questionId: number) =>
+      `/api/v1/teacher/questions/${questionId}`,
+    fromBank: (testId: number) =>
+      `/api/v1/teacher/tests/${testId}/questions/from-bank`,
+    randomDraw: (testId: number) =>
+      `/api/v1/teacher/tests/${testId}/questions/random-draw`,
+    importExcel: (testId: number, dryRun: boolean) =>
+      `/api/v1/teacher/tests/${testId}/import-excel${dryRun ? "?dry_run=1" : ""}`,
+    bank: "/api/v1/teacher/question-bank",
+    gradingQueue: "/api/v1/teacher/grading/queue",
+    gradingCount: "/api/v1/teacher/grading/count",
+    gradeAnswer: (answerId: number) =>
+      `/api/v1/teacher/attempt-answers/${answerId}/grade`,
+  },
   public: {
     subjects: "/api/v1/subjects",
     grades: "/api/v1/grades",

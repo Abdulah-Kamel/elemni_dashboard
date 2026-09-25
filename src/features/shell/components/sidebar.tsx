@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { useSyncExternalStore } from "react"
+import { useEffect, useState, useSyncExternalStore } from "react"
 import { useAutoAnimate } from "@formkit/auto-animate/react"
 import { useTranslations } from "next-intl"
 import {
@@ -23,7 +23,8 @@ import { Link, usePathname } from "@/i18n/routing"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { LogoutButton } from "@/features/shell/components/logout-button"
-import { DEMO_TESTS_CHANGED, getPendingGradingCount } from "@/features/course-tests/demo-store"
+import { getCourseTestsClient, isCourseTestsDemo } from "@/features/course-tests/client"
+import { subscribeCourseTestsChanged } from "@/features/course-tests/hooks"
 
 const PRIMARY_NAV = [
   { id: "overview", href: "/dashboard", icon: LayoutGrid },
@@ -49,7 +50,8 @@ type SidebarProps = {
   teacherName?: string
   teacherRole?: string
   userRole?: string
-  pendingGradingCount?: number
+  /** Server-fetched pending essay count (API mode). null/undefined = unknown: no badge. */
+  pendingGradingCount?: number | null
 }
 
 const SIDEBAR_STORAGE_KEY = "sidebar-collapsed"
@@ -73,16 +75,35 @@ function subscribeToCollapsedPreference(onChange: () => void): () => void {
   }
 }
 
-function subscribeToDemoGrading(onChange: () => void): () => void {
-  window.addEventListener(DEMO_TESTS_CHANGED, onChange)
-  window.addEventListener("storage", onChange)
-  return () => {
-    window.removeEventListener(DEMO_TESTS_CHANGED, onChange)
-    window.removeEventListener("storage", onChange)
-  }
+/**
+ * Pending-grading badge count. Starts from the server value (API mode) and
+ * refreshes through the course-tests client whenever test data changes; in
+ * demo mode the local demo client is read on mount. Never a placeholder number.
+ */
+function usePendingGradingCount(initial: number | null | undefined, enabled: boolean): number | null {
+  const [count, setCount] = useState<number | null>(initial ?? null)
+  useEffect(() => {
+    if (!enabled) return
+    let cancelled = false
+    const refresh = () => {
+      getCourseTestsClient()
+        .then((client) => client.getPendingGradingCount())
+        .then((result) => {
+          if (!cancelled && result.ok) setCount(result.data)
+        })
+        .catch(() => {})
+    }
+    if (isCourseTestsDemo) refresh()
+    const unsubscribe = subscribeCourseTestsChanged(refresh)
+    return () => {
+      cancelled = true
+      unsubscribe()
+    }
+  }, [enabled])
+  return count
 }
 
-export function Sidebar({ teacherName, teacherRole, userRole, pendingGradingCount = 0 }: SidebarProps) {
+export function Sidebar({ teacherName, teacherRole, userRole, pendingGradingCount }: SidebarProps) {
   const tNav = useTranslations("sidebar")
   const tCommon = useTranslations("common")
   const pathname = usePathname()
@@ -94,11 +115,8 @@ export function Sidebar({ teacherName, teacherRole, userRole, pendingGradingCoun
     readCollapsedPreference,
     () => false
   )
-  const visiblePendingCount = useSyncExternalStore(
-    subscribeToDemoGrading,
-    () => getPendingGradingCount().count,
-    () => pendingGradingCount,
-  )
+  const tTests = useTranslations("courseTests.grading")
+  const pendingCount = usePendingGradingCount(pendingGradingCount, userRole !== "ADMIN") ?? 0
 
   const toggleCollapsed = () => {
     try {
@@ -182,8 +200,26 @@ export function Sidebar({ teacherName, teacherRole, userRole, pendingGradingCoun
                       : "text-on-surface-muted hover:bg-surface-strong hover:text-foreground"
                   )}
                 >
-                  <Icon className="size-5 shrink-0" aria-hidden="true" />
-                  {!collapsed && <span className="flex min-w-0 flex-1 items-center justify-between gap-2"><span className="truncate">{tNav(id)}</span>{id === "grading" && visiblePendingCount > 0 && <span aria-label={`${visiblePendingCount} ${tNav("grading")}`} className="min-w-5 rounded-full bg-destructive px-1.5 text-center text-xs font-bold text-destructive-foreground">{visiblePendingCount}</span>}</span>}
+                  <span className="relative shrink-0">
+                    <Icon className="size-5" aria-hidden="true" />
+                    {collapsed && id === "grading" && pendingCount > 0 && (
+                      <span aria-hidden="true" className="absolute -end-1 -top-1 size-2.5 rounded-full bg-warning ring-2 ring-surface animate-in zoom-in-50 motion-reduce:animate-none" />
+                    )}
+                  </span>
+                  {collapsed ? <span className="sr-only">{tNav(id)}</span> : <span className="truncate">{tNav(id)}</span>}
+                  {id === "grading" && pendingCount > 0 && (
+                    <>
+                      {!collapsed && (
+                        <span
+                          aria-hidden="true"
+                          className="ms-auto grid h-5.5 min-w-5.5 place-items-center rounded-full bg-[color-mix(in_oklch,var(--color-warning),black_32%)] px-1.5 text-xs font-bold text-white tabular-nums animate-in zoom-in-75 fade-in motion-reduce:animate-none"
+                        >
+                          {pendingCount}
+                        </span>
+                      )}
+                      <span className="sr-only">{tTests("nav_badge", { count: pendingCount })}</span>
+                    </>
+                  )}
                 </Link>
               </li>
             )

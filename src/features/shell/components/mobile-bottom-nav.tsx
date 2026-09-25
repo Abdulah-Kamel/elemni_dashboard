@@ -11,6 +11,7 @@ import {
   Library,
   ReceiptText,
   TicketPercent,
+  ClipboardCheck,
   MoreHorizontal,
 } from "lucide-react"
 import { Link, usePathname } from "@/i18n/routing"
@@ -21,6 +22,7 @@ const TEACHER_NAV = [
   { id: "overview", href: "/dashboard", icon: LayoutGrid },
   { id: "my_courses", href: "/courses", icon: BookOpen },
   { id: "students", href: "/students", icon: GraduationCap },
+  { id: "grading", href: "/grading", icon: ClipboardCheck },
   { id: "earnings", href: "/usage", icon: ReceiptText },
   { id: "profile", href: "/profile", icon: User },
 ] as const

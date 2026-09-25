@@ -22,3 +22,16 @@ describe("Sidebar collapse layout", () => {
     expect(source).not.toMatch(/<div\s+aria-hidden="true"[^>]*onClick[^>]*>/)
   })
 })
+
+describe("Sidebar grading badge", () => {
+  it("reads the real pending count through the course-tests client, never demo data", () => {
+    expect(source).not.toContain("demo-store")
+    expect(source).toContain("getCourseTestsClient")
+    expect(source).toContain("client.getPendingGradingCount()")
+  })
+
+  it("only renders the badge for a known, positive count", () => {
+    expect(source).toContain('id === "grading" && pendingCount > 0')
+    expect(source).toContain("usePendingGradingCount(pendingGradingCount")
+  })
+})
