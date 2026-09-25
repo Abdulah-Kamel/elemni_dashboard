@@ -177,7 +177,7 @@ export function TeachersList() {
                       </div>
                     </TableCell>
                     <TableCell className="px-4 py-3">
-                      <div className="flex max-w-xs flex-wrap gap-1">
+                      <div className="flex max-w-[20rem] flex-wrap gap-1">
                         {teacher.subjects.slice(0, 3).map((subject) => (
                           <Badge key={subject.id} variant="outline">
                             {subject.name}

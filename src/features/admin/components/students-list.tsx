@@ -300,7 +300,7 @@ export function StudentsList() {
                   students.map((student) => (
                     <TableRow key={student.id}>
                       <TableCell className="px-4 py-3">
-                        <div className="max-w-sm min-w-0">
+                        <div className="max-w-[24rem] min-w-0">
                           <p className="font-semibold">{student.name}</p>
                           <p className="truncate text-sm text-on-surface-muted">
                             {student.email}
