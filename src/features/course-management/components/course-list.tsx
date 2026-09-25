@@ -167,7 +167,7 @@ export function CourseListSkeleton() {
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
-        <Skeleton className="h-10 w-full sm:max-w-md" />
+        <Skeleton className="h-10 w-full sm:max-w-[28rem]" />
         <Skeleton className="h-10 w-64" />
       </div>
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">

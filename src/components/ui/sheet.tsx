@@ -54,9 +54,9 @@ function SheetContent({
         data-side={side}
         className={cn(
           // NOTE: widths use arbitrary values (max-w-[28rem]) instead of the
-          // token classes max-w-sm/md/lg. This project defines a named spacing
+          // token classes max-w-[24rem]/md/lg. This project defines a named spacing
           // scale in globals.css (--spacing-sm: 8px, --spacing-md: 12px, ...)
-          // which, in Tailwind v4, shadows the container scale — so max-w-sm
+          // which, in Tailwind v4, shadows the container scale — so max-w-[24rem]
           // resolves to 8px, not 24rem, and collapses the panel. Keep arbitrary
           // values here (and in any shadcn component that sizes with max-w-*).
           "fixed z-50 flex flex-col gap-4 overflow-y-auto bg-popover bg-clip-padding text-sm text-popover-foreground shadow-lg transition duration-200 ease-in-out data-ending-style:opacity-0 data-starting-style:opacity-0 data-[side=bottom]:inset-x-0 data-[side=bottom]:bottom-0 data-[side=bottom]:h-auto data-[side=bottom]:border-t data-[side=bottom]:data-ending-style:translate-y-[2.5rem] data-[side=bottom]:data-starting-style:translate-y-[2.5rem] data-[side=left]:inset-y-0 data-[side=left]:left-0 data-[side=left]:h-full data-[side=left]:w-3/4 data-[side=left]:border-e data-[side=left]:data-ending-style:translate-x-[-2.5rem] rtl:data-[side=left]:data-ending-style:-translate-x-[-2.5rem] data-[side=left]:data-starting-style:translate-x-[-2.5rem] rtl:data-[side=left]:data-starting-style:-translate-x-[-2.5rem] data-[side=right]:inset-y-0 data-[side=right]:right-0 data-[side=right]:h-full data-[side=right]:w-3/4 data-[side=right]:border-s data-[side=right]:data-ending-style:translate-x-[2.5rem] rtl:data-[side=right]:data-ending-style:-translate-x-[2.5rem] data-[side=right]:data-starting-style:translate-x-[2.5rem] rtl:data-[side=right]:data-starting-style:-translate-x-[2.5rem] data-[side=top]:inset-x-0 data-[side=top]:top-0 data-[side=top]:h-auto data-[side=top]:border-b data-[side=top]:data-ending-style:translate-y-[-2.5rem] data-[side=top]:data-starting-style:translate-y-[-2.5rem] data-[side=left]:sm:max-w-[28rem] data-[side=right]:sm:max-w-[28rem]",

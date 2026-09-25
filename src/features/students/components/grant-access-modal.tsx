@@ -35,7 +35,7 @@ export function GrantAccessModal({
         if (e.target === e.currentTarget) onClose()
       }}
     >
-      <div className="w-full max-w-md rounded-2xl bg-surface p-6 shadow-xl">
+      <div className="w-full max-w-[28rem] rounded-2xl bg-surface p-6 shadow-xl">
         <h2 className="text-lg font-semibold text-foreground">
           {t("grant_access_title")}
         </h2>
