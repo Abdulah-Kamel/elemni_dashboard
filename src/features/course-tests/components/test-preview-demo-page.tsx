@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { ArrowDown, ArrowUp, Check, ChevronLeft, ChevronRight, Clock3, Flag, Send, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, ChevronLeft, ChevronRight, Clock3, Flag, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getCourseTestSnapshot, subscribeDemoCourseTests } from "@/features/course-tests/demo-store";
 import type { CourseTest, TestQuestion } from "@/features/course-tests/types";
 
@@ -101,13 +102,19 @@ export function TestPreviewDemoPage({ courseId, testId }: { courseId: number; te
         </aside>
       </div>}
 
-      {confirmSubmit && !submitted && !timedOut && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setConfirmSubmit(false); }}>
-        <section role="dialog" aria-modal="true" aria-labelledby="preview-submit-title" className="w-full max-w-lg rounded-xl border bg-card p-5 shadow-xl sm:p-6">
-          <div className="flex items-start justify-between gap-3"><div><h2 id="preview-submit-title" className="text-xl font-bold">تأكيد تسليم المعاينة</h2><p className="mt-1 text-sm text-muted-foreground">هذه خطوة تجريبية ولن تُسجّل النتيجة.</p></div><button type="button" onClick={() => setConfirmSubmit(false)} aria-label="إغلاق نافذة التسليم" className="flex size-11 items-center justify-center rounded-lg hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"><X className="size-5" aria-hidden="true" /></button></div>
-          <div className="mt-5 grid grid-cols-3 gap-2 text-center"><Stat label="تمت الإجابة" value={String(answeredCount)} /><Stat label="بلا إجابة" value={String(questions.length - answeredCount)} /><Stat label="للمراجعة" value={String(flagged.length)} /></div>
-          <div className="mt-5 flex justify-end gap-2"><Button variant="outline" className="min-h-11" onClick={() => setConfirmSubmit(false)}>العودة للاختبار</Button><Button className="min-h-11" onClick={() => { setConfirmSubmit(false); setSubmitted(true); }}>تسليم المعاينة</Button></div>
-        </section>
-      </div>}
+      <Dialog open={confirmSubmit && !submitted && !timedOut} onOpenChange={setConfirmSubmit}>
+        <DialogContent dir="rtl" className="!w-[calc(100vw-2rem)] !max-w-[32rem]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">تأكيد تسليم المعاينة</DialogTitle>
+            <DialogDescription>هذه خطوة تجريبية ولن تُسجّل النتيجة.</DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-3 gap-2 text-center"><Stat label="تمت الإجابة" value={String(answeredCount)} /><Stat label="بلا إجابة" value={String(questions.length - answeredCount)} /><Stat label="للمراجعة" value={String(flagged.length)} /></div>
+          <DialogFooter>
+            <Button variant="outline" className="min-h-11" onClick={() => setConfirmSubmit(false)}>العودة للاختبار</Button>
+            <Button className="min-h-11" onClick={() => { setConfirmSubmit(false); setSubmitted(true); }}>تسليم المعاينة</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   </main>;
 }
