@@ -54,7 +54,7 @@ export default async function TeacherLayout({
           <Topbar teacherName={user.name} />
           <main className="flex-1 overflow-auto pb-[calc(4rem+env(safe-area-inset-bottom,0px))] md:pb-0">
             <ChapterNavigationProvider>
-              <div className="teacher-content-shell mx-auto w-full max-w-7xl animate-fade-in px-container-margin py-xl">
+              <div className="teacher-content-shell w-full animate-fade-in px-container-margin py-xl">
                 {children}
               </div>
             </ChapterNavigationProvider>
