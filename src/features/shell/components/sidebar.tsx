@@ -163,7 +163,7 @@ export function Sidebar({ teacherName, teacherRole, userRole, pendingGradingCoun
                     "flex items-center gap-3 rounded-lg px-sm py-2 text-body-md text-body-md--line-height font-medium transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none",
                     collapsed && "justify-center px-0",
                     isActive
-                      ? "border-s-4 border-primary bg-primary-tint font-semibold text-primary"
+                      ? "bg-primary-tint font-semibold text-primary"
                       : "text-on-surface-muted hover:bg-surface-strong hover:text-foreground"
                   )}
                 >
