@@ -1,10 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "fs";
+import { readdirSync, readFileSync } from "fs";
 import { join } from "path";
 
 describe("i18n glossary compliance", () => {
   const arPath = join(process.cwd(), "src/i18n/messages/ar.json");
-  const arContent = readFileSync(arPath, "utf-8");
+  const areasDir = join(process.cwd(), "src/i18n/messages/areas");
+  const arContent = [readFileSync(arPath, "utf-8"), ...readdirSync(areasDir).filter((name) => name.endsWith(".ar.json")).map((name) => readFileSync(join(areasDir, name), "utf-8"))].join("\n");
 
   const bannedTerms = [
     { term: "كورس", reason: "Should use 'دورة' instead" },
