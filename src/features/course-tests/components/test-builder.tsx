@@ -317,7 +317,7 @@ export function TestBuilder({ courseId, testId, initialStep = "questions" }: { c
             ) : (
               <section className={cn(CARD, "flex min-h-72 flex-col items-center justify-center gap-2 rounded-3xl p-10 text-center", ENTER)}>
                 <p className="text-base font-semibold">{t("empty.title")}</p>
-                <p className="max-w-sm text-sm text-muted-foreground">{t("empty.description")}</p>
+                <p className="max-w-[24rem] text-sm text-muted-foreground">{t("empty.description")}</p>
               </section>
             )}
             <div className="flex flex-col gap-5 lg:col-span-2 xl:col-span-1">

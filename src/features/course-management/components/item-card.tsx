@@ -561,7 +561,7 @@ export function ItemCard({
           if (!val) setError(null)
         }}
       >
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-[42rem]">
           <DialogHeader>
             <DialogTitle>{t("edit")}</DialogTitle>
           </DialogHeader>

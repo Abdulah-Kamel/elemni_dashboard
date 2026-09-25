@@ -107,7 +107,7 @@ export function BankPickerDialog({ courseId, open, onOpenChange }: { courseId: n
         if (!next) reset()
       }}
     >
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-[42rem]">
         <DialogHeader>
           <DialogTitle className="text-lg">{t("title")}</DialogTitle>
           <DialogDescription>{t("description")}</DialogDescription>

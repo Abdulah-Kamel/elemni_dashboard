@@ -239,7 +239,7 @@ function EmptyPanel({ filter, hasItems }: { filter: Filter; hasItems: boolean })
         <Icon className="size-6" />
       </span>
       <h2 className="text-base font-semibold">{t(allDone ? "all_done_title" : filter === "pending" ? "empty_pending_title" : "empty_graded_title")}</h2>
-      {filter === "pending" && <p className="max-w-sm text-sm text-on-surface-muted">{t(allDone ? "all_done_body" : "empty_pending_body")}</p>}
+      {filter === "pending" && <p className="max-w-[24rem] text-sm text-on-surface-muted">{t(allDone ? "all_done_body" : "empty_pending_body")}</p>}
     </section>
   )
 }

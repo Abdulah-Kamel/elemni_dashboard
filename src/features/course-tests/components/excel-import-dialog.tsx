@@ -105,7 +105,7 @@ export function ExcelImportDialog({ courseId, open, onOpenChange }: { courseId: 
         else onOpenChange(true)
       }}
     >
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-[42rem]">
         <DialogHeader>
           <DialogTitle className="text-lg">{t("title")}</DialogTitle>
           <DialogDescription>{t("description")}</DialogDescription>

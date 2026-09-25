@@ -57,7 +57,7 @@ export function CourseTestsOverview({ courseId, courses, initial }: { courseId: 
                 <ClipboardList className="size-6" />
               </span>
               <h2 className="text-base font-semibold">{t("table.empty_title")}</h2>
-              <p className="max-w-md text-sm text-on-surface-muted">{t("table.empty_description")}</p>
+              <p className="max-w-[28rem] text-sm text-on-surface-muted">{t("table.empty_description")}</p>
             </div>
           ) : (
             <TestsTable rows={query.data.rows} />

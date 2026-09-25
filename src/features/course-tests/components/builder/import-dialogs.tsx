@@ -92,7 +92,7 @@ export function BankDialog({ open, onOpenChange, testId, courseId, ensureAck, on
 
   return (
     <Dialog open={open} onOpenChange={(next) => close(next)}>
-      <DialogContent className="gap-4 rounded-3xl p-6 sm:max-w-2xl">
+      <DialogContent className="gap-4 rounded-3xl p-6 sm:max-w-[42rem]">
         <DialogHeader className="gap-1.5">
           <DialogTitle className="text-lg font-bold">{t("title")}</DialogTitle>
           <DialogDescription>{t("description")}</DialogDescription>
@@ -207,7 +207,7 @@ export function ExcelImportDialog({ open, onOpenChange, testId, ensureAck, onImp
 
   return (
     <Dialog open={open} onOpenChange={(next) => close(next)}>
-      <DialogContent className="gap-4 rounded-3xl p-6 sm:max-w-xl">
+      <DialogContent className="gap-4 rounded-3xl p-6 sm:max-w-[36rem]">
         <DialogHeader className="gap-1.5">
           <DialogTitle className="text-lg font-bold">{t("title")}</DialogTitle>
           <DialogDescription>{t("description")}</DialogDescription>

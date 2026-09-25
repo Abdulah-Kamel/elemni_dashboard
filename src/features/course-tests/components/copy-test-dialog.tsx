@@ -75,7 +75,7 @@ export function CopyTestDialog({ courseId, courses, open, onOpenChange }: { cour
         }
       }}
     >
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className="sm:max-w-[36rem]">
         <DialogHeader>
           <DialogTitle className="text-lg">{t("title")}</DialogTitle>
           <DialogDescription>{t("description")}</DialogDescription>
