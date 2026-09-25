@@ -23,6 +23,7 @@ import { Link, usePathname } from "@/i18n/routing"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { LogoutButton } from "@/features/shell/components/logout-button"
+import { DEMO_TESTS_CHANGED, getPendingGradingCount } from "@/features/course-tests/demo-store"
 
 const PRIMARY_NAV = [
   { id: "overview", href: "/dashboard", icon: LayoutGrid },
@@ -72,6 +73,15 @@ function subscribeToCollapsedPreference(onChange: () => void): () => void {
   }
 }
 
+function subscribeToDemoGrading(onChange: () => void): () => void {
+  window.addEventListener(DEMO_TESTS_CHANGED, onChange)
+  window.addEventListener("storage", onChange)
+  return () => {
+    window.removeEventListener(DEMO_TESTS_CHANGED, onChange)
+    window.removeEventListener("storage", onChange)
+  }
+}
+
 export function Sidebar({ teacherName, teacherRole, userRole, pendingGradingCount = 0 }: SidebarProps) {
   const tNav = useTranslations("sidebar")
   const tCommon = useTranslations("common")
@@ -83,6 +93,11 @@ export function Sidebar({ teacherName, teacherRole, userRole, pendingGradingCoun
     subscribeToCollapsedPreference,
     readCollapsedPreference,
     () => false
+  )
+  const visiblePendingCount = useSyncExternalStore(
+    subscribeToDemoGrading,
+    () => getPendingGradingCount().count,
+    () => pendingGradingCount,
   )
 
   const toggleCollapsed = () => {
@@ -168,7 +183,7 @@ export function Sidebar({ teacherName, teacherRole, userRole, pendingGradingCoun
                   )}
                 >
                   <Icon className="size-5 shrink-0" aria-hidden="true" />
-                  {!collapsed && <span className="flex min-w-0 flex-1 items-center justify-between gap-2"><span className="truncate">{tNav(id)}</span>{id === "grading" && pendingGradingCount > 0 && <span aria-label={`${pendingGradingCount} ${tNav("grading")}`} className="min-w-5 rounded-full bg-destructive px-1.5 text-center text-xs font-bold text-destructive-foreground">{pendingGradingCount}</span>}</span>}
+                  {!collapsed && <span className="flex min-w-0 flex-1 items-center justify-between gap-2"><span className="truncate">{tNav(id)}</span>{id === "grading" && visiblePendingCount > 0 && <span aria-label={`${visiblePendingCount} ${tNav("grading")}`} className="min-w-5 rounded-full bg-destructive px-1.5 text-center text-xs font-bold text-destructive-foreground">{visiblePendingCount}</span>}</span>}
                 </Link>
               </li>
             )

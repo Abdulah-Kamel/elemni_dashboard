@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "@/i18n/routing";
 import { toast } from "sonner";
@@ -57,6 +57,14 @@ export function TestBuilder({ initialTest }: { initialTest: CourseTest }) {
   const manualQuestions = test.questions.filter((question) => question.type === "essay");
   const totalPoints = test.questions.reduce((sum, question) => sum + question.points, 0);
   const allErrors = [...errors, ...(test.questions.length ? [] : ["أضف سؤالاً واحداً على الأقل."]), ...questionErrors.map((item) => `السؤال ${item.index}: ${item.message}`), ...(test.pass_percent < 1 || test.pass_percent > 100 ? ["نسبة النجاح يجب أن تكون بين 1 و100."] : []), ...(test.opens_at && test.closes_at && new Date(test.closes_at) <= new Date(test.opens_at) ? ["موعد الإغلاق يجب أن يأتي بعد الفتح."] : []), ...(test.random_pool_size && test.random_pool_size > test.questions.length ? ["حجم السحب العشوائي أكبر من عدد الأسئلة."] : [])];
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void updateCourseTest(test.id, settingsPayload(test));
+      for (const question of test.questions) void updateTestQuestion(question.id, question);
+    }, 650);
+    return () => window.clearTimeout(timer);
+  }, [test]);
 
   function patchQuestion(id: number, patch: Partial<TestQuestion>) {
     setTest((current) => ({ ...current, questions: current.questions.map((question) => question.id === id ? { ...question, ...patch } : question) }));

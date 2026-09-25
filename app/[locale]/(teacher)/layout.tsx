@@ -39,7 +39,7 @@ export default async function TeacherLayout({
   }
 
   const t = await getTranslations({ locale, namespace: "common" })
-  const gradingCount = await getPendingGradingCount().catch(() => ({ count: 0 }))
+  const gradingCount = getPendingGradingCount()
   const teacherRole = t("teacher_role")
 
   return (
