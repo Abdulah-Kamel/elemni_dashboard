@@ -8,6 +8,7 @@ import { Sidebar } from "@/features/shell/components/sidebar"
 import { Topbar } from "@/features/shell/components/topbar"
 import { MobileBottomNav } from "@/features/shell/components/mobile-bottom-nav"
 import { ChapterNavigationProvider } from "@/features/course-management/chapter-navigation-context"
+import { getPendingGradingCount } from "@/features/course-tests/actions"
 
 export const dynamic = "force-dynamic"
 
@@ -38,12 +39,13 @@ export default async function TeacherLayout({
   }
 
   const t = await getTranslations({ locale, namespace: "common" })
+  const gradingCount = await getPendingGradingCount().catch(() => ({ count: 0 }))
   const teacherRole = t("teacher_role")
 
   return (
     <DirectionProvider direction={(locale === "ar" ? "rtl" : "ltr") as never}>
       <div className="flex h-dvh overflow-hidden bg-page">
-        <Sidebar teacherName={user.name} teacherRole={teacherRole} />
+        <Sidebar teacherName={user.name} teacherRole={teacherRole} pendingGradingCount={gradingCount.count} />
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <Topbar teacherName={user.name} />
           <main className="flex-1 overflow-auto pb-[calc(4rem+env(safe-area-inset-bottom,0px))] md:pb-0">

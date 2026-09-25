@@ -12,6 +12,7 @@ import {
   Layers,
   GitBranch,
   Library,
+  ClipboardCheck,
   ReceiptText,
   TicketPercent,
   PanelLeftClose,
@@ -27,6 +28,7 @@ const PRIMARY_NAV = [
   { id: "overview", href: "/dashboard", icon: LayoutGrid },
   { id: "my_courses", href: "/courses", icon: BookOpen },
   { id: "students", href: "/students", icon: GraduationCap },
+  { id: "grading", href: "/grading", icon: ClipboardCheck },
   { id: "earnings", href: "/usage", icon: ReceiptText },
   { id: "profile", href: "/profile", icon: User },
 ] as const
@@ -46,6 +48,7 @@ type SidebarProps = {
   teacherName?: string
   teacherRole?: string
   userRole?: string
+  pendingGradingCount?: number
 }
 
 const SIDEBAR_STORAGE_KEY = "sidebar-collapsed"
@@ -69,7 +72,7 @@ function subscribeToCollapsedPreference(onChange: () => void): () => void {
   }
 }
 
-export function Sidebar({ teacherName, teacherRole, userRole }: SidebarProps) {
+export function Sidebar({ teacherName, teacherRole, userRole, pendingGradingCount = 0 }: SidebarProps) {
   const tNav = useTranslations("sidebar")
   const tCommon = useTranslations("common")
   const pathname = usePathname()
@@ -165,7 +168,7 @@ export function Sidebar({ teacherName, teacherRole, userRole }: SidebarProps) {
                   )}
                 >
                   <Icon className="size-5 shrink-0" aria-hidden="true" />
-                  {!collapsed && <span className="truncate">{tNav(id)}</span>}
+                  {!collapsed && <span className="flex min-w-0 flex-1 items-center justify-between gap-2"><span className="truncate">{tNav(id)}</span>{id === "grading" && pendingGradingCount > 0 && <span aria-label={`${pendingGradingCount} ${tNav("grading")}`} className="min-w-5 rounded-full bg-destructive px-1.5 text-center text-xs font-bold text-destructive-foreground">{pendingGradingCount}</span>}</span>}
                 </Link>
               </li>
             )
