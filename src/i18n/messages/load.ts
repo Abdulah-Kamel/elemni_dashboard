@@ -4,6 +4,8 @@ import baseAr from "./ar.json"
 import baseEn from "./en.json"
 import adminConsoleAr from "./areas/admin-console.ar.json"
 import adminConsoleEn from "./areas/admin-console.en.json"
+import adminCouponsAr from "./areas/admin-coupons.ar.json"
+import adminCouponsEn from "./areas/admin-coupons.en.json"
 import shellAr from "./areas/shell.ar.json"
 import shellEn from "./areas/shell.en.json"
 import teacherHomeAr from "./areas/teacher-home.ar.json"
@@ -12,8 +14,8 @@ import teacherWorkspaceAr from "./areas/teacher-workspace.ar.json"
 import teacherWorkspaceEn from "./areas/teacher-workspace.en.json"
 
 const areas = {
-  ar: [shellAr, teacherHomeAr, adminConsoleAr, teacherWorkspaceAr],
-  en: [shellEn, teacherHomeEn, adminConsoleEn, teacherWorkspaceEn],
+  ar: [shellAr, teacherHomeAr, adminConsoleAr, teacherWorkspaceAr, adminCouponsAr],
+  en: [shellEn, teacherHomeEn, adminConsoleEn, teacherWorkspaceEn, adminCouponsEn],
 }
 
 const base = { ar: baseAr, en: baseEn }
