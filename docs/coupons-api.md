@@ -84,3 +84,15 @@ If the coupon became invalid in between, return 409 with a `detail` message
 ## Later (optional)
 Teacher-owned coupons (scoped to the teacher's courses), bulk code generation
 for campaigns, and first-purchase-only coupons.
+
+## Open questions for the backend
+- Add a `near_cap` count (≥ 90% of `max_uses`) to `/stats`, and list filters for
+  expiring-soon / near-cap (the UI currently narrows one page of 100 on the client).
+  Confirm `expiring_soon` means 7 days.
+- Add `GET /api/v1/admin/coupons/{code}` (deep links currently search with `?q=`)
+  and an admin course list for the "specific courses" picker.
+- Are `teacher_ids` teacher-profile ids or user ids? (The UI sends profile ids.)
+- Money as decimal strings everywhere (`value`, `min_price`, amounts)?
+- Can `type`/`value` change after a coupon was redeemed?
+- Time zone for `starts_at`/`expires_at` (the UI sends start/end of the admin's local day).
+- Unimplemented routes: answer 404 or 501? (The UI treats both as "not available yet".)
