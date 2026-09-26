@@ -1,1 +1,55 @@
-{}
+{
+  "teacherHome": {
+    "greeting": "Welcome back, {name}",
+    "showing": "Figures for {range}",
+    "range": {
+      "label": "Date range",
+      "7d": "7 days",
+      "30d": "30 days",
+      "term": "This term",
+      "all": "All time",
+      "custom": "Custom",
+      "all_time_phrase": "all time",
+      "last_7": "the last 7 days",
+      "last_30": "the last 30 days",
+      "this_term": "this term"
+    },
+    "kpi": {
+      "label": "Key figures",
+      "earnings": "Your earnings",
+      "earnings_hint": "From {revenue} total revenue",
+      "subscriptions": "Completed subscriptions",
+      "courses": "Active courses",
+      "courses_hint": "{drafts} drafts · {archived} archived",
+      "courses_hint_archived": "{archived} archived"
+    },
+    "attention": {
+      "title": "Needs your attention",
+      "empty": "Nothing needs your attention right now.",
+      "unavailable": "Couldn't check for pending work right now.",
+      "expiring_soon": "Subscriptions ending within {days} days",
+      "pending_payments": "Subscriptions awaiting payment",
+      "draft_courses": "Draft courses to finish",
+      "published_without_students": "Published courses with no active students"
+    },
+    "top": {
+      "title": "Top courses",
+      "subtitle": "Ranked by your earnings in this period",
+      "view_all": "All courses",
+      "subscriptions": "{count, plural, one {# subscription} other {# subscriptions}}",
+      "edit": "Edit {course}",
+      "students": "Students of {course}",
+      "empty": "No course earnings in this period.",
+      "show_all_time": "Show all time"
+    },
+    "activity": {
+      "view_all": "View all"
+    },
+    "empty": {
+      "title": "Start with your first course",
+      "body": "Once a course is published, your earnings, subscriptions and anything that needs a follow-up will show up here.",
+      "cta": "Create a course"
+    },
+    "loading": "Loading overview"
+  }
+}

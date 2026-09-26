@@ -1,1 +1,63 @@
-{}
+{
+  "teacherWorkspace": {
+    "students": {
+      "tiles_label": "تصفية سريعة للطلاب",
+      "tile_all_hint": "عرض كل الاشتراكات",
+      "tile_filter_hint": "اضغط لتصفية الجدول",
+      "tile_expiring": "وصول ينتهي قريباً",
+      "tile_expiring_hint": "خلال 14 يوماً",
+      "filter_access": "الوصول",
+      "access_all": "أي وصول",
+      "access_active": "وصول فعّال",
+      "access_expiring": "ينتهي خلال 14 يوماً",
+      "access_expired_filter": "وصول منتهٍ",
+      "access_expired": "انتهى الوصول",
+      "access_none": "لا وصول قبل اكتمال الدفع",
+      "days_left": "{count, plural, =0 {ينتهي اليوم} one {متبقٍ يوم واحد} two {متبقٍ يومان} few {متبقٍ # أيام} many {متبقٍ # يوماً} other {متبقٍ # يوم}}",
+      "clear_filters": "مسح الفلاتر",
+      "open_student": "عرض تفاصيل {name}",
+      "contact_title": "التواصل",
+      "contact_email": "البريد",
+      "contact_phone": "الهاتف",
+      "contact_whatsapp": "واتساب",
+      "contact_parent": "ولي الأمر",
+      "subscriptions_count": "{count, plural, one {اشتراك واحد} two {اشتراكان} few {# اشتراكات} many {# اشتراكاً} other {# اشتراك}}",
+      "subscriptions_title": "الاشتراكات معك ({count})",
+      "course_students": "طلاب هذه الدورة",
+      "open_course": "فتح الدورة",
+      "amount_note": "المبالغ كما سجّلها النظام لكل اشتراك."
+    },
+    "courses": {
+      "metric_students": "الطلاب",
+      "metric_earnings": "أرباحك",
+      "pending_count": "{count, plural, one {اشتراك واحد بانتظار الدفع} two {اشتراكان بانتظار الدفع} few {# اشتراكات بانتظار الدفع} many {# اشتراكاً بانتظار الدفع} other {# اشتراك بانتظار الدفع}}",
+      "draft_hint": "غير ظاهرة للطلاب بعد. أكمل المحتوى ثم انشرها.",
+      "continue_setup": "متابعة الإعداد",
+      "view_students": "الطلاب",
+      "column_course": "الدورة",
+      "column_status": "الحالة",
+      "column_created": "تاريخ الإنشاء",
+      "column_actions": "إجراءات",
+      "sort_label": "ترتيب الدورات",
+      "sort_created": "تاريخ الإنشاء",
+      "sort_title": "العنوان",
+      "sort_students": "عدد الطلاب",
+      "sort_earnings": "الأرباح",
+      "sort_ascending": "تصاعدي",
+      "sort_descending": "تنازلي",
+      "view_label": "طريقة العرض",
+      "view_grid": "بطاقات",
+      "view_table": "جدول",
+      "clear_filters": "مسح البحث والتصفية",
+      "metrics_partial": "بعض الأرقام غير متاحة الآن؛ تظهر كـ «—»."
+    },
+    "usage": {
+      "title": "الاستخدام والتكاليف",
+      "balance_hint": "رصيدك الحالي — لا يتغير بالفلاتر",
+      "period_hint": "ضمن الفترة المحددة",
+      "storage_now_hint": "المساحة المستخدمة الآن",
+      "empty_none_title": "لا يوجد استخدام مسجّل بعد",
+      "empty_none_note": "تُضاف السجلات اليومية هنا بعد تجميع استهلاك البث والتخزين لمحتواك."
+    }
+  }
+}

@@ -1,1 +1,60 @@
-{}
+{
+  "dashboardShell": {
+    "brand_subtitle_teacher": "بوابة المعلم",
+    "brand_subtitle_admin": "لوحة الإدارة",
+    "groups": {
+      "workspace": "مساحة العمل",
+      "account": "الحساب",
+      "operations": "العمليات",
+      "catalog": "التصنيفات"
+    },
+    "breadcrumb_label": "مسار التنقل",
+    "crumbs": {
+      "new_course": "دورة جديدة",
+      "course": "الدورة",
+      "chapter": "الفصل",
+      "teacher": "المعلم",
+      "details": "التفاصيل"
+    },
+    "search_trigger": "ابحث في الصفحات والإجراءات",
+    "search_trigger_short": "بحث",
+    "palette": {
+      "title": "انتقل إلى صفحة أو نفّذ إجراءً",
+      "placeholder": "اكتب اسم صفحة أو إجراء…",
+      "empty": "لا توجد نتائج لـ «{query}»",
+      "group_navigate": "الصفحات",
+      "group_actions": "الإجراءات",
+      "results": "{count, plural, =0 {لا توجد نتائج} one {نتيجة واحدة} two {نتيجتان} few {# نتائج} many {# نتيجة} other {# نتيجة}}",
+      "hint_move": "تنقّل",
+      "hint_open": "فتح",
+      "hint_close": "إغلاق"
+    },
+    "actions": {
+      "create_course": "إنشاء دورة",
+      "toggle_theme": "التبديل بين الوضع الفاتح والداكن",
+      "switch_locale": "تغيير اللغة",
+      "view_profile": "عرض الملف الشخصي",
+      "create_teacher": "إضافة معلم جديد"
+    },
+    "keywords": {
+      "overview": "الرئيسية نظرة عامة لوحة ملخص home dashboard overview",
+      "my_courses": "دوراتي الدورات المحتوى الدروس courses",
+      "students": "الطلاب الطلبة المشتركين students",
+      "earnings": "الاستخدام الأرباح الفوترة التخزين usage earnings",
+      "profile": "الملف الشخصي حسابي الإعدادات profile account",
+      "teachers": "المعلمون المعلمين المدرسين teachers",
+      "subscriptions": "الاشتراكات المدفوعات subscriptions payments",
+      "coupons": "الكوبونات الخصومات أكواد coupons discounts",
+      "grades": "الصفوف المراحل grades",
+      "streams": "الشعب streams",
+      "subjects": "المواد subjects",
+      "create_course": "دورة جديدة إضافة إنشاء new course create",
+      "toggle_theme": "الوضع الداكن الفاتح المظهر dark light theme",
+      "switch_locale": "اللغة عربي انجليزي English language",
+      "create_teacher": "معلم جديد انشاء اضافة مدرس teacher new create"
+    },
+    "notifications_empty_hint": "ستظهر هنا التحديثات الخاصة بحسابك.",
+    "controls": "أدوات سريعة",
+    "close": "إغلاق"
+  }
+}

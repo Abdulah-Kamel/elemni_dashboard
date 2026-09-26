@@ -1,57 +1,83 @@
-"use client";
+"use client"
 
+import { useTranslations } from "next-intl"
+import { LogOut, UserRound } from "lucide-react"
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
   DropdownMenuContent,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { LogoutButton } from "@/features/shell/components/logout-button";
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Link } from "@/i18n/routing"
+import type { NavRole } from "@/features/shell/nav-config"
+import { useSignOut } from "@/features/shell/components/use-sign-out"
+import { initials } from "@/features/shell/components/initials"
 
 type AccountMenuProps = {
-  teacherName: string;
-};
-
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  const first = parts[0]?.[0] ?? "";
-  const second = parts[1]?.[0] ?? "";
-  return (first + second).toUpperCase() || "?";
+  userName: string
+  roleLabel: string
+  role: NavRole
 }
 
-export function AccountMenu({ teacherName }: AccountMenuProps) {
+export function AccountMenu({ userName, roleLabel, role }: AccountMenuProps) {
+  const t = useTranslations("topbar")
+  const tShell = useTranslations("dashboardShell")
+  const { signOut, pending, error } = useSignOut()
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        nativeButton={false}
-        aria-label={`Account menu: ${teacherName}`}
-        render={
-          <Avatar className="relative size-10 cursor-pointer border border-outline-variant bg-brand-violet-tint text-label-md font-bold text-brand-violet transition-opacity hover:opacity-80">
-            <AvatarFallback>
-              {initials(teacherName)}
-            </AvatarFallback>
-            <span
-              aria-hidden="true"
-              className="absolute -end-0.5 -top-0.5 size-2.5 rounded-full border-2 border-surface bg-error"
-            />
-          </Avatar>
-        }
-      />
-      <DropdownMenuContent align="end" sideOffset={8} className="w-56">
-        <div className="flex items-center gap-3 border-b border-outline-variant px-md py-3">
-          <Avatar className="size-9 shrink-0 bg-brand-violet-tint text-body-md font-bold text-brand-violet">
-            <AvatarFallback>
-              {initials(teacherName)}
+        aria-label={`${t("account_menu")}: ${userName}`}
+        className="flex items-center rounded-full focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface focus-visible:outline-none"
+      >
+        <Avatar className="size-9 bg-primary-tint text-primary transition-opacity hover:opacity-85">
+          <AvatarFallback className="bg-primary-tint text-label-md font-semibold text-primary">
+            {initials(userName)}
+          </AvatarFallback>
+        </Avatar>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" sideOffset={8} className="w-60 p-1">
+        <div className="flex items-center gap-3 px-2 py-2.5">
+          <Avatar className="size-9 shrink-0 bg-primary-tint text-primary">
+            <AvatarFallback className="bg-primary-tint text-label-md font-semibold text-primary">
+              {initials(userName)}
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-body-md text-body-md--line-height font-semibold text-foreground">
-              {teacherName}
+            <p className="truncate text-body-lg font-semibold text-on-surface" title={userName}>
+              {userName}
             </p>
+            <p className="truncate text-label-md text-on-surface-muted">{roleLabel}</p>
           </div>
         </div>
-        <LogoutButton variant="menu" />
+        <DropdownMenuSeparator />
+        {role === "teacher" && (
+          <DropdownMenuItem
+            render={<Link href="/profile" />}
+            className="gap-2.5 px-2 py-2 text-body-md"
+          >
+            <UserRound className="size-4 text-on-surface-muted" aria-hidden="true" />
+            {tShell("actions.view_profile")}
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuItem
+          variant="destructive"
+          closeOnClick={false}
+          disabled={pending}
+          onClick={() => void signOut()}
+          className="gap-2.5 px-2 py-2 text-body-md"
+        >
+          <LogOut className="size-4 rtl:rotate-180" aria-hidden="true" />
+          {t("sign_out")}
+        </DropdownMenuItem>
+        {error && (
+          <p role="alert" className="px-2 pb-2 text-label-md text-error">
+            {error}
+          </p>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
-  );
+  )
 }

@@ -33,7 +33,7 @@ export default async function DashboardPage({
     start: normalizeDateParam(query.start),
     end: normalizeDateParam(query.end),
   }
-  const result = await loadDashboardOverview(filters)
+  const result = await loadDashboardOverview(filters, user.id)
   if (result.kind === "ready") {
     const teacherFirstName = user.name.split(/\s+/)[0] ?? user.name
     return (
@@ -42,7 +42,11 @@ export default async function DashboardPage({
         summary={result.summary}
         topCourses={result.topCourses}
         recentSubscriptions={result.recentSubscriptions}
+        courses={result.courses}
+        subscriptions={result.subscriptions}
+        trend={result.trend}
         filters={filters}
+        now={new Date()}
       />
     )
   }

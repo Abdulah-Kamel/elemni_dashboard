@@ -1,7 +1,8 @@
 "use client"
 
-import { Search } from "lucide-react"
+import { Search, X } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -12,6 +13,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
+export type FilterOption = { value: string; label: string }
+
 interface StudentFiltersProps {
   searchTerm: string
   onSearchChange: (value: string) => void
@@ -20,13 +23,17 @@ interface StudentFiltersProps {
   statusOptions: string[]
   courseFilter: string
   onCourseChange: (value: string) => void
-  courses: string[]
+  courses: FilterOption[]
   gradeFilter: string
   onGradeChange: (value: string) => void
-  grades: string[]
+  grades: FilterOption[]
   streamFilter: string
   onStreamChange: (value: string) => void
-  streams: string[]
+  streams: FilterOption[]
+  accessFilter: string
+  onAccessChange: (value: string) => void
+  hasActiveFilters: boolean
+  onClear: () => void
 }
 
 export function StudentFilters({
@@ -44,119 +51,116 @@ export function StudentFilters({
   streamFilter,
   onStreamChange,
   streams,
+  accessFilter,
+  onAccessChange,
+  hasActiveFilters,
+  onClear,
 }: StudentFiltersProps) {
   const t = useTranslations("student")
-  const statusItems = [
-    { value: "all", label: t("filter_all_statuses") },
-    ...statusOptions.map((status) => ({
-      value: status,
-      label: getStatusLabel(status, t),
-    })),
-  ]
-  const courseItems = [
-    { value: "all", label: t("filter_all_courses") },
-    ...courses.map((course) => ({ value: course, label: course })),
-  ]
-  const gradeItems = [
-    { value: "all", label: t("filter_all_grades") },
-    ...grades.map((grade) => ({ value: grade, label: grade })),
-  ]
-  const streamItems = [
-    { value: "all", label: t("filter_all_streams") },
-    ...streams.map((stream) => ({ value: stream, label: stream })),
-  ]
+  const tw = useTranslations("teacherWorkspace.students")
 
   return (
-    <div className="grid gap-3 rounded-2xl border border-border bg-surface-muted p-3 xl:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))]">
-      <div className="relative flex-1">
+    <div className="grid grid-cols-2 gap-2 rounded-xl border border-border bg-surface-muted p-2 xl:grid-cols-[minmax(0,2fr)_repeat(5,minmax(0,1fr))_auto]">
+      <div className="relative col-span-2 xl:col-span-1">
         <Search
           className="pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2 text-on-surface-muted"
           aria-hidden="true"
         />
         <Input
+          type="search"
           placeholder={t("search_placeholder")}
+          aria-label={t("search_placeholder")}
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
           className="border-border bg-surface ps-8"
         />
       </div>
 
-      <Select
+      <FilterSelect
+        label={t("filter_status")}
         value={statusFilter}
-        onValueChange={(value) => onStatusChange(value ?? "all")}
-        items={statusItems}
-      >
-        <SelectTrigger className="w-full bg-surface">
-          <SelectValue placeholder={t("filter_status")} />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            {statusItems.map((item) => (
-              <SelectItem key={item.value} value={item.value}>
-                {item.label}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-
-      <Select
+        onChange={onStatusChange}
+        items={[
+          { value: "all", label: t("filter_all_statuses") },
+          ...statusOptions.map((status) => ({
+            value: status,
+            label: getStatusLabel(status, t),
+          })),
+        ]}
+      />
+      <FilterSelect
+        label={t("filter_course")}
         value={courseFilter}
-        onValueChange={(value) => onCourseChange(value ?? "all")}
-        items={courseItems}
-      >
-        <SelectTrigger className="w-full bg-surface">
-          <SelectValue placeholder={t("filter_course")} />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            {courseItems.map((item) => (
-              <SelectItem key={item.value} value={item.value}>
-                {item.label}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-
-      <Select
+        onChange={onCourseChange}
+        items={[{ value: "all", label: t("filter_all_courses") }, ...courses]}
+      />
+      <FilterSelect
+        label={t("filter_grade")}
         value={gradeFilter}
-        onValueChange={(value) => onGradeChange(value ?? "all")}
-        items={gradeItems}
-      >
-        <SelectTrigger className="w-full bg-surface">
-          <SelectValue placeholder={t("filter_grade")} />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            {gradeItems.map((item) => (
-              <SelectItem key={item.value} value={item.value}>
-                {item.label}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-
-      <Select
+        onChange={onGradeChange}
+        items={[{ value: "all", label: t("filter_all_grades") }, ...grades]}
+      />
+      <FilterSelect
+        label={t("filter_stream")}
         value={streamFilter}
-        onValueChange={(value) => onStreamChange(value ?? "all")}
-        items={streamItems}
+        onChange={onStreamChange}
+        items={[{ value: "all", label: t("filter_all_streams") }, ...streams]}
+      />
+      <FilterSelect
+        label={tw("filter_access")}
+        value={accessFilter}
+        onChange={onAccessChange}
+        items={[
+          { value: "all", label: tw("access_all") },
+          { value: "active", label: tw("access_active") },
+          { value: "expiring", label: tw("access_expiring") },
+          { value: "expired", label: tw("access_expired_filter") },
+        ]}
+      />
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={onClear}
+        disabled={!hasActiveFilters}
+        className="col-span-2 h-8 text-on-surface-muted sm:col-span-1 xl:col-span-1"
       >
-        <SelectTrigger className="w-full bg-surface">
-          <SelectValue placeholder={t("filter_stream")} />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            {streamItems.map((item) => (
-              <SelectItem key={item.value} value={item.value}>
-                {item.label}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
+        <X data-icon="inline-start" aria-hidden="true" />
+        {tw("clear_filters")}
+      </Button>
     </div>
+  )
+}
+
+function FilterSelect({
+  label,
+  value,
+  onChange,
+  items,
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  items: FilterOption[]
+}) {
+  return (
+    <Select
+      value={value}
+      onValueChange={(next) => onChange((next as string | null) ?? "all")}
+      items={items}
+    >
+      <SelectTrigger className="w-full bg-surface" aria-label={label}>
+        <SelectValue placeholder={label} />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectGroup>
+          {items.map((item) => (
+            <SelectItem key={item.value} value={item.value}>
+              {item.label}
+            </SelectItem>
+          ))}
+        </SelectGroup>
+      </SelectContent>
+    </Select>
   )
 }
 

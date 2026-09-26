@@ -161,6 +161,22 @@ export async function listTeachersAction(
   }
 }
 
+export async function getTeacherAction(id: number) {
+  try {
+    return await apiFetch(`/api/v1/admin/teachers/${id}`, adminTeacherListItemSchema)
+  } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "type" in error &&
+      error.type === "Unauthorized"
+    ) {
+      await redirectToAuth(`/admin/teachers?view=${id}`)
+    }
+    throw error
+  }
+}
+
 export async function updateTeacher(
   id: number,
   data: unknown
@@ -208,6 +224,22 @@ export async function listSubscriptionsAction(params: PageParams = {}) {
       error.type === "Unauthorized"
     ) {
       await redirectToAuth("/admin/subscriptions")
+    }
+    throw error
+  }
+}
+
+export async function getStudentAction(id: number) {
+  try {
+    return await apiFetch(`/api/v1/admin/students/${id}`, adminStudentSchema)
+  } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "type" in error &&
+      error.type === "Unauthorized"
+    ) {
+      await redirectToAuth(`/admin/students?view=${id}`)
     }
     throw error
   }

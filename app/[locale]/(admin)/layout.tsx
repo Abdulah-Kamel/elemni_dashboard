@@ -6,6 +6,7 @@ import { redirectToAuth } from "@/lib/auth/redirect"
 import { Sidebar } from "@/features/shell/components/sidebar"
 import { Topbar } from "@/features/shell/components/topbar"
 import { MobileBottomNav } from "@/features/shell/components/mobile-bottom-nav"
+import { CommandPaletteProvider } from "@/features/command-palette/command-palette"
 
 export const dynamic = "force-dynamic"
 
@@ -35,25 +36,28 @@ export default async function AdminLayout({
   }
 
   const t = await getTranslations({ locale, namespace: "common" })
+  const roleLabel = t("admin_role")
 
   return (
     <DirectionProvider direction={(locale === "ar" ? "rtl" : "ltr") as never}>
-      <div className="flex h-dvh overflow-hidden bg-page">
-        <Sidebar
-          teacherName={user.name}
-          teacherRole={t("admin_role")}
-          userRole={user.role}
-        />
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-          <Topbar teacherName={user.name} />
-          <main className="flex-1 overflow-auto pb-[calc(4rem+env(safe-area-inset-bottom,0px))] md:pb-0">
-            <div className="mx-auto w-full max-w-7xl animate-fade-in px-container-margin py-xl">
-              {children}
-            </div>
-          </main>
+      <CommandPaletteProvider role="admin">
+        <div className="flex h-dvh overflow-hidden bg-page">
+          <Sidebar
+            teacherName={user.name}
+            teacherRole={roleLabel}
+            userRole={user.role}
+          />
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+            <Topbar userName={user.name} roleLabel={roleLabel} role="admin" />
+            <main className="flex-1 overflow-auto pb-[calc(4rem+env(safe-area-inset-bottom,0px))] md:pb-0">
+              <div className="mx-auto w-full max-w-7xl animate-fade-in px-container-margin py-xl">
+                {children}
+              </div>
+            </main>
+          </div>
+          <MobileBottomNav userRole={user.role} />
         </div>
-        <MobileBottomNav userRole={user.role} />
-      </div>
+      </CommandPaletteProvider>
     </DirectionProvider>
   )
 }

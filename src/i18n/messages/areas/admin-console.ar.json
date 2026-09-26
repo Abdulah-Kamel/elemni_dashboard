@@ -1,1 +1,71 @@
-{}
+{
+  "adminConsole": {
+    "tiles": {
+      "label": "إجماليات المنصة",
+      "of_total": "من أصل {total}",
+      "completed_subscriptions": "الاشتراكات المكتملة",
+      "open_list": "افتح قائمة الاشتراكات",
+      "revenue_hint": "من الاشتراكات المكتملة"
+    },
+    "attention": {
+      "title": "بحاجة إلى متابعة",
+      "empty": "لا شيء يحتاج متابعتك الآن.",
+      "duplicatePayments": "{count, plural, one {دفعة مكررة تحتاج استردادًا أو تسوية} other {مدفوعات مكررة تحتاج استردادًا أو تسوية}}",
+      "failedPayments": "{count, plural, one {دفعة فاشلة} other {مدفوعات فاشلة}}",
+      "teachersWithoutLibrary": "{count, plural, one {معلم بلا مكتبة فيديو} other {معلمون بلا مكتبة فيديو}}",
+      "inactiveTeachers": "{count, plural, one {معلم معطل} other {معلمون معطلون}}",
+      "pendingPayments": "{count, plural, one {دفعة قيد الانتظار} other {مدفوعات قيد الانتظار}}"
+    },
+    "empty": {
+      "teachers": "لا يوجد معلمون بعد.",
+      "subscriptions": "لا توجد اشتراكات مكتملة بعد.",
+      "generic": "لا يوجد شيء هنا بعد."
+    },
+    "library_short_missing": "بلا مكتبة",
+    "feed": {
+      "subscribed": "<strong>{student}</strong> اشترك في <strong>{course}</strong>"
+    },
+    "sheet": {
+      "label": "لوحة التفاصيل",
+      "teacher_title": "المعلم",
+      "student_title": "الطالب",
+      "subscription_title": "الاشتراك",
+      "load_error": "تعذر تحميل هذه التفاصيل. أغلق اللوحة وحاول مرة أخرى.",
+      "section_error": "تعذر تحميل هذا القسم.",
+      "no_assignments": "لا توجد مواد أو صفوف مسندة.",
+      "completed_subscriptions": "الاشتراكات المكتملة",
+      "open_profile": "فتح الملف الكامل",
+      "no_student_subscriptions": "لا توجد اشتراكات لهذا الطالب.",
+      "period": "{from} – {to}",
+      "enrollment_id": "اشتراك رقم {id}",
+      "open_student": "فتح الطالب",
+      "payment": "الدفع",
+      "subscription_not_on_page": "هذا الاشتراك غير موجود في القائمة الحالية. امسح الفلاتر أو ابحث عنه لعرض تفاصيله."
+    },
+    "fields": {
+      "joined": "تاريخ الانضمام",
+      "bandwidth_cost": "تكلفة النقل لكل جيجابايت",
+      "storage_cost": "تكلفة التخزين لكل جيجابايت شهريًا",
+      "whatsapp": "واتساب",
+      "parent_phone": "هاتف ولي الأمر",
+      "amount_paid": "المبلغ المدفوع",
+      "purchased_at": "تاريخ الشراء",
+      "expires_at": "تاريخ الانتهاء",
+      "currency": "العملة"
+    },
+    "filters": {
+      "clear": "مسح الفلاتر ({count})",
+      "clear_all": "مسح الفلاتر",
+      "sort_page_only": "الترتيب يشمل صفوف هذه الصفحة فقط.",
+      "library_all": "كل المكتبات",
+      "library_scan_truncated": "فلتر المكتبة يفحص أحدث {count} معلم فقط."
+    },
+    "actions": {
+      "view": "عرض"
+    },
+    "errors": {
+      "list": "تعذر تحميل هذه القائمة.",
+      "retry": "إعادة المحاولة"
+    }
+  }
+}

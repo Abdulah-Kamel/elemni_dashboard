@@ -45,25 +45,26 @@ function applyTheme(theme: Theme) {
   }
 }
 
+/** Flip between light and dark; shared by the toggle and the command palette. */
+export function toggleTheme() {
+  applyTheme(getSnapshot() === "dark" ? "light" : "dark");
+  window.dispatchEvent(new Event(CHANGE_EVENT));
+}
+
 export function ThemeToggle() {
   const t = useTranslations("topbar");
   const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const isDark = theme === "dark";
   const nextLabel = isDark ? t("theme_light") : t("theme_dark");
 
-  const handleToggle = () => {
-    const next: Theme = isDark ? "light" : "dark";
-    applyTheme(next);
-    window.dispatchEvent(new Event(CHANGE_EVENT));
-  };
-
   return (
     <Button
       variant="ghost"
       size="icon"
-      onClick={handleToggle}
+      onClick={toggleTheme}
       aria-label={nextLabel}
       title={nextLabel}
+      className="size-9 text-on-surface-muted hover:bg-surface-muted hover:text-on-surface"
     >
       {isDark ? (
         <Sun className="size-5" aria-hidden="true" />

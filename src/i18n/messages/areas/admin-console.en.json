@@ -1,1 +1,71 @@
-{}
+{
+  "adminConsole": {
+    "tiles": {
+      "label": "Platform totals",
+      "of_total": "of {total} total",
+      "completed_subscriptions": "Completed subscriptions",
+      "open_list": "Open the subscriptions list",
+      "revenue_hint": "From completed subscriptions"
+    },
+    "attention": {
+      "title": "Needs attention",
+      "empty": "Nothing needs your attention right now.",
+      "duplicatePayments": "{count, plural, one {Duplicate payment to refund or reconcile} other {Duplicate payments to refund or reconcile}}",
+      "failedPayments": "{count, plural, one {Failed payment} other {Failed payments}}",
+      "teachersWithoutLibrary": "{count, plural, one {Teacher without a video library} other {Teachers without a video library}}",
+      "inactiveTeachers": "{count, plural, one {Deactivated teacher} other {Deactivated teachers}}",
+      "pendingPayments": "{count, plural, one {Payment still pending} other {Payments still pending}}"
+    },
+    "empty": {
+      "teachers": "No teachers yet.",
+      "subscriptions": "No completed subscriptions yet.",
+      "generic": "Nothing here yet."
+    },
+    "library_short_missing": "No library",
+    "feed": {
+      "subscribed": "<strong>{student}</strong> subscribed to <strong>{course}</strong>"
+    },
+    "sheet": {
+      "label": "Details panel",
+      "teacher_title": "Teacher",
+      "student_title": "Student",
+      "subscription_title": "Subscription",
+      "load_error": "Could not load these details. Close the panel and try again.",
+      "section_error": "This section could not be loaded.",
+      "no_assignments": "No subjects or grades assigned.",
+      "completed_subscriptions": "Completed subscriptions",
+      "open_profile": "Open full profile",
+      "no_student_subscriptions": "This student has no subscriptions.",
+      "period": "{from} – {to}",
+      "enrollment_id": "Enrollment #{id}",
+      "open_student": "Open student",
+      "payment": "Payment",
+      "subscription_not_on_page": "This subscription is not in the current list. Clear the filters or search for it to see its details."
+    },
+    "fields": {
+      "joined": "Joined",
+      "bandwidth_cost": "Bandwidth cost / GB",
+      "storage_cost": "Storage cost / GB monthly",
+      "whatsapp": "WhatsApp",
+      "parent_phone": "Parent phone",
+      "amount_paid": "Amount paid",
+      "purchased_at": "Purchased",
+      "expires_at": "Expires",
+      "currency": "Currency"
+    },
+    "filters": {
+      "clear": "Clear filters ({count})",
+      "clear_all": "Clear filters",
+      "sort_page_only": "Sorting applies to the rows on this page.",
+      "library_all": "Any library",
+      "library_scan_truncated": "The library filter checks the newest {count} teachers only."
+    },
+    "actions": {
+      "view": "View"
+    },
+    "errors": {
+      "list": "This list could not be loaded.",
+      "retry": "Try again"
+    }
+  }
+}

@@ -6,7 +6,12 @@ import type {
   TeacherAnalytics,
   TopEarningCourse,
 } from "@/features/analytics/schema"
-import { listRecentTeacherSubscriptions } from "@/features/students/queries"
+import { listCourses } from "@/features/course-management/queries"
+import type { CourseOut } from "@/features/shell/schema"
+import {
+  listRecentTeacherSubscriptions,
+  listTeacherSubscriptions,
+} from "@/features/students/queries"
 import type { TeacherSubscription } from "@/features/students/schema"
 import type { ApiError } from "@/lib/api/errors"
 
@@ -16,6 +21,15 @@ export type DashboardResult =
       summary: TeacherAnalytics
       topCourses: TopEarningCourse[]
       recentSubscriptions: TeacherSubscription[] | null
+      /** All courses (for draft / no-student counts); null if it failed. */
+      courses: CourseOut[] | null
+      /** Every subscription (for expiry / pending counts); null if it failed. */
+      subscriptions: TeacherSubscription[] | null
+      /**
+       * Revenue/subscriptions over time. No endpoint exists yet, so this is
+       * always null and the trend slot renders nothing.
+       */
+      trend: null
     }
   | { kind: "error"; error: ApiError }
   | { kind: "unauthorized" }
@@ -23,16 +37,30 @@ export type DashboardResult =
 type DashboardFilters = { start?: string; end?: string }
 
 export async function loadDashboardOverview(
-  filters: DashboardFilters
+  filters: DashboardFilters,
+  teacherProfileId: number
 ): Promise<DashboardResult> {
-  const [summaryResult, topCoursesResult, recentSubscriptionsResult] =
-    await Promise.allSettled([
-      getTeacherAnalytics(filters),
-      listTopEarningCourses({ ...filters, limit: 5 }),
-      listRecentTeacherSubscriptions(),
-    ])
+  const [
+    summaryResult,
+    topCoursesResult,
+    recentSubscriptionsResult,
+    coursesResult,
+    subscriptionsResult,
+  ] = await Promise.allSettled([
+    getTeacherAnalytics(filters),
+    listTopEarningCourses({ ...filters, limit: 5 }),
+    listRecentTeacherSubscriptions(),
+    listCourses(teacherProfileId),
+    listTeacherSubscriptions(),
+  ])
 
-  const results = [summaryResult, topCoursesResult, recentSubscriptionsResult]
+  const results = [
+    summaryResult,
+    topCoursesResult,
+    recentSubscriptionsResult,
+    coursesResult,
+    subscriptionsResult,
+  ]
   if (results.some((r) => r.status === "rejected" && isUnauthorized(r.reason))) {
     return { kind: "unauthorized" }
   }
@@ -51,17 +79,19 @@ export async function loadDashboardOverview(
     }
   }
 
-  let recentSubscriptions: TeacherSubscription[] | null = null
-  if (recentSubscriptionsResult.status === "fulfilled") {
-    recentSubscriptions = recentSubscriptionsResult.value
-  }
-
   return {
     kind: "ready",
     summary: summaryResult.value,
     topCourses: topCoursesResult.value,
-    recentSubscriptions,
+    recentSubscriptions: valueOrNull(recentSubscriptionsResult),
+    courses: valueOrNull(coursesResult),
+    subscriptions: valueOrNull(subscriptionsResult),
+    trend: null,
   }
+}
+
+function valueOrNull<T>(result: PromiseSettledResult<T>): T | null {
+  return result.status === "fulfilled" ? result.value : null
 }
 
 function toApiError(error: unknown): ApiError {

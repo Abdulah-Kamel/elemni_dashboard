@@ -1,1 +1,63 @@
-{}
+{
+  "teacherWorkspace": {
+    "students": {
+      "tiles_label": "Quick student filters",
+      "tile_all_hint": "Show all subscriptions",
+      "tile_filter_hint": "Click to filter the table",
+      "tile_expiring": "Access ending soon",
+      "tile_expiring_hint": "Within 14 days",
+      "filter_access": "Access",
+      "access_all": "Any access",
+      "access_active": "Active access",
+      "access_expiring": "Ends within 14 days",
+      "access_expired_filter": "Expired access",
+      "access_expired": "Access ended",
+      "access_none": "No access until payment completes",
+      "days_left": "{count, plural, =0 {Ends today} one {# day left} other {# days left}}",
+      "clear_filters": "Clear filters",
+      "open_student": "View details for {name}",
+      "contact_title": "Contact",
+      "contact_email": "Email",
+      "contact_phone": "Phone",
+      "contact_whatsapp": "WhatsApp",
+      "contact_parent": "Parent",
+      "subscriptions_count": "{count, plural, one {# subscription} other {# subscriptions}}",
+      "subscriptions_title": "Subscriptions with you ({count})",
+      "course_students": "Students in this course",
+      "open_course": "Open course",
+      "amount_note": "Amounts are shown as recorded for each subscription."
+    },
+    "courses": {
+      "metric_students": "Students",
+      "metric_earnings": "Your earnings",
+      "pending_count": "{count, plural, one {# subscription awaiting payment} other {# subscriptions awaiting payment}}",
+      "draft_hint": "Not visible to students yet. Finish the content, then publish.",
+      "continue_setup": "Continue setup",
+      "view_students": "Students",
+      "column_course": "Course",
+      "column_status": "Status",
+      "column_created": "Created",
+      "column_actions": "Actions",
+      "sort_label": "Sort courses",
+      "sort_created": "Date created",
+      "sort_title": "Title",
+      "sort_students": "Students",
+      "sort_earnings": "Earnings",
+      "sort_ascending": "Ascending",
+      "sort_descending": "Descending",
+      "view_label": "View",
+      "view_grid": "Cards",
+      "view_table": "Table",
+      "clear_filters": "Clear search and filters",
+      "metrics_partial": "Some numbers aren't available right now; they show as “—”."
+    },
+    "usage": {
+      "title": "Usage & costs",
+      "balance_hint": "Your current balance — not affected by filters",
+      "period_hint": "For the selected period",
+      "storage_now_hint": "Space in use right now",
+      "empty_none_title": "No usage recorded yet",
+      "empty_none_note": "Daily records appear here once streaming and storage for your content have been tallied."
+    }
+  }
+}

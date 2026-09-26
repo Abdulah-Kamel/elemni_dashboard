@@ -1,1 +1,55 @@
-{}
+{
+  "teacherHome": {
+    "greeting": "أهلًا بعودتك يا {name}",
+    "showing": "الأرقام عن {range}",
+    "range": {
+      "label": "الفترة",
+      "7d": "7 أيام",
+      "30d": "30 يومًا",
+      "term": "هذا الترم",
+      "all": "كل الوقت",
+      "custom": "مخصص",
+      "all_time_phrase": "كل الوقت",
+      "last_7": "آخر 7 أيام",
+      "last_30": "آخر 30 يومًا",
+      "this_term": "هذا الترم"
+    },
+    "kpi": {
+      "label": "الأرقام الرئيسية",
+      "earnings": "أرباحك",
+      "earnings_hint": "من إجمالي إيرادات {revenue}",
+      "subscriptions": "الاشتراكات المكتملة",
+      "courses": "الدورات النشطة",
+      "courses_hint": "{drafts} مسودة · {archived} مؤرشفة",
+      "courses_hint_archived": "{archived} مؤرشفة"
+    },
+    "attention": {
+      "title": "يحتاج متابعتك",
+      "empty": "لا شيء يحتاج متابعتك الآن.",
+      "unavailable": "تعذر التحقق من المهام المعلقة الآن.",
+      "expiring_soon": "اشتراكات تنتهي خلال {days} يومًا",
+      "pending_payments": "اشتراكات بانتظار الدفع",
+      "draft_courses": "دورات مسودة بحاجة لإكمال",
+      "published_without_students": "دورات منشورة بلا طلاب نشطين"
+    },
+    "top": {
+      "title": "أعلى الدورات",
+      "subtitle": "مرتبة حسب أرباحك في هذه الفترة",
+      "view_all": "كل الدورات",
+      "subscriptions": "{count, plural, zero {لا اشتراكات} one {اشتراك واحد} two {اشتراكان} few {# اشتراكات} many {# اشتراكًا} other {# اشتراك}}",
+      "edit": "تعديل {course}",
+      "students": "طلاب {course}",
+      "empty": "لا توجد أرباح دورات في هذه الفترة.",
+      "show_all_time": "اعرض كل الوقت"
+    },
+    "activity": {
+      "view_all": "عرض الكل"
+    },
+    "empty": {
+      "title": "ابدأ بدورتك الأولى",
+      "body": "بعد نشر أول دورة ستظهر هنا أرباحك واشتراكاتك وأي شيء يحتاج متابعة.",
+      "cta": "أنشئ دورة"
+    },
+    "loading": "جارٍ تحميل النظرة العامة"
+  }
+}

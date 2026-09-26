@@ -1,4 +1,4 @@
-import { render, waitFor } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { describe, expect, it, vi } from "vitest"
 import { EarningsView } from "../earnings-view"
@@ -78,8 +78,17 @@ vi.mock("@/features/analytics/components/date-range-filter-form", () => ({
   ),
 }))
 
+vi.mock("@/i18n/routing", () => ({
+  Link: ({ href, children }: { href: string; children: React.ReactNode }) => <a href={href}>{children}</a>,
+}))
+
+const actionMocks = vi.hoisted(() => ({ getTeacherUsageAction: vi.fn() }))
+
 vi.mock("@/features/earnings/actions", () => ({
-  getTeacherUsageAction: vi.fn().mockResolvedValue({
+  getTeacherUsageAction: actionMocks.getTeacherUsageAction,
+}))
+
+const usageResponse = {
     items: [
       {
         id: 1,
@@ -111,8 +120,8 @@ vi.mock("@/features/earnings/actions", () => ({
       pending_dues: 0,
       storage_used_mb: 2.0,
     },
-  }),
-}))
+}
+actionMocks.getTeacherUsageAction.mockResolvedValue(usageResponse)
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false } },
@@ -197,5 +206,30 @@ describe("EarningsView responsive", () => {
     const filterGrid = container.querySelector(".grid.gap-3.border-b")
     expect(filterGrid?.className).toContain("sm:grid-cols-2")
     expect(filterGrid?.className).toContain("xl:grid-cols-")
+  })
+
+  it("sorts the ledger server-side from the column headers", async () => {
+    window.history.replaceState(null, "", "/en/usage")
+    renderWithProviders(<EarningsView data={data} filters={filters} locale="en" />)
+
+    const header = await screen.findByRole("columnheader", { name: /Total/ })
+    expect(header.getAttribute("aria-sort")).toBe("none")
+    fireEvent.click(screen.getByRole("button", { name: "Total" }))
+
+    await waitFor(() =>
+      expect(actionMocks.getTeacherUsageAction).toHaveBeenCalledWith(
+        expect.objectContaining({ sortBy: "cost_amount", sortOrder: "desc", skip: 0 })
+      )
+    )
+    expect(
+      (await screen.findByRole("columnheader", { name: /Total/ })).getAttribute("aria-sort")
+    ).toBe("descending")
+    expect(window.location.search).toBe("?sort_by=cost_amount")
+  })
+
+  it("shows the balance exactly as the API returned it", () => {
+    renderWithProviders(<EarningsView data={data} filters={filters} locale="en" />)
+    expect(screen.getByText("Pending Dues")).toBeTruthy()
+    expect(screen.getAllByText("EGP 0.00").length).toBeGreaterThan(0)
   })
 })

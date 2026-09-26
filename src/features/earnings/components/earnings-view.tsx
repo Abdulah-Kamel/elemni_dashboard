@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, type FormEvent } from "react"
+import { useEffect, useMemo, useState, type FormEvent } from "react"
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import {
   Activity,
@@ -11,13 +11,13 @@ import {
   Database,
   ReceiptText,
   WalletCards,
+  Wallet,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Card,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
@@ -25,14 +25,8 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { StatTile } from "@/components/ui/stat-tile"
+import { SortHeader, ariaSort } from "@/components/ui/sort-header"
 import {
   Table,
   TableBody,
@@ -67,6 +61,8 @@ type EarningsViewProps = {
 
 type EarningsTranslator = ReturnType<typeof useTranslations>
 
+type LedgerSortKey = NonNullable<TeacherUsageFilters["sortBy"]>
+
 type EarningsClientFilters = {
   startDate?: string
   endDate?: string
@@ -78,6 +74,7 @@ type EarningsClientFilters = {
 
 export function EarningsView({ data, filters, locale }: EarningsViewProps) {
   const t = useTranslations("earnings")
+  const tw = useTranslations("teacherWorkspace.usage")
   const initialPageSize = resolvePageSize(filters.limit)
   const [activeFilters, setActiveFilters] = useState<EarningsClientFilters>(
     () => createInitialFilters(filters)
@@ -94,6 +91,14 @@ export function EarningsView({ data, filters, locale }: EarningsViewProps) {
     [activeFilters, page, pageSize]
   )
   const requestKey = JSON.stringify(requestFilters)
+  const urlQuery = toUrlQuery(requestFilters)
+  useEffect(() => {
+    // Keep the address bar shareable; the server page parses the same params.
+    const url = `${window.location.pathname}${urlQuery ? `?${urlQuery}` : ""}`
+    if (url !== `${window.location.pathname}${window.location.search}`) {
+      window.history.replaceState(window.history.state, "", url)
+    }
+  }, [urlQuery])
   const [initialRequestKey] = useState(requestKey)
   const usageQuery = useQuery({
     queryKey: ["teacher-usage", requestFilters],
@@ -149,11 +154,36 @@ export function EarningsView({ data, filters, locale }: EarningsViewProps) {
       ...current,
       minCost: normalizeMoneyInput(readFormValue(formData, "min_cost")),
       maxCost: normalizeMoneyInput(readFormValue(formData, "max_cost")),
-      sortBy: parseSortBy(readFormValue(formData, "sort_by")),
-      sortOrder: parseSortOrder(readFormValue(formData, "sort_order")),
     }))
     setPage(1)
   }
+
+  // Server-side sort: the ledger is paginated by the API, so sorting a page
+  // locally would be misleading. A new column starts with the largest/newest.
+  function handleSort(column: LedgerSortKey) {
+    setActiveFilters((current) => ({
+      ...current,
+      sortBy: column,
+      sortOrder:
+        current.sortBy === column
+          ? current.sortOrder === "desc"
+            ? "asc"
+            : "desc"
+          : "desc",
+    }))
+    setPage(1)
+  }
+
+  const ledgerSort = {
+    key: activeFilters.sortBy,
+    direction: activeFilters.sortOrder,
+  }
+  const hasFilters = Boolean(
+    activeFilters.startDate ||
+      activeFilters.endDate ||
+      activeFilters.minCost ||
+      activeFilters.maxCost
+  )
 
   function handleFilterReset() {
     setActiveFilters(createResetFilters())
@@ -163,90 +193,83 @@ export function EarningsView({ data, filters, locale }: EarningsViewProps) {
 
   return (
     <div className="flex flex-col gap-xl">
-      <Card className="relative animate-slide-up overflow-hidden rounded-2xl border-primary-deep bg-primary text-primary-foreground shadow-xs">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -end-20 -top-20 size-64 rounded-full border border-primary-foreground/10"
-        />
-        <CardContent className="relative grid gap-6 p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_minmax(17rem,0.7fr)] lg:gap-8 lg:p-10">
-          <div className="self-center">
-            <Badge
-              variant="secondary"
-              className="gap-1.5 bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/15"
-            >
-              <Activity className="size-3.5" aria-hidden="true" />
-              {t("eyebrow")}
-            </Badge>
-            <h1 className="mt-4 max-w-[14ch] font-heading text-display-lg leading-[1.2] font-bold text-balance text-primary-foreground sm:text-4xl">
-              {t("title")}
-            </h1>
-            <p className="mt-4 text-base leading-7 text-primary-foreground/80">
-              {t("subtitle")}
-            </p>
-          </div>
-          <div className="self-end rounded-xl border border-primary-foreground/15 bg-primary-foreground/10 p-5">
-            <p className="text-label-md leading-5 font-medium text-primary-foreground/75">
-              {t("pending_dues")}
-            </p>
-            <p className="mt-2 font-heading text-display-lg leading-tight font-bold text-primary-foreground tabular-nums">
-              {formatCurrency(displayedData.summary.pending_dues, currency)}
-            </p>
-            <p className="mt-3 text-sm leading-6 text-primary-foreground/75">
-              {t("pending_dues_hint")}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <header className="flex flex-col gap-1">
+        <h1 className="text-headline-md font-bold text-on-surface">
+          {tw("title")}
+        </h1>
+        <p className="text-sm text-on-surface-muted">{t("subtitle")}</p>
+      </header>
 
       <section
-        className="grid overflow-hidden rounded-2xl border border-border bg-surface shadow-xs sm:grid-cols-2 xl:grid-cols-4"
+        className="grid grid-cols-2 gap-3 xl:grid-cols-5"
         aria-labelledby="earnings-summary-title"
       >
         <h2 id="earnings-summary-title" className="sr-only">
           {t("summary_title")}
         </h2>
-        <SummaryCell
+        <StatTile
+          label={t("pending_dues")}
+          value={formatCurrency(displayedData.summary.pending_dues, currency)}
+          hint={tw("balance_hint")}
+          icon={Wallet}
+          tone="primary"
+          className="col-span-2 xl:col-span-1"
+        />
+        <StatTile
           label={t("summary.filtered_cost")}
-          value={formatCurrency(displayedData.summary.total_cost, currency)}
+          value={
+            isLoadingData ? (
+              <TileSkeleton />
+            ) : (
+              formatCurrency(displayedData.summary.total_cost, currency)
+            )
+          }
+          hint={tw("period_hint")}
           icon={CircleDollarSign}
-          className="bg-primary-tint"
-          loading={isLoadingData}
         />
-        <SummaryCell
+        <StatTile
           label={t("summary.bandwidth_cost")}
-          value={formatCurrency(
-            displayedData.summary.total_bandwidth_cost,
-            currency
-          )}
+          value={
+            isLoadingData ? (
+              <TileSkeleton />
+            ) : (
+              formatCurrency(displayedData.summary.total_bandwidth_cost, currency)
+            )
+          }
+          hint={tw("period_hint")}
           icon={Activity}
-          className="border-s border-border"
-          loading={isLoadingData}
         />
-        <SummaryCell
+        <StatTile
           label={t("summary.storage_cost")}
-          value={formatCurrency(
-            displayedData.summary.total_storage_cost,
-            currency
-          )}
+          value={
+            isLoadingData ? (
+              <TileSkeleton />
+            ) : (
+              formatCurrency(displayedData.summary.total_storage_cost, currency)
+            )
+          }
+          hint={tw("period_hint")}
           icon={Database}
-          className="border-t border-border sm:border-s xl:border-t-0"
-          loading={isLoadingData}
         />
-        <SummaryCell
+        <StatTile
           label={t("summary.storage_now")}
           value={
-            displayedData.summary.storage_used_mb == null
-              ? t("not_available")
-              : `${number.format(displayedData.summary.storage_used_mb)} ${t("units.mb")}`
+            isLoadingData ? (
+              <TileSkeleton />
+            ) : displayedData.summary.storage_used_mb == null ? (
+              t("not_available")
+            ) : (
+              `${number.format(displayedData.summary.storage_used_mb)} ${t("units.mb")}`
+            )
           }
+          hint={tw("storage_now_hint")}
           icon={WalletCards}
-          className="border-s border-t border-border sm:border-s xl:border-t-0"
-          loading={isLoadingData}
         />
       </section>
 
+      {isLoadingData || chartData.length > 0 ? (
       <Card
-        className="animate-slide-up overflow-hidden rounded-2xl border-border shadow-xs"
+        className="animate-slide-up overflow-hidden rounded-xl border-border"
         aria-labelledby="earnings-chart-title"
         aria-busy={isLoadingData}
       >
@@ -255,11 +278,11 @@ export function EarningsView({ data, filters, locale }: EarningsViewProps) {
             <div className="min-w-0 flex-1">
               <CardTitle
                 id="earnings-chart-title"
-                className="font-heading text-headline-sm leading-7 font-semibold"
+                className="text-base font-semibold"
               >
                 {t("chart.title")}
               </CardTitle>
-              <CardDescription className="mt-1 text-body-lg leading-6">
+              <CardDescription className="mt-0.5 text-sm">
                 {t("chart.subtitle")}
               </CardDescription>
             </div>
@@ -270,24 +293,19 @@ export function EarningsView({ data, filters, locale }: EarningsViewProps) {
         </CardHeader>
         {isLoadingData ? (
           <ChartSkeleton label={t("ledger.refreshing")} />
-        ) : chartData.length > 0 ? (
+        ) : (
           <EarningsCostChart
             data={chartData}
             ariaLabel={t("chart.label")}
             costLabel={t("chart.cost")}
             locale={locale}
           />
-        ) : (
-          <EmptyState
-            icon={Activity}
-            title={t("empty.title")}
-            note={t("empty.note")}
-          />
         )}
       </Card>
+      ) : null}
 
       <Card
-        className="animate-slide-up overflow-hidden rounded-2xl border-border shadow-xs"
+        className="animate-slide-up overflow-hidden rounded-xl border-border"
         aria-labelledby="earnings-ledger-title"
         aria-busy={isLoadingData}
       >
@@ -296,11 +314,11 @@ export function EarningsView({ data, filters, locale }: EarningsViewProps) {
             <div className="min-w-0 flex-1">
               <CardTitle
                 id="earnings-ledger-title"
-                className="font-heading text-headline-sm leading-7 font-semibold"
+                className="text-base font-semibold"
               >
                 {t("ledger.title")}
               </CardTitle>
-              <CardDescription className="mt-1 text-body-lg leading-6">
+              <CardDescription className="mt-0.5 text-sm">
                 {t("ledger.subtitle")}
               </CardDescription>
             </div>
@@ -311,11 +329,11 @@ export function EarningsView({ data, filters, locale }: EarningsViewProps) {
           </div>
         </CardHeader>
 
-        <div className="grid gap-3 border-b border-border p-4 sm:grid-cols-2 xl:grid-cols-[minmax(15rem,1.3fr)_repeat(4,minmax(0,1fr))_auto]">
+        <div className="grid gap-3 border-b border-border p-4 sm:grid-cols-2 xl:grid-cols-[minmax(15rem,1.3fr)_repeat(2,minmax(0,1fr))_auto]">
           <div className="grid min-w-0 gap-1.5">
             <Label
               htmlFor="earnings-date-range"
-              className="text-label-md text-label-md--line-height font-medium text-on-surface-muted"
+              className="text-label-md font-medium text-on-surface-muted"
             >
               {t("filters.range")}
             </Label>
@@ -336,7 +354,7 @@ export function EarningsView({ data, filters, locale }: EarningsViewProps) {
               }}
               className="min-w-0"
               triggerId="earnings-date-range"
-              triggerClassName="h-9 min-w-0 px-3 text-body-md text-body-md--line-height sm:w-full sm:min-w-0"
+              triggerClassName="h-9 min-w-0 px-3 text-body-md sm:w-full sm:min-w-0"
               onApply={handleDateRangeApply}
               onReset={handleDateRangeReset}
               labels={{
@@ -373,7 +391,7 @@ export function EarningsView({ data, filters, locale }: EarningsViewProps) {
             <FilterField id="earnings-min-cost" label={t("filters.min_cost")}>
               <Input
                 id="earnings-min-cost"
-                className="text-body-sm--line-height h-9 bg-surface text-body-md"
+                className=" h-9 bg-surface text-body-md"
                 type="number"
                 name="min_cost"
                 min="0"
@@ -385,7 +403,7 @@ export function EarningsView({ data, filters, locale }: EarningsViewProps) {
             <FilterField id="earnings-max-cost" label={t("filters.max_cost")}>
               <Input
                 id="earnings-max-cost"
-                className="text-body-sm--line-height h-9 bg-surface text-body-md"
+                className=" h-9 bg-surface text-body-md"
                 type="number"
                 name="max_cost"
                 min="0"
@@ -394,31 +412,6 @@ export function EarningsView({ data, filters, locale }: EarningsViewProps) {
                 defaultValue={activeFilters.maxCost}
               />
             </FilterField>
-            <FilterSelect
-              id="earnings-sort"
-              label={t("filters.sort")}
-              name="sort_by"
-              defaultValue={activeFilters.sortBy}
-              options={[
-                { value: "date", label: t("filters.sort_date") },
-                { value: "cost_amount", label: t("filters.sort_cost") },
-                {
-                  value: "bandwidth_bytes",
-                  label: t("filters.sort_bandwidth"),
-                },
-                { value: "storage_bytes", label: t("filters.sort_storage") },
-              ]}
-            />
-            <FilterSelect
-              id="earnings-order"
-              label={t("filters.order")}
-              name="sort_order"
-              defaultValue={activeFilters.sortOrder}
-              options={[
-                { value: "desc", label: t("filters.desc") },
-                { value: "asc", label: t("filters.asc") },
-              ]}
-            />
             <Input type="hidden" name="limit" value={String(pageSize)} />
             <div className="flex items-end gap-2 sm:col-span-2 xl:col-span-1">
               <Button type="submit" size="sm" className="flex-1 xl:flex-none">
@@ -468,24 +461,16 @@ export function EarningsView({ data, filters, locale }: EarningsViewProps) {
               </TableCaption>
               <TableHeader className="bg-surface-muted">
                 <TableRow>
-                  <TableHead className="px-5 py-3 text-label-md leading-5 font-semibold text-on-surface-muted">
-                    {t("ledger.date")}
-                  </TableHead>
-                  <TableHead className="px-5 py-3 text-label-md leading-5 font-semibold text-on-surface-muted">
-                    {t("ledger.bandwidth")}
-                  </TableHead>
-                  <TableHead className="px-5 py-3 text-label-md leading-5 font-semibold text-on-surface-muted">
-                    {t("ledger.storage")}
-                  </TableHead>
+                  <LedgerHead column="date" label={t("ledger.date")} sort={ledgerSort} onSort={handleSort} />
+                  <LedgerHead column="bandwidth_bytes" label={t("ledger.bandwidth")} sort={ledgerSort} onSort={handleSort} />
+                  <LedgerHead column="storage_bytes" label={t("ledger.storage")} sort={ledgerSort} onSort={handleSort} />
                   <TableHead className="px-5 py-3 text-label-md leading-5 font-semibold text-on-surface-muted">
                     {t("ledger.bandwidth_cost")}
                   </TableHead>
                   <TableHead className="px-5 py-3 text-label-md leading-5 font-semibold text-on-surface-muted">
                     {t("ledger.storage_cost")}
                   </TableHead>
-                  <TableHead className="px-5 py-3 text-label-md leading-5 font-semibold text-on-surface-muted">
-                    {t("ledger.total")}
-                  </TableHead>
+                  <LedgerHead column="cost_amount" label={t("ledger.total")} sort={ledgerSort} onSort={handleSort} />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -500,11 +485,22 @@ export function EarningsView({ data, filters, locale }: EarningsViewProps) {
                 ))}
               </TableBody>
             </Table>
-          ) : (
+          ) : hasFilters ? (
             <EmptyState
               icon={CalendarDays}
               title={t("empty.title")}
               note={t("empty.note")}
+              action={
+                <Button variant="outline" size="sm" type="button" onClick={handleFilterReset}>
+                  {t("filters.reset")}
+                </Button>
+              }
+            />
+          ) : (
+            <EmptyState
+              icon={Activity}
+              title={tw("empty_none_title")}
+              note={tw("empty_none_note")}
             />
           )}
 
@@ -540,90 +536,11 @@ function FilterField({
     <div className="grid min-w-0 gap-1.5">
       <Label
         htmlFor={id}
-        className="text-label-md text-label-md--line-height font-medium text-on-surface-muted"
+        className="text-label-md font-medium text-on-surface-muted"
       >
         {label}
       </Label>
       {children}
-    </div>
-  )
-}
-
-function FilterSelect({
-  id,
-  label,
-  name,
-  defaultValue,
-  options,
-}: {
-  id: string
-  label: string
-  name: string
-  defaultValue: string
-  options: { value: string; label: string }[]
-}) {
-  return (
-    <div className="grid min-w-0 gap-1.5">
-      <Label
-        htmlFor={id}
-        className="text-label-md text-label-md--line-height font-medium text-on-surface-muted"
-      >
-        {label}
-      </Label>
-      <Select name={name} defaultValue={defaultValue} items={options}>
-        <SelectTrigger
-          id={id}
-          className="h-9 w-full bg-surface text-body-md text-body-md--line-height"
-        >
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            {options.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-    </div>
-  )
-}
-
-function SummaryCell({
-  label,
-  value,
-  icon: Icon,
-  className,
-  loading = false,
-}: {
-  label: string
-  value: string
-  icon: typeof Activity
-  className?: string
-  loading?: boolean
-}) {
-  return (
-    <div className={cn("min-w-0 p-5", className)}>
-      <div className="flex size-9 items-center justify-center rounded-xl bg-primary-tint text-primary">
-        <Icon className="size-4" aria-hidden="true" />
-      </div>
-      {loading ? (
-        <div className="mt-4 space-y-2" aria-hidden="true">
-          <Skeleton className="h-3 w-24 motion-reduce:animate-none" />
-          <Skeleton className="h-7 w-32 motion-reduce:animate-none" />
-        </div>
-      ) : (
-        <>
-          <p className="mt-4 text-label-md text-label-md--line-height font-medium text-on-surface-muted">
-            {label}
-          </p>
-          <p className="mt-1 font-heading text-headline-sm text-headline-sm--line-height font-semibold text-foreground tabular-nums">
-            {value}
-          </p>
-        </>
-      )}
     </div>
   )
 }
@@ -711,22 +628,22 @@ function UsageRow({
 }) {
   return (
     <TableRow>
-      <TableCell className="px-5 py-3 text-body-md text-body-md--line-height font-medium tabular-nums">
+      <TableCell className="px-5 py-3 text-body-md font-medium tabular-nums">
         {formatDate(item.date, locale)}
       </TableCell>
-      <TableCell className="px-5 py-3 text-body-md text-body-md--line-height text-on-surface-muted tabular-nums">
+      <TableCell className="px-5 py-3 text-body-md text-on-surface-muted tabular-nums">
         {formatBytes(item.bandwidth_bytes, locale, t)}
       </TableCell>
-      <TableCell className="px-5 py-3 text-body-md text-body-md--line-height text-on-surface-muted tabular-nums">
+      <TableCell className="px-5 py-3 text-body-md text-on-surface-muted tabular-nums">
         {formatBytes(item.storage_bytes, locale, t)}
       </TableCell>
-      <TableCell className="px-5 py-3 text-body-md text-body-md--line-height tabular-nums">
+      <TableCell className="px-5 py-3 text-body-md tabular-nums">
         {formatCurrency(item.bandwidth_cost_amount, currency)}
       </TableCell>
-      <TableCell className="px-5 py-3 text-body-md text-body-md--line-height tabular-nums">
+      <TableCell className="px-5 py-3 text-body-md tabular-nums">
         {formatCurrency(item.storage_cost_amount, currency)}
       </TableCell>
-      <TableCell className="px-5 py-3 text-body-md text-body-md--line-height font-semibold text-primary tabular-nums">
+      <TableCell className="px-5 py-3 text-body-md font-semibold text-primary tabular-nums">
         {formatCurrency(item.cost_amount, currency)}
       </TableCell>
     </TableRow>
@@ -737,10 +654,12 @@ function EmptyState({
   icon: Icon,
   title,
   note,
+  action,
 }: {
   icon: typeof Activity
   title: string
   note: string
+  action?: React.ReactNode
 }) {
   return (
     <div className="flex min-h-60 items-center justify-center p-8 text-center">
@@ -748,12 +667,13 @@ function EmptyState({
         <div className="mx-auto flex size-11 items-center justify-center rounded-xl bg-primary-tint text-primary">
           <Icon className="size-5" aria-hidden="true" />
         </div>
-        <p className="mt-3 text-title-md text-title-md--line-height font-semibold text-foreground">
+        <p className="mt-3 text-title-md font-semibold text-foreground">
           {title}
         </p>
-        <p className="mt-1 text-body-md text-body-md--line-height text-on-surface-muted">
+        <p className="mx-auto mt-1 max-w-[32rem] text-body-md text-on-surface-muted">
           {note}
         </p>
+        {action ? <div className="mt-4">{action}</div> : null}
       </div>
     </div>
   )
@@ -785,7 +705,7 @@ function Pagination({
   return (
     <div className="flex flex-col gap-3 border-t border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex flex-wrap items-center gap-4">
-        <p className="text-body-md text-body-md--line-height text-on-surface-muted">
+        <p className="text-body-md text-on-surface-muted">
           {t("ledger.showing", { from, to, total })}
         </p>
         <EarningsPageSizeSelect
@@ -819,7 +739,7 @@ function Pagination({
           />
           {t("ledger.previous")}
         </Button>
-        <span className="min-w-16 text-center text-body-md text-body-md--line-height font-medium text-on-surface-muted tabular-nums">
+        <span className="min-w-16 text-center text-body-md font-medium text-on-surface-muted tabular-nums">
           {page} / {pages}
         </span>
         <Button
@@ -884,22 +804,6 @@ function normalizeMoneyInput(value?: string) {
     : undefined
 }
 
-function parseSortBy(
-  value?: string
-): NonNullable<TeacherUsageFilters["sortBy"]> {
-  return value === "cost_amount" ||
-    value === "bandwidth_bytes" ||
-    value === "storage_bytes"
-    ? value
-    : "date"
-}
-
-function parseSortOrder(
-  value?: string
-): NonNullable<TeacherUsageFilters["sortOrder"]> {
-  return value === "asc" ? "asc" : "desc"
-}
-
 function getPageNumber(data: PaginatedTeacherUsageLogs) {
   return Math.floor(data.skip / data.limit) + 1
 }
@@ -934,4 +838,43 @@ function formatBytes(value: number, locale: string, t: EarningsTranslator) {
     return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(value)} ${t("units.bytes")}`
   }
   return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(value / unit.divisor)} ${unit.label}`
+}
+
+function LedgerHead({
+  column,
+  label,
+  sort,
+  onSort,
+}: {
+  column: LedgerSortKey
+  label: string
+  sort: { key: LedgerSortKey; direction: "asc" | "desc" }
+  onSort: (column: LedgerSortKey) => void
+}) {
+  return (
+    <TableHead
+      className="px-5 py-3 text-label-md leading-5 font-semibold text-on-surface-muted"
+      aria-sort={ariaSort(sort, column)}
+    >
+      <SortHeader label={label} column={column} sort={sort} onSort={onSort} />
+    </TableHead>
+  )
+}
+
+function TileSkeleton() {
+  return <Skeleton className="h-7 w-28 motion-reduce:animate-none" />
+}
+
+/** Same param names the server page parses, defaults omitted. */
+function toUrlQuery(filters: TeacherUsageFilters) {
+  const params = new URLSearchParams()
+  if (filters.startDate) params.set("start_date", filters.startDate)
+  if (filters.endDate) params.set("end_date", filters.endDate)
+  if (filters.minCost) params.set("min_cost", filters.minCost)
+  if (filters.maxCost) params.set("max_cost", filters.maxCost)
+  if (filters.sortBy && filters.sortBy !== "date") params.set("sort_by", filters.sortBy)
+  if (filters.sortOrder === "asc") params.set("sort_order", "asc")
+  if (filters.limit != null && filters.limit !== 10) params.set("limit", String(filters.limit))
+  if (filters.skip) params.set("skip", String(filters.skip))
+  return params.toString()
 }

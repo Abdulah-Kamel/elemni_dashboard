@@ -6,6 +6,8 @@ const mocks = vi.hoisted(() => ({
   getTeacherAnalytics: vi.fn(),
   listTopEarningCourses: vi.fn(),
   listRecentTeacherSubscriptions: vi.fn(),
+  listTeacherSubscriptions: vi.fn(),
+  listCourses: vi.fn(),
 }))
 
 vi.mock("@/features/analytics/queries", () => ({
@@ -14,6 +16,10 @@ vi.mock("@/features/analytics/queries", () => ({
 }))
 vi.mock("@/features/students/queries", () => ({
   listRecentTeacherSubscriptions: mocks.listRecentTeacherSubscriptions,
+  listTeacherSubscriptions: mocks.listTeacherSubscriptions,
+}))
+vi.mock("@/features/course-management/queries", () => ({
+  listCourses: mocks.listCourses,
 }))
 
 import { loadDashboardOverview } from "./load-overview"
@@ -56,6 +62,8 @@ const subscriptions: TeacherSubscription[] = [{
 describe("loadDashboardOverview", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mocks.listCourses.mockResolvedValue([])
+    mocks.listTeacherSubscriptions.mockResolvedValue(subscriptions)
   })
 
   it("returns analytics and recent subscriptions together", async () => {
@@ -63,11 +71,14 @@ describe("loadDashboardOverview", () => {
     mocks.listTopEarningCourses.mockResolvedValue(topCourses)
     mocks.listRecentTeacherSubscriptions.mockResolvedValue(subscriptions)
 
-    await expect(loadDashboardOverview({ start: "2026-09-01" })).resolves.toEqual({
+    await expect(loadDashboardOverview({ start: "2026-09-01" }, 7)).resolves.toEqual({
       kind: "ready",
       summary,
       topCourses,
       recentSubscriptions: subscriptions,
+      courses: [],
+      subscriptions,
+      trend: null,
     })
   })
 
@@ -76,11 +87,14 @@ describe("loadDashboardOverview", () => {
     mocks.listTopEarningCourses.mockResolvedValue(topCourses)
     mocks.listRecentTeacherSubscriptions.mockRejectedValue({ type: "Upstream", status: 503 })
 
-    await expect(loadDashboardOverview({})).resolves.toEqual({
+    await expect(loadDashboardOverview({}, 7)).resolves.toEqual({
       kind: "ready",
       summary,
       topCourses,
       recentSubscriptions: null,
+      courses: [],
+      subscriptions,
+      trend: null,
     })
   })
 
@@ -89,7 +103,7 @@ describe("loadDashboardOverview", () => {
     mocks.listTopEarningCourses.mockResolvedValue(topCourses)
     mocks.listRecentTeacherSubscriptions.mockRejectedValue({ type: "Unauthorized", status: 401 })
 
-    await expect(loadDashboardOverview({})).resolves.toEqual({ kind: "unauthorized" })
+    await expect(loadDashboardOverview({}, 7)).resolves.toEqual({ kind: "unauthorized" })
   })
 
   it("preserves the existing analytics error result", async () => {
@@ -101,7 +115,7 @@ describe("loadDashboardOverview", () => {
     mocks.listTopEarningCourses.mockResolvedValue(topCourses)
     mocks.listRecentTeacherSubscriptions.mockResolvedValue(subscriptions)
 
-    await expect(loadDashboardOverview({})).resolves.toEqual({
+    await expect(loadDashboardOverview({}, 7)).resolves.toEqual({
       kind: "error",
       error: {
         type: "Upstream",
@@ -127,7 +141,7 @@ describe("loadDashboardOverview", () => {
       status: 401,
     })
 
-    await expect(loadDashboardOverview({})).resolves.toEqual({
+    await expect(loadDashboardOverview({}, 7)).resolves.toEqual({
       kind: "unauthorized",
     })
   })
@@ -141,7 +155,7 @@ describe("loadDashboardOverview", () => {
     })
     mocks.listRecentTeacherSubscriptions.mockResolvedValue(subscriptions)
 
-    await expect(loadDashboardOverview({})).resolves.toEqual({
+    await expect(loadDashboardOverview({}, 7)).resolves.toEqual({
       kind: "error",
       error: {
         type: "Upstream",
@@ -159,7 +173,7 @@ describe("loadDashboardOverview", () => {
     })
     mocks.listRecentTeacherSubscriptions.mockResolvedValue(subscriptions)
 
-    await expect(loadDashboardOverview({})).resolves.toEqual({
+    await expect(loadDashboardOverview({}, 7)).resolves.toEqual({
       kind: "unauthorized",
     })
   })
@@ -181,7 +195,7 @@ describe("loadDashboardOverview", () => {
       message: "Internal error",
     })
 
-    await expect(loadDashboardOverview({})).resolves.toEqual({
+    await expect(loadDashboardOverview({}, 7)).resolves.toEqual({
       kind: "error",
       error: {
         type: "Upstream",
@@ -189,5 +203,26 @@ describe("loadDashboardOverview", () => {
         message: "Service unavailable",
       },
     })
+  })
+
+  it("keeps the overview ready when the attention inputs fail", async () => {
+    mocks.getTeacherAnalytics.mockResolvedValue(summary)
+    mocks.listTopEarningCourses.mockResolvedValue(topCourses)
+    mocks.listRecentTeacherSubscriptions.mockResolvedValue(subscriptions)
+    mocks.listCourses.mockRejectedValue({ type: "Upstream", status: 503 })
+    mocks.listTeacherSubscriptions.mockRejectedValue({ type: "Upstream", status: 503 })
+
+    const result = await loadDashboardOverview({}, 7)
+    expect(result).toMatchObject({ kind: "ready", courses: null, subscriptions: null })
+    expect(mocks.listCourses).toHaveBeenCalledWith(7)
+  })
+
+  it("returns unauthorized when the course list is unauthorized", async () => {
+    mocks.getTeacherAnalytics.mockResolvedValue(summary)
+    mocks.listTopEarningCourses.mockResolvedValue(topCourses)
+    mocks.listRecentTeacherSubscriptions.mockResolvedValue(subscriptions)
+    mocks.listCourses.mockRejectedValue({ type: "Unauthorized", status: 401 })
+
+    await expect(loadDashboardOverview({}, 7)).resolves.toEqual({ kind: "unauthorized" })
   })
 })

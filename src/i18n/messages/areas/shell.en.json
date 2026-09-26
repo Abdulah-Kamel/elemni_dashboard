@@ -1,1 +1,60 @@
-{}
+{
+  "dashboardShell": {
+    "brand_subtitle_teacher": "Teacher Portal",
+    "brand_subtitle_admin": "Admin Console",
+    "groups": {
+      "workspace": "Workspace",
+      "account": "Account",
+      "operations": "Operations",
+      "catalog": "Catalog"
+    },
+    "breadcrumb_label": "Breadcrumb",
+    "crumbs": {
+      "new_course": "New course",
+      "course": "Course",
+      "chapter": "Chapter",
+      "teacher": "Teacher",
+      "details": "Details"
+    },
+    "search_trigger": "Search pages and actions",
+    "search_trigger_short": "Search",
+    "palette": {
+      "title": "Go to a page or run an action",
+      "placeholder": "Type a page or action…",
+      "empty": "Nothing matches “{query}”",
+      "group_navigate": "Pages",
+      "group_actions": "Actions",
+      "results": "{count, plural, =0 {No results} one {# result} other {# results}}",
+      "hint_move": "Move",
+      "hint_open": "Open",
+      "hint_close": "Close"
+    },
+    "actions": {
+      "create_course": "Create a course",
+      "toggle_theme": "Switch light / dark theme",
+      "switch_locale": "Switch language",
+      "view_profile": "View profile",
+      "create_teacher": "Add a new teacher"
+    },
+    "keywords": {
+      "overview": "home dashboard start summary الرئيسية نظرة عامة",
+      "my_courses": "courses classes content lessons دوراتي الدورات",
+      "students": "students learners subscribers الطلاب",
+      "earnings": "usage earnings billing storage الاستخدام الأرباح",
+      "profile": "profile account me settings الملف الشخصي حسابي",
+      "teachers": "teachers instructors المعلمون المدرسين",
+      "subscriptions": "subscriptions payments enrollments الاشتراكات",
+      "coupons": "coupons discounts codes promo الكوبونات الخصومات",
+      "grades": "grades years levels الصفوف",
+      "streams": "streams tracks sections الشعب",
+      "subjects": "subjects topics المواد",
+      "create_course": "new course add create دورة جديدة إضافة",
+      "toggle_theme": "dark light mode theme الوضع الداكن الفاتح",
+      "switch_locale": "language arabic english اللغة عربي انجليزي",
+      "create_teacher": "new teacher create add instructor مدرس"
+    },
+    "notifications_empty_hint": "Updates about your account will appear here.",
+    "controls": "Quick controls",
+    "close": "Close"
+  }
+}

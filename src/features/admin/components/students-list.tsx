@@ -1,10 +1,10 @@
 "use client"
 
-import { useDeferredValue, useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useAutoAnimate } from "@formkit/auto-animate/react"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Plus, Search, Trash2 } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { PanelRightOpen, Plus, Trash2 } from "lucide-react"
+import { useLocale, useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -25,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Skeleton } from "@/components/ui/skeleton"
+import { SortHeader, ariaSort } from "@/components/ui/sort-header"
 import {
   Table,
   TableBody,
@@ -34,6 +34,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { nextSort, sortRows } from "@/lib/sort"
 import {
   listGradesAction,
   listStreamsAction,
@@ -48,18 +49,44 @@ import {
 import type { GradeOut, StreamOut } from "@/features/course-management/schema"
 import { AccountCreationProgress } from "./account-creation-progress"
 import { AdminActionDialog } from "./admin-action-dialog"
+import { StudentSheet } from "./student-sheet"
+import {
+  FilterBar,
+  FilteredEmpty,
+  ListError,
+  PageSortNote,
+  SearchField,
+  Segmented,
+  TableSkeleton,
+  rowOpenProps,
+} from "./list-controls"
+import { useDebouncedSearch, useUrlFilters } from "../hooks/use-url-filters"
+import { formatDate } from "../format"
+import {
+  parseStudentFilters,
+  serializeStudentFilters,
+  type StudentFilters,
+  type StudentSortKey,
+} from "../url-state"
 import type { AdminStudent } from "../schema"
 
 const PAGE_SIZE = 10
 
+const accessors: Record<StudentSortKey, (row: AdminStudent) => string | number | null> = {
+  name: (row) => row.name,
+  level: (row) => [row.grade_name, row.stream_name].filter(Boolean).join(" ") || null,
+  status: (row) => (row.is_active ? 0 : 1),
+  joined: (row) => new Date(row.created_at).getTime(),
+}
+
 export function StudentsList() {
   const t = useTranslations("admin")
+  const c = useTranslations("adminConsole")
+  const locale = useLocale()
   const queryClient = useQueryClient()
-  const [search, setSearch] = useState("")
-  const [status, setStatus] = useState<"all" | "active" | "inactive">("all")
-  const [gradeId, setGradeId] = useState("all")
-  const [streamId, setStreamId] = useState("all")
-  const [page, setPage] = useState(1)
+  const [filters, updateFilters] = useUrlFilters(parseStudentFilters, serializeStudentFilters)
+  const commitSearch = useCallback((q: string) => updateFilters({ q, page: 1 }), [updateFilters])
+  const [search, setSearch] = useDebouncedSearch(filters.q, commitSearch)
   const [open, setOpen] = useState(false)
   const [progressOpen, setProgressOpen] = useState(false)
   const [creationStatus, setCreationStatus] = useState<
@@ -72,21 +99,21 @@ export function StudentsList() {
   const [form, setForm] = useState({ name: "", email: "", phone_number: "" })
   const [grades, setGrades] = useState<GradeOut[]>([])
   const [streams, setStreams] = useState<StreamOut[]>([])
-  const deferredSearch = useDeferredValue(search)
   const params = {
-    page,
+    page: filters.page,
     limit: PAGE_SIZE,
-    search: deferredSearch || undefined,
-    isActive: status === "all" ? undefined : status === "active",
-    gradeId: gradeId === "all" ? undefined : Number(gradeId),
-    streamId: streamId === "all" ? undefined : Number(streamId),
+    search: filters.q || undefined,
+    isActive: filters.status === "all" ? undefined : filters.status === "active",
+    gradeId: filters.grade ?? undefined,
+    streamId: filters.stream ?? undefined,
   }
   const query = useQuery({
     queryKey: adminKeys.students(params),
     queryFn: () => listStudentsAction(params),
+    placeholderData: keepPreviousData,
   })
-  const [desktopRowsRef] = useAutoAnimate({ duration: 180 })
-  const [mobileRowsRef] = useAutoAnimate({ duration: 180 })
+  const [desktopRowsRef] = useAutoAnimate({ duration: 160 })
+  const [mobileRowsRef] = useAutoAnimate({ duration: 160 })
   const refresh = (result: { success: boolean }) => {
     if (result.success) {
       return queryClient.invalidateQueries({ queryKey: adminKeys.all })
@@ -99,7 +126,8 @@ export function StudentsList() {
     onSuccess: refresh,
   })
   const remove = useMutation({ mutationFn: deleteStudent, onSuccess: refresh })
-  const pages = Math.max(1, Math.ceil((query.data?.total ?? 0) / PAGE_SIZE))
+  const total = query.data?.total ?? 0
+  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const gradeItems = [
     { value: "all", label: t("all_grades") },
     ...grades.map((grade) => ({ value: String(grade.id), label: grade.name })),
@@ -151,40 +179,58 @@ export function StudentsList() {
     }
   }
 
-  async function confirmStudentAction() {
-    if (!studentAction) return
-    if (studentAction.kind === "delete") {
-      const outcome = await remove.mutateAsync(studentAction.student.id)
-      if (!outcome.success) {
-        toast.error(outcome.error.message)
-        return
-      }
-      toast.success(t("deleted"))
-    } else {
-      const outcome = await update.mutateAsync({
-        id: studentAction.student.id,
-        data: { is_active: !studentAction.student.is_active },
-      })
-      if (!outcome.success) {
-        toast.error(outcome.error.message)
-        return
-      }
-      toast.success(t("updated"))
+  async function toggleStatus(student: AdminStudent) {
+    const outcome = await update.mutateAsync({
+      id: student.id,
+      data: { is_active: !student.is_active },
+    })
+    if (!outcome.success) {
+      toast.error(outcome.error.message)
+      return false
     }
-    setStudentAction(null)
+    toast.success(t("updated"))
+    return true
   }
 
-  const students = query.data?.items ?? []
+  async function removeStudent(student: AdminStudent) {
+    const outcome = await remove.mutateAsync(student.id)
+    if (!outcome.success) {
+      toast.error(outcome.error.message)
+      return false
+    }
+    toast.success(t("deleted"))
+    return true
+  }
+
+  async function confirmStudentAction() {
+    if (!studentAction) return
+    const ok =
+      studentAction.kind === "delete"
+        ? await removeStudent(studentAction.student)
+        : await toggleStatus(studentAction.student)
+    if (ok) setStudentAction(null)
+  }
+
+  const students = sortRows(query.data?.items ?? [], filters.sort, accessors, locale)
+  const activeFilterCount = [filters.q, filters.status !== "all", filters.grade !== null, filters.stream !== null].filter(Boolean).length
+  const clearFilters = () => updateFilters({ q: "", status: "all", grade: null, stream: null, page: 1 })
+  const view = (id: number) => updateFilters({ view: id })
+  const sortBy = (key: StudentSortKey) => updateFilters({ sort: nextSort(filters.sort, key) })
+  const head = (key: StudentSortKey, label: string) => (
+    <TableHead className="px-4 py-2.5" aria-sort={ariaSort(filters.sort, key)}>
+      <SortHeader label={label} column={key} sort={filters.sort} onSort={sortBy} />
+    </TableHead>
+  )
 
   return (
-    <div className="flex flex-col gap-xl">
-      <header className="flex animate-slide-up items-end justify-between border-b border-border pb-5">
+    <div className="flex flex-col gap-lg">
+      <header className="flex animate-slide-up flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-headline-md font-semibold">
             {t("title_students")}
           </h1>
-          <p className="mt-1 text-on-surface-muted">
-            {t("students_count", { count: query.data?.total ?? 0 })}
+          <p className="mt-1 text-on-surface-muted" aria-live="polite">
+            {t("students_count", { count: total })}
           </p>
         </div>
         <Button size="lg" onClick={() => setOpen(true)}>
@@ -192,252 +238,224 @@ export function StudentsList() {
           {t("btn_new_student")}
         </Button>
       </header>
-      <div className="relative animate-slide-up rounded-2xl border border-border bg-surface p-md shadow-xs animate-stagger-1">
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <div className="relative flex-1">
-            <Search className="absolute start-3 top-1/2 size-4 -translate-y-1/2 text-on-surface-muted" />
-            <Input
-              className="ps-9"
-              value={search}
-              onChange={(event) => {
-                setSearch(event.target.value)
-                setPage(1)
-              }}
-              placeholder={t("search_students")}
-            />
-          </div>
-          <Select
-            value={status}
-            onValueChange={(value) => {
-              setStatus(value as typeof status)
-              setPage(1)
-            }}
-            items={[
-              { value: "all", label: t("status_all") },
-              { value: "active", label: t("status_active") },
-              { value: "inactive", label: t("status_inactive") },
-            ]}
-          >
-            <SelectTrigger className="w-full sm:w-40">
-              <SelectValue placeholder={t("status_all")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value="all">{t("status_all")}</SelectItem>
-                <SelectItem value="active">{t("status_active")}</SelectItem>
-                <SelectItem value="inactive">{t("status_inactive")}</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-          <Select
-            value={gradeId}
-            onValueChange={(value) => {
-              setGradeId(value ?? "all")
-              setPage(1)
-            }}
-            items={gradeItems}
-          >
-            <SelectTrigger className="w-full sm:w-44">
-              <SelectValue placeholder={t("all_grades")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                {gradeItems.map((item) => (
-                  <SelectItem key={item.value} value={item.value}>
-                    {item.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-          <Select
-            value={streamId}
-            onValueChange={(value) => {
-              setStreamId(value ?? "all")
-              setPage(1)
-            }}
-            items={streamItems}
-          >
-            <SelectTrigger className="w-full sm:w-44">
-              <SelectValue placeholder={t("all_streams")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                {streamItems.map((item) => (
-                  <SelectItem key={item.value} value={item.value}>
-                    {item.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+
+      <FilterBar activeCount={activeFilterCount} onClear={clearFilters}>
+        <SearchField value={search} onChange={setSearch} placeholder={t("search_students")} />
+        <Segmented<StudentFilters["status"]>
+          label={t("table_status")}
+          value={filters.status}
+          onChange={(status) => updateFilters({ status, page: 1 })}
+          options={[
+            { value: "all", label: t("status_all") },
+            { value: "active", label: t("status_active") },
+            { value: "inactive", label: t("status_inactive") },
+          ]}
+        />
+        <Select
+          value={filters.grade === null ? "all" : String(filters.grade)}
+          onValueChange={(value) => {
+            updateFilters({ grade: !value || value === "all" ? null : Number(value), page: 1 })
+          }}
+          items={gradeItems}
+        >
+          <SelectTrigger className="h-9 w-full sm:w-44" aria-label={t("all_grades")}>
+            <SelectValue placeholder={t("all_grades")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              {gradeItems.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+        <Select
+          value={filters.stream === null ? "all" : String(filters.stream)}
+          onValueChange={(value) => {
+            updateFilters({ stream: !value || value === "all" ? null : Number(value), page: 1 })
+          }}
+          items={streamItems}
+        >
+          <SelectTrigger className="h-9 w-full sm:w-44" aria-label={t("all_streams")}>
+            <SelectValue placeholder={t("all_streams")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              {streamItems.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      </FilterBar>
+
       {query.isLoading ? (
-        <Skeleton className="h-80 rounded-2xl" />
+        <TableSkeleton />
+      ) : query.isError ? (
+        <ListError onRetry={() => query.refetch()} />
+      ) : students.length === 0 ? (
+        <div className="rounded-xl border border-border bg-surface">
+          <FilteredEmpty filtered={activeFilterCount > 0} onClear={clearFilters} />
+        </div>
       ) : (
-        <section className="animate-slide-up overflow-hidden rounded-2xl border border-border bg-surface shadow-xs animate-stagger-2">
+        <section
+          className="overflow-hidden rounded-xl border border-border bg-surface transition-opacity data-[stale=true]:opacity-70"
+          data-stale={query.isPlaceholderData}
+          aria-busy={query.isFetching}
+        >
           <div className="hidden overflow-x-auto md:block">
             <Table className="text-sm">
-              <TableHeader className="border-b border-border bg-surface-muted text-start text-on-surface-muted">
-                <TableRow>
-                  <TableHead className="px-4 py-3">
-                    {t("table_student")}
-                  </TableHead>
-                  <TableHead className="px-4 py-3">
-                    {t("table_level")}
-                  </TableHead>
-                  <TableHead className="px-4 py-3">
-                    {t("table_status")}
-                  </TableHead>
-                  <TableHead className="px-4 py-3 text-end">
+              <TableHeader className="bg-surface-muted text-start text-on-surface-muted">
+                <TableRow className="hover:bg-transparent">
+                  {head("name", t("table_student"))}
+                  {head("level", t("table_level"))}
+                  {head("status", t("table_status"))}
+                  {head("joined", c("fields.joined"))}
+                  <TableHead className="px-4 py-2.5 text-end">
                     {t("table_actions")}
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody ref={desktopRowsRef}>
-                {students.length ? (
-                  students.map((student) => (
-                    <TableRow key={student.id}>
-                      <TableCell className="px-4 py-3">
-                        <div className="max-w-[24rem] min-w-0">
-                          <p className="font-semibold">{student.name}</p>
-                          <p className="truncate text-sm text-on-surface-muted">
-                            {student.email}
-                            {student.phone_number
-                              ? ` · ${student.phone_number}`
-                              : ""}
-                          </p>
-                        </div>
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-sm text-on-surface-muted">
-                        {[student.grade_name, student.stream_name]
-                          .filter(Boolean)
-                          .join(" · ") || "—"}
-                      </TableCell>
-                      <TableCell className="px-4 py-3">
-                        <Badge
-                          variant={student.is_active ? "default" : "secondary"}
+                {students.map((student) => (
+                  <TableRow key={student.id} {...rowOpenProps(() => view(student.id), filters.view === student.id)}>
+                    <TableCell className="px-4 py-2.5">
+                      <div className="max-w-[24rem] min-w-0">
+                        <button
+                          type="button"
+                          onClick={() => view(student.id)}
+                          className="rounded-sm text-start font-semibold hover:text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
                         >
-                          {student.is_active
-                            ? t("status_active")
-                            : t("status_inactive")}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="px-4 py-3 text-end">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={update.isPending}
-                            onClick={() =>
-                              setStudentAction({ kind: "status", student })
-                            }
-                          >
-                            {student.is_active
-                              ? t("btn_deactivate")
-                              : t("btn_activate")}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            disabled={remove.isPending}
-                            className="text-destructive"
-                            aria-label={t("btn_delete")}
-                            onClick={() =>
-                              setStudentAction({ kind: "delete", student })
-                            }
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={4}
-                      className="px-4 py-8 text-center text-xs text-on-surface-muted"
-                    >
-                      {t("no_results")}
+                          {student.name}
+                        </button>
+                        <p className="truncate text-xs text-on-surface-muted">
+                          {student.email}
+                          {student.phone_number
+                            ? ` · ${student.phone_number}`
+                            : ""}
+                        </p>
+                      </div>
                     </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-          <div ref={mobileRowsRef} className="divide-y divide-border md:hidden">
-            {students.length ? (
-              students.map((student) => (
-                <article
-                  key={student.id}
-                  className="flex flex-col gap-3 p-md sm:flex-row sm:items-center"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold">{student.name}</p>
-                    <p className="truncate text-sm text-on-surface-muted">
-                      {student.email}
-                      {student.phone_number ? ` · ${student.phone_number}` : ""}
-                    </p>
-                    <p className="text-xs text-on-surface-muted">
+                    <TableCell className="px-4 py-2.5 text-sm text-on-surface-muted">
                       {[student.grade_name, student.stream_name]
                         .filter(Boolean)
-                        .join(" · ")}
-                    </p>
-                  </div>
-                  <Badge variant={student.is_active ? "default" : "secondary"}>
-                    {student.is_active
-                      ? t("status_active")
-                      : t("status_inactive")}
-                  </Badge>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={update.isPending}
-                    onClick={() =>
-                      setStudentAction({ kind: "status", student })
-                    }
-                  >
-                    {student.is_active
-                      ? t("btn_deactivate")
-                      : t("btn_activate")}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    disabled={remove.isPending}
-                    className="text-destructive"
-                    aria-label={t("btn_delete")}
-                    onClick={() =>
-                      setStudentAction({ kind: "delete", student })
-                    }
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </article>
-              ))
-            ) : (
-              <div className="p-md text-center text-xs text-on-surface-muted">
-                {t("no_results")}
-              </div>
-            )}
+                        .join(" · ") || "—"}
+                    </TableCell>
+                    <TableCell className="px-4 py-2.5">
+                      <Badge
+                        variant={student.is_active ? "default" : "secondary"}
+                      >
+                        {student.is_active
+                          ? t("status_active")
+                          : t("status_inactive")}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="px-4 py-2.5 whitespace-nowrap text-on-surface-muted">
+                      {formatDate(locale, student.created_at)}
+                    </TableCell>
+                    <TableCell className="px-4 py-2.5 text-end">
+                      <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => view(student.id)}>
+                          <PanelRightOpen className="size-4 rtl:-scale-x-100" aria-hidden="true" />
+                          {c("actions.view")}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={update.isPending}
+                          onClick={() =>
+                            setStudentAction({ kind: "status", student })
+                          }
+                        >
+                          {student.is_active
+                            ? t("btn_deactivate")
+                            : t("btn_activate")}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={remove.isPending}
+                          className="text-destructive"
+                          aria-label={t("btn_delete")}
+                          onClick={() =>
+                            setStudentAction({ kind: "delete", student })
+                          }
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <PageSortNote show={!!filters.sort && pages > 1} />
           </div>
+          <ul ref={mobileRowsRef} className="divide-y divide-border md:hidden">
+            {students.map((student) => (
+              <li key={student.id} className="flex items-center gap-3 p-3">
+                <button
+                  type="button"
+                  onClick={() => view(student.id)}
+                  className="min-w-0 flex-1 rounded-md text-start focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                >
+                  <span className="block truncate font-semibold">{student.name}</span>
+                  <span className="block truncate text-sm text-on-surface-muted">
+                    {student.email}
+                  </span>
+                  <span className="block text-xs text-on-surface-muted">
+                    {[student.grade_name, student.stream_name]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
+                </button>
+                <Badge variant={student.is_active ? "default" : "secondary"}>
+                  {student.is_active
+                    ? t("status_active")
+                    : t("status_inactive")}
+                </Badge>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  disabled={remove.isPending}
+                  className="text-destructive"
+                  aria-label={t("btn_delete")}
+                  onClick={() =>
+                    setStudentAction({ kind: "delete", student })
+                  }
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
       <DashboardPagination
-        currentPage={page}
+        currentPage={Math.min(filters.page, pages)}
         totalPages={pages}
-        totalItems={query.data?.total ?? 0}
+        totalItems={total}
         pageSize={PAGE_SIZE}
-        onPageChange={setPage}
+        onPageChange={(page) => updateFilters({ page })}
         labels={{
           previous: t("previous"),
           next: t("next"),
           page: (current, totalPages) =>
             t("pagination", { page: current, pages: totalPages }),
-          summary: (from, to, total) => t("showing", { from, to, total }),
+          summary: (from, to, totalItems) => t("showing", { from, to, total: totalItems }),
         }}
+      />
+      <StudentSheet
+        studentId={filters.view}
+        row={students.find((student) => student.id === filters.view)}
+        onClose={() => updateFilters({ view: null })}
+        onToggleStatus={toggleStatus}
+        onDelete={removeStudent}
+        pending={update.isPending || remove.isPending}
       />
       <Dialog open={open && !progressOpen} onOpenChange={setOpen}>
         <DialogContent>

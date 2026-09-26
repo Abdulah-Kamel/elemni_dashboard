@@ -12,15 +12,27 @@ import { Plus } from "lucide-react"
 import type { CourseOut } from "@/features/shell/schema"
 import { Suspense } from "react"
 import { redirectToAuth } from "@/lib/auth/redirect"
+import { listTeacherSubscriptions } from "@/features/students/queries"
+import { listTopEarningCourses } from "@/features/analytics/queries"
+import {
+  deriveCourseCounts,
+  earningsByCourse,
+  parseCourseQuery,
+  serializeCourseQuery,
+  type CourseMetrics,
+  type CourseQueryState,
+} from "@/features/course-management/components/course-overview/course-overview-model"
 
 export const dynamic = "force-dynamic"
 
 async function CourseListContent({
   locale,
   teacherProfileId,
+  initialQuery,
 }: {
   locale: string
   teacherProfileId: number
+  initialQuery: CourseQueryState
 }) {
   const t = await getTranslations({ locale, namespace: "courses" })
 
@@ -28,12 +40,24 @@ async function CourseListContent({
   let error: string | null = null
   let gradeNames: Record<number, string> = {}
   let streamNames: Record<number, string> = {}
+  const metrics: CourseMetrics = { counts: null, earnings: null }
 
   try {
-    const [coursesResult, profileResult] = await Promise.allSettled([
-      listCourses(teacherProfileId),
-      getTeacherProfile(),
-    ])
+    // Per-course numbers are best-effort: the list still renders if they fail.
+    // Top-courses caps at 100 rows (API max); courses beyond that show "—".
+    const [coursesResult, profileResult, subscriptionsResult, topCoursesResult] =
+      await Promise.allSettled([
+        listCourses(teacherProfileId),
+        getTeacherProfile(),
+        listTeacherSubscriptions(),
+        listTopEarningCourses({ limit: 100 }),
+      ])
+    if (subscriptionsResult.status === "fulfilled") {
+      metrics.counts = deriveCourseCounts(subscriptionsResult.value)
+    }
+    if (topCoursesResult.status === "fulfilled") {
+      metrics.earnings = earningsByCourse(topCoursesResult.value)
+    }
     if (coursesResult.status === "rejected") throw coursesResult.reason
     courses = coursesResult.value
 
@@ -72,16 +96,21 @@ async function CourseListContent({
       locale={locale}
       gradeNames={gradeNames}
       streamNames={streamNames}
+      metrics={metrics}
+      initialQuery={initialQuery}
     />
   )
 }
 
 export default async function CoursesPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
   const { locale } = await params
+  const initialQuery = parseCourseQuery(await searchParams)
   setRequestLocale(locale)
   const t = await getTranslations({ locale, namespace: "courses" })
   const session = await verifySession()
@@ -91,8 +120,8 @@ export default async function CoursesPage({
   const teacherProfileId = session?.id ?? 0
 
   return (
-    <div className="space-y-7">
-      <div className="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
+    <div className="space-y-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-headline-md font-bold text-on-surface">
             {t("title")}
@@ -101,6 +130,7 @@ export default async function CoursesPage({
         </div>
         <Button
           id="create-course-trigger"
+          nativeButton={false}
           render={
             <Link href="/courses/new">
               <Plus data-icon="inline-start" />
@@ -111,8 +141,10 @@ export default async function CoursesPage({
       </div>
       <Suspense fallback={<CourseListSkeleton />}>
         <CourseListContent
+          key={serializeCourseQuery(initialQuery)}
           locale={locale}
           teacherProfileId={teacherProfileId}
+          initialQuery={initialQuery}
         />
       </Suspense>
     </div>
