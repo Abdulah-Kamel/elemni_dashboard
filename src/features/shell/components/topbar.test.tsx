@@ -50,11 +50,11 @@ describe("Topbar", () => {
     expect(within(crumbs).getByText("Teacher")).toBeTruthy()
   })
 
-  it("groups search, notifications, theme, locale and the account menu", () => {
+  it("groups search, theme, locale and the account menu without a notifications bell", () => {
     renderTopbar("teacher", "/dashboard")
     expect(screen.getAllByRole("button", { name: "Search pages and actions" }).length).toBeGreaterThan(0)
     const controls = screen.getByRole("group", { name: "Quick controls" })
-    expect(within(controls).getByRole("button", { name: "Notifications" })).toBeTruthy()
+    expect(within(controls).queryByRole("button", { name: "Notifications" })).toBeNull()
     expect(within(controls).getByRole("button", { name: /Switch to (dark|light) theme/ })).toBeTruthy()
     expect(within(controls).getByRole("button", { name: "العربية" })).toBeTruthy()
     expect(within(controls).getByRole("button", { name: "My Account: Abdullah Kamel" })).toBeTruthy()

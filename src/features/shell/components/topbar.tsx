@@ -2,7 +2,6 @@ import { useTranslations } from "next-intl"
 import type { NavRole } from "@/features/shell/nav-config"
 import { AccountMenu } from "@/features/shell/components/account-menu"
 import { LocaleToggle } from "@/features/shell/components/locale-toggle"
-import { NotificationBell } from "@/features/shell/components/notification-bell"
 import { PageContext } from "@/features/shell/components/page-context"
 import { ThemeToggle } from "@/features/shell/components/theme-toggle"
 import { SearchTrigger } from "@/features/command-palette/search-trigger"
@@ -30,7 +29,6 @@ export function Topbar({ userName, roleLabel, role }: TopbarProps) {
         <div className="md:hidden">
           <SearchTrigger variant="icon" />
         </div>
-        <NotificationBell />
         <ThemeToggle />
         <LocaleToggle />
         <span aria-hidden="true" className="mx-1.5 hidden h-6 w-px bg-border sm:block" />
