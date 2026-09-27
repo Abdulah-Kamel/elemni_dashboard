@@ -10,6 +10,7 @@ import { MobileBottomNav } from "@/features/shell/components/mobile-bottom-nav"
 import { ChapterNavigationProvider } from "@/features/course-management/chapter-navigation-context"
 import { headers } from "next/headers"
 import { sanitizeNextPath } from "@/lib/routes"
+import { ClientMessageProvider } from "@/i18n/client-message-provider"
 
 export const dynamic = "force-dynamic"
 
@@ -45,6 +46,7 @@ export default async function TeacherLayout({
   const teacherRole = t("teacher_role")
 
   return (
+    <ClientMessageProvider namespaces={["common", "topbar", "sidebar", "placeholder", "courses", "lessons", "items", "chapters", "profile", "settings", "student", "analytics", "billing", "earnings", "storage"]}>
     <DirectionProvider direction={(locale === "ar" ? "rtl" : "ltr") as never}>
       <div className="flex h-dvh overflow-hidden bg-page">
         <Sidebar teacherName={user.name} teacherRole={teacherRole} />
@@ -61,5 +63,6 @@ export default async function TeacherLayout({
         <MobileBottomNav />
       </div>
     </DirectionProvider>
+    </ClientMessageProvider>
   )
 }

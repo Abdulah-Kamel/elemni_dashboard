@@ -101,8 +101,8 @@ function renderItemList() {
   )
 }
 
-function getTitleInput() {
-  return screen.getByRole("textbox", { name: "Item title" }) as HTMLInputElement
+async function getTitleInput() {
+  return (await screen.findByRole("textbox", { name: "Item title" })) as HTMLInputElement
 }
 
 beforeEach(() => {
@@ -142,7 +142,7 @@ describe("ItemList creation integration", () => {
   it("creates one item with both files from Add Item", async () => {
     renderItemList()
     fireEvent.click(screen.getByRole("button", { name: "Add Item" }))
-    fireEvent.change(getTitleInput(), {
+    fireEvent.change(await getTitleInput(), {
       target: { value: "Lesson resources" },
     })
     fireEvent.change(document.getElementById("create-item-video-upload")!, {
@@ -174,7 +174,7 @@ describe("ItemList creation integration", () => {
 
     renderItemList()
     fireEvent.click(screen.getByRole("button", { name: "Add Item" }))
-    fireEvent.change(getTitleInput(), {
+    fireEvent.change(await getTitleInput(), {
       target: { value: "Lesson resources" },
     })
     fireEvent.change(document.getElementById("create-item-video-upload")!, {

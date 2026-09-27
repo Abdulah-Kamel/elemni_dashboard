@@ -6,8 +6,10 @@ import {
   useId,
   useMemo,
   useState,
+  Suspense,
   type ReactNode,
 } from "react"
+import dynamic from "next/dynamic"
 import { BookOpen, Check, Loader2, Save } from "lucide-react"
 import type {
   StudentCoursePreviewModel,
@@ -16,7 +18,10 @@ import type {
 } from "./types"
 import { PreviewWorkspace } from "./preview-workspace"
 import type { PreviewWorkspaceTab } from "./preview-workspace"
-import { StudentCourseDetailPreview } from "./student-course-detail-preview"
+const StudentCourseDetailPreview = dynamic(
+  () => import("./student-course-detail-preview").then((m) => m.StudentCourseDetailPreview),
+  { loading: () => <div className="min-h-64 animate-pulse rounded-xl bg-muted" /> }
+)
 import { loadCoursePreviewCurriculum } from "./server-actions"
 import { CurriculumPicker } from "@/features/course-management/components/curriculum-picker"
 import type {
@@ -634,13 +639,15 @@ function CourseWorkspaceContent({
       <PreviewWorkspace
         editor={editor}
         preview={
-          <StudentCourseDetailPreview
-            key={curriculumKey}
-            model={previewModel}
-            locale={locale}
-            interactionMode="local-only"
-            showEditAffordance
-          />
+          <Suspense fallback={<div className="min-h-64 animate-pulse rounded-xl bg-muted" />}>
+            <StudentCourseDetailPreview
+              key={curriculumKey}
+              model={previewModel}
+              locale={locale}
+              interactionMode="local-only"
+              showEditAffordance
+            />
+          </Suspense>
         }
         locale={locale}
         deviceWidth={deviceWidth}

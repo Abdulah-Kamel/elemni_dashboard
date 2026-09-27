@@ -143,9 +143,9 @@ describe("CourseWorkspace", () => {
     mockedRouterRefresh.mockReset()
   })
 
-  it("renders editor and preview", () => {
+  it("renders editor and preview", async () => {
     render(<CourseWorkspace model={mockModel} locale="ar" viewer="guest" />)
-    expect(screen.getByText("كورس الفيزياء")).toBeDefined()
+    expect(await screen.findByText("كورس الفيزياء")).toBeDefined()
   })
 
   it("renders the existing curriculum editor inside the workspace", () => {
@@ -167,40 +167,42 @@ describe("CourseWorkspace", () => {
     expect(screen.getByText("المنهج")).toBeDefined()
   })
 
-  it("updates preview when title changes", () => {
+  it("updates preview when title changes", async () => {
     render(<CourseWorkspace model={mockModel} locale="ar" viewer="guest" />)
     const titleInput = screen.getByDisplayValue("كورس الفيزياء")
     fireEvent.change(titleInput, { target: { value: "كورس رياضيات" } })
-    expect(screen.getByText("كورس رياضيات")).toBeDefined()
+    expect(await screen.findByText("كورس رياضيات")).toBeDefined()
   })
 
-  it("highlights the matching title control from the preview", () => {
+  it("highlights the matching title control from the preview", async () => {
     render(<CourseWorkspace model={mockModel} locale="en" viewer="guest" />)
 
     const titleInput = screen.getByLabelText("Title")
+    await waitFor(() =>
+      expect(document.querySelector('[data-course-preview-field="title"]')).not.toBeNull()
+    )
     const previewTitle = document.querySelector(
       '[data-course-preview-field="title"]'
-    )
-    expect(previewTitle).not.toBeNull()
+    )!
 
-    fireEvent.mouseEnter(previewTitle!)
+    fireEvent.mouseEnter(previewTitle)
     expect(titleInput.className).toContain("ring-primary/30")
-    expect(previewTitle!.getAttribute("data-course-preview-state")).toBe(
+    expect(document.querySelector('[data-course-preview-field="title"]')?.getAttribute("data-course-preview-state")).toBe(
       "hovered"
     )
 
-    fireEvent.mouseLeave(previewTitle!)
+    fireEvent.mouseLeave(previewTitle)
     expect(titleInput.className).not.toContain("ring-primary/30")
   })
 
-  it("focuses the matching editor field when a preview title is clicked", () => {
+  it("focuses the matching editor field when a preview title is clicked", async () => {
     render(<CourseWorkspace model={mockModel} locale="en" viewer="guest" />)
 
-    fireEvent.click(screen.getByRole("button", { name: "Edit course title" }))
+    fireEvent.click(await screen.findByRole("button", { name: "Edit course title" }))
     expect(document.activeElement).toBe(screen.getByLabelText("Title"))
   })
 
-  it("focuses a curriculum editor node when its preview lesson is clicked", () => {
+  it("focuses a curriculum editor node when its preview lesson is clicked", async () => {
     render(
       <CourseWorkspace
         model={{ ...mockModel, sections: mockSections }}
@@ -219,7 +221,7 @@ describe("CourseWorkspace", () => {
       />
     )
 
-    fireEvent.click(screen.getByText("الدرس الأول").closest("button")!)
+    fireEvent.click((await screen.findByText("الدرس الأول")).closest("button")!)
     expect(document.activeElement).toBe(
       document.querySelector('[data-builder-node-type="lesson"]')
     )

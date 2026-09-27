@@ -57,6 +57,44 @@ describe("API client (Article II / FR-005)", () => {
     expect(result.name).toBe("T")
   })
 
+  it("omits request IDs and abort signals on tagged cacheable GETs", async () => {
+    let requestId: string | null = "unexpected"
+    server.use(http.get(`${mockApiUrl}/api/v1/catalog`, ({ request }) => {
+      requestId = request.headers.get("X-Request-ID")
+      return HttpResponse.json([])
+    }))
+    const fetchSpy = vi.spyOn(globalThis, "fetch")
+    const { apiFetch } = await import("@/lib/api/client")
+    await apiFetch("/api/v1/catalog", (await import("zod")).z.array((await import("zod")).z.unknown()), { tags: ["catalog:grades"], revalidate: 3600, noAuth: true })
+    expect(requestId).toBeNull()
+    expect(fetchSpy.mock.calls.at(-1)?.[1]).not.toHaveProperty("signal")
+    fetchSpy.mockRestore()
+  })
+
+  it("still times out tagged cacheable GETs that never answer", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(() => new Promise<Response>(() => {}))
+    const { apiFetch } = await import("@/lib/api/client")
+    const { z } = await import("zod")
+    await expect(
+      apiFetch("/api/v1/catalog", z.array(z.unknown()), { tags: ["catalog:grades"], revalidate: 3600, noAuth: true, timeoutMs: 30 })
+    ).rejects.toMatchObject({ type: "Upstream", message: "Request timeout" })
+    fetchSpy.mockRestore()
+  })
+
+  it("keeps request IDs and timeout signals on mutations", async () => {
+    let requestId: string | null = null
+    server.use(http.post(`${mockApiUrl}/api/v1/catalog`, ({ request }) => {
+      requestId = request.headers.get("X-Request-ID")
+      return HttpResponse.json({})
+    }))
+    const fetchSpy = vi.spyOn(globalThis, "fetch")
+    const { apiFetch } = await import("@/lib/api/client")
+    await apiFetch("/api/v1/catalog", (await import("zod")).z.object({}), { method: "POST", noAuth: true })
+    expect(requestId).toMatch(/^req_/)
+    expect(fetchSpy.mock.calls.at(-1)?.[1]).toHaveProperty("signal")
+    fetchSpy.mockRestore()
+  })
+
   it("maps 403 to Forbidden ApiError", async () => {
     server.use(
       http.get(`${mockApiUrl}/api/v1/courses`, () => {

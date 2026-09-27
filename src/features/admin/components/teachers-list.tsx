@@ -1,6 +1,7 @@
 "use client"
 
 import { useDeferredValue, useState } from "react"
+import dynamic from "next/dynamic"
 import { useAutoAnimate } from "@formkit/auto-animate/react"
 import { useTranslations } from "next-intl"
 import { toast } from "sonner"
@@ -21,7 +22,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Placeholder } from "@/features/shell/components/placeholder"
-import { TeacherCreateDialog } from "./teacher-create-dialog"
+const TeacherCreateDialog = dynamic(() => import("./teacher-create-dialog").then((m) => m.TeacherCreateDialog), { loading: () => <div className="h-24 animate-pulse rounded-xl bg-muted" /> })
 import { AdminActionDialog } from "./admin-action-dialog"
 import {
   useTeacherMutations,
@@ -276,7 +277,9 @@ export function TeachersList() {
           summary: (from, to, total) => t("showing", { from, to, total }),
         }}
       />
-      <TeacherCreateDialog open={createOpen} onOpenChange={setCreateOpen} />
+      {createOpen ? (
+        <TeacherCreateDialog open={createOpen} onOpenChange={setCreateOpen} />
+      ) : null}
       <AdminActionDialog
         open={statusAction !== null}
         title={

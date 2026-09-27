@@ -27,7 +27,7 @@ import { useTaxonomyQuery } from "@/features/admin/hooks/use-taxonomy-queries"
 import { TaxonomyCreateDialog } from "@/features/admin/components/taxonomy-create-dialog"
 import { TaxonomyEditDialog } from "@/features/admin/components/taxonomy-edit-dialog"
 import { TaxonomyDeleteDialog } from "@/features/admin/components/taxonomy-delete-dialog"
-import type { GradeOut, StreamOut } from "@/features/course-management/schema"
+import type { GradeOut, StreamOut, SubjectOut } from "@/features/course-management/schema"
 
 type Item = {
   id: number
@@ -42,6 +42,7 @@ type Props = {
   kind: "grades" | "streams" | "subjects"
   titleKey: string
   fields: { key: string; labelKey: string; required?: boolean }[]
+  initialData: GradeOut[] | StreamOut[] | SubjectOut[]
 }
 
 function getScalarCellValue(item: Item, key: string) {
@@ -54,9 +55,9 @@ function getScalarCellValue(item: Item, key: string) {
   return "—"
 }
 
-export function TaxonomyManager({ kind, titleKey, fields }: Props) {
+export function TaxonomyManager({ kind, titleKey, fields, initialData }: Props) {
   const t = useTranslations("admin")
-  const { data, isLoading, isError } = useTaxonomyQuery(kind)
+  const { data, isLoading, isError } = useTaxonomyQuery(kind, initialData)
   const [createOpen, setCreateOpen] = useState(false)
   const [editItem, setEditItem] = useState<Item | null>(null)
   const [deleteItem, setDeleteItem] = useState<Item | null>(null)

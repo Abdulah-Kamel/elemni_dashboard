@@ -8,6 +8,7 @@ import { Topbar } from "@/features/shell/components/topbar"
 import { MobileBottomNav } from "@/features/shell/components/mobile-bottom-nav"
 import { headers } from "next/headers"
 import { sanitizeNextPath } from "@/lib/routes"
+import { ClientMessageProvider } from "@/i18n/client-message-provider"
 
 export const dynamic = "force-dynamic"
 
@@ -41,6 +42,7 @@ export default async function AdminLayout({
   const t = await getTranslations({ locale, namespace: "common" })
 
   return (
+    <ClientMessageProvider namespaces={["common", "topbar", "sidebar", "placeholder", "admin", "student", "coupons"]}>
     <DirectionProvider direction={(locale === "ar" ? "rtl" : "ltr") as never}>
       <div className="flex h-dvh overflow-hidden bg-page">
         <Sidebar
@@ -59,5 +61,6 @@ export default async function AdminLayout({
         <MobileBottomNav userRole={user.role} />
       </div>
     </DirectionProvider>
+    </ClientMessageProvider>
   )
 }

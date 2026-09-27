@@ -2,6 +2,7 @@ import { setRequestLocale } from "next-intl/server"
 import { verifySession } from "@/lib/auth/dal"
 import { redirectToAuth } from "@/lib/auth/redirect"
 import { TaxonomyManager } from "@/features/admin/components/taxonomy-manager"
+import { listStreams } from "@/features/course-management/queries"
 
 export const dynamic = "force-dynamic"
 
@@ -14,10 +15,12 @@ export default async function StreamsPage({
   setRequestLocale(locale)
   const user = await verifySession()
   if (!user) return redirectToAuth(locale, `/${locale}/admin/streams`)
+  const initialData = await listStreams()
 
   return (
     <TaxonomyManager
       kind="streams"
+      initialData={initialData}
       titleKey="title_streams"
       fields={[
         { key: "name", labelKey: "table_name", required: true },

@@ -1,5 +1,6 @@
 "use server"
 import { headers } from "next/headers"
+import { revalidateTag } from "next/cache"
 import { apiFetch } from "@/lib/api/client"
 import { z } from "zod"
 import {
@@ -307,6 +308,10 @@ function taxonomyPath(kind: TaxonomyKind): string {
   return `/api/v1/admin/${kind}`
 }
 
+function revalidateTaxonomy(kind: TaxonomyKind) {
+  revalidateTag(`catalog:${kind}`, "max")
+}
+
 export async function createTaxonomyItem(
   kind: TaxonomyKind,
   data: unknown
@@ -327,6 +332,7 @@ export async function createTaxonomyItem(
       method: "POST",
       body: JSON.stringify(parsed),
     })
+    revalidateTaxonomy(kind)
     const elapsed = Math.round(performance.now() - start)
     logger.actionDone("createTaxonomyItem", { kind }, elapsed)
     return { success: true, data: result }
@@ -350,6 +356,7 @@ export async function updateTaxonomyItem(
       taxonomyOutSchema(kind),
       { method: "PATCH", body: JSON.stringify(parsed) }
     )
+    revalidateTaxonomy(kind)
     const elapsed = Math.round(performance.now() - start)
     logger.actionDone("updateTaxonomyItem", { kind, id }, elapsed)
     return { success: true, data: result }
@@ -369,6 +376,7 @@ export async function deleteTaxonomyItem(
     await apiFetch(`${taxonomyPath(kind)}/${id}`, z.void(), {
       method: "DELETE",
     })
+    revalidateTaxonomy(kind)
     const elapsed = Math.round(performance.now() - start)
     logger.actionDone("deleteTaxonomyItem", { kind, id }, elapsed)
     return { success: true, data: undefined }

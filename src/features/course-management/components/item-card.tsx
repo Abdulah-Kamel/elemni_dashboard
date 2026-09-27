@@ -24,7 +24,6 @@ import {
   requestVideoUpload,
 } from "@/features/course-management/items-actions"
 import { uploadToPresignedUrl } from "@/lib/upload"
-import { uploadVideoToBunnyTus } from "@/lib/tus-upload"
 import {
   Dialog,
   DialogContent,
@@ -200,6 +199,7 @@ export function ItemCard({
           return
         }
 
+        const { uploadVideoToBunnyTus } = await import("@/lib/tus-upload")
         await uploadVideoToBunnyTus(
           file,
           credentialsResult.data,

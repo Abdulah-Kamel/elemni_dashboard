@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useRef, useId } from "react";
+import dynamic from "next/dynamic";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslations } from "next-intl";
@@ -24,7 +25,7 @@ import { Plus, GripVertical } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PortalDragOverlay } from "@/components/ui/portal-drag-overlay"
 import { ItemCard } from "./item-card";
-import { CreateItemDialog } from "./create-item-dialog";
+const CreateItemDialog = dynamic(() => import("./create-item-dialog").then((m) => m.CreateItemDialog), { loading: () => <div className="h-24 animate-pulse rounded-xl bg-muted" /> });
 import { useCreateItemFlow } from "@/features/course-management/hooks/use-create-item-flow";
 import { applyOptimisticReorder, buildReorderPayload, rollbackReorder } from "@/features/course-management/reorder-utils";
 import { toast } from "sonner";
@@ -301,19 +302,21 @@ export function ItemList({
         </>
       )}
 
-      <CreateItemDialog
-        open={createDialogOpen}
-        onOpenChange={(open) => {
-          setCreateDialogOpen(open);
-          if (!open) createFlow.reset();
-        }}
-        onSubmit={(payload) => void createFlow.submit(payload)}
-        uploading={createFlow.uploading}
-        videoStatus={createFlow.videoStatus}
-        documentStatus={createFlow.documentStatus}
-        videoProgress={createFlow.videoProgress}
-        error={createFlow.error}
-      />
+      {createDialogOpen ? (
+        <CreateItemDialog
+          open={createDialogOpen}
+          onOpenChange={(open) => {
+            setCreateDialogOpen(open);
+            if (!open) createFlow.reset();
+          }}
+          onSubmit={(payload) => void createFlow.submit(payload)}
+          uploading={createFlow.uploading}
+          videoStatus={createFlow.videoStatus}
+          documentStatus={createFlow.documentStatus}
+          videoProgress={createFlow.videoProgress}
+          error={createFlow.error}
+        />
+      ) : null}
     </div>
   );
 }
