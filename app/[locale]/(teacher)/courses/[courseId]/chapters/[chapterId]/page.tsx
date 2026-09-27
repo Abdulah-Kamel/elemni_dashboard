@@ -9,6 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 import { Suspense } from "react"
 import { redirectToAuth } from "@/lib/auth/redirect"
+import { notFound } from "next/navigation"
+import { isApiNotFound, parsePositiveRouteId } from "@/lib/routes"
 
 export const dynamic = "force-dynamic"
 
@@ -29,6 +31,7 @@ async function ChapterPageContent({
     course = await getCourse(courseId)
   } catch (err: unknown) {
     const apiErr = err as { type?: string }
+    if (isApiNotFound(err)) notFound()
     if (apiErr.type === "Unauthorized") {
       return redirectToAuth(
         locale,
@@ -43,6 +46,7 @@ async function ChapterPageContent({
     chapters = await listChapters(courseId)
   } catch (err: unknown) {
     const apiErr = err as { type?: string }
+    if (isApiNotFound(err)) notFound()
     if (apiErr.type === "Unauthorized") {
       return redirectToAuth(
         locale,
@@ -54,11 +58,7 @@ async function ChapterPageContent({
 
   const chapter = chapters.find((ch) => ch.id === chapterId)
   if (!chapter) {
-    return (
-      <div className="space-y-4">
-        <p className="text-sm text-destructive">{t("not_found")}</p>
-      </div>
-    )
+    notFound()
   }
 
   let lessons: Awaited<ReturnType<typeof listLessons>> = []
@@ -126,8 +126,9 @@ export default async function ChapterDetailPage({
   params: Promise<{ locale: string; courseId: string; chapterId: string }>
 }) {
   const { locale, courseId, chapterId } = await params
-  const courseIdNum = Number(courseId)
-  const chapterIdNum = Number(chapterId)
+  const courseIdNum = parsePositiveRouteId(courseId)
+  const chapterIdNum = parsePositiveRouteId(chapterId)
+  if (courseIdNum === null || chapterIdNum === null) notFound()
   setRequestLocale(locale)
 
   const session = await verifySession()

@@ -1,4 +1,5 @@
 "use server"
+import { titleValidationError } from "@/features/course-management/title-validation"
 import { revalidateTag } from "next/cache"
 import { headers } from "next/headers"
 import { apiFetch } from "@/lib/api/client"
@@ -26,7 +27,7 @@ type ActionResult<T> =
   | { success: true; data: T }
   | {
       success: false
-      error: { type: string; message: string; fields?: string[] }
+      error: { type: string; code?: string; message: string; fields?: string[] }
     }
 
 export async function listItems(
@@ -87,7 +88,13 @@ export async function createItem(
   lessonId: number,
   data: ItemCreate
 ): Promise<ActionResult<ItemOut>> {
-  const body = itemCreateSchema.parse(data)
+  const parsed = itemCreateSchema.safeParse(data)
+  if (!parsed.success) {
+    const requestHeaders = await headers()
+    const locale = requestHeaders.get("x-pathname")?.startsWith("/en/") ? "en" : "ar"
+    return titleValidationError(locale, parsed.error.issues)
+  }
+  const body = parsed.data
 
   logger.action("createItem", { courseId, lessonId, title: body.title })
   const start = performance.now()
@@ -126,7 +133,13 @@ export async function updateItem(
   itemId: number,
   data: ItemUpdate
 ): Promise<ActionResult<ItemOut>> {
-  const body = itemUpdateSchema.parse(data)
+  const parsed = itemUpdateSchema.safeParse(data)
+  if (!parsed.success) {
+    const requestHeaders = await headers()
+    const locale = requestHeaders.get("x-pathname")?.startsWith("/en/") ? "en" : "ar"
+    return titleValidationError(locale, parsed.error.issues)
+  }
+  const body = parsed.data
 
   logger.action("updateItem", { courseId, itemId })
   const start = performance.now()

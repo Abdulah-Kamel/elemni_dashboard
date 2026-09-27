@@ -1,4 +1,5 @@
 "use server"
+import { titleValidationError } from "@/features/course-management/title-validation"
 import { revalidateTag } from "next/cache"
 import { apiFetch } from "@/lib/api/client"
 import { endpoints } from "@/lib/api/endpoints"
@@ -24,7 +25,7 @@ type ActionResult<T> =
   | { success: true; data: T }
   | {
       success: false
-      error: { type: string; message: string; fields?: string[] }
+      error: { type: string; code?: string; message: string; fields?: string[] }
     }
 
 async function redirectToSignIn(nextPath: string): Promise<never> {
@@ -73,7 +74,13 @@ export async function createLesson(
   data: LessonCreate,
   chapterId?: number
 ): Promise<ActionResult<LessonOut>> {
-  const body = lessonCreateSchema.parse(data)
+  const parsed = lessonCreateSchema.safeParse(data)
+  if (!parsed.success) {
+    const requestHeaders = await headers()
+    const locale = requestHeaders.get("x-pathname")?.startsWith("/en/") ? "en" : "ar"
+    return titleValidationError(locale, parsed.error.issues)
+  }
+  const body = parsed.data
 
   logger.action("createLesson", { courseId, chapterId, title: body.title })
   const start = performance.now()
@@ -115,7 +122,13 @@ export async function updateLesson(
   lessonId: number,
   data: LessonUpdate
 ): Promise<ActionResult<LessonOut>> {
-  const body = lessonUpdateSchema.parse(data)
+  const parsed = lessonUpdateSchema.safeParse(data)
+  if (!parsed.success) {
+    const requestHeaders = await headers()
+    const locale = requestHeaders.get("x-pathname")?.startsWith("/en/") ? "en" : "ar"
+    return titleValidationError(locale, parsed.error.issues)
+  }
+  const body = parsed.data
 
   logger.action("updateLesson", { courseId, lessonId })
   const start = performance.now()

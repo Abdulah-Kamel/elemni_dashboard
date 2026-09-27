@@ -48,7 +48,7 @@ export function CurriculumPicker({
           onValueChange={(v) => onSubjectChange(v ? Number(v) : null)}
           items={subjects.map((s) => ({ value: String(s.id), label: s.name }))}
         >
-          <SelectTrigger disabled={disabled || subjects.length === 0} className="w-full">
+          <SelectTrigger aria-invalid={Boolean(errors?.subjectId)} disabled={disabled || subjects.length === 0} className="w-full">
             <SelectValue placeholder={subjects.length === 0 ? t("loading_curriculum") : t("subject_label")} />
           </SelectTrigger>
           <SelectContent>
@@ -71,7 +71,7 @@ export function CurriculumPicker({
           onValueChange={(v) => onGradeChange(v ? Number(v) : null)}
           items={grades.map((g) => ({ value: String(g.id), label: g.name }))}
         >
-          <SelectTrigger disabled={disabled || grades.length === 0} className="w-full">
+          <SelectTrigger aria-invalid={Boolean(errors?.gradeId)} disabled={disabled || grades.length === 0} className="w-full">
             <SelectValue placeholder={grades.length === 0 ? t("loading_curriculum") : t("grade_label")} />
           </SelectTrigger>
           <SelectContent>
@@ -94,7 +94,7 @@ export function CurriculumPicker({
           onValueChange={(v) => onStreamChange(v ? Number(v) : null)}
           items={streams.map((s) => ({ value: String(s.id), label: s.name }))}
         >
-          <SelectTrigger disabled={disabled || streams.length === 0} className="w-full">
+          <SelectTrigger aria-invalid={Boolean(errors?.streamId)} disabled={disabled || streams.length === 0} className="w-full">
             <SelectValue placeholder={streams.length === 0 ? t("loading_curriculum") : t("stream_label")} />
           </SelectTrigger>
           <SelectContent>

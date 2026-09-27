@@ -34,6 +34,7 @@ import { LessonList } from "./lesson-list"
 import type { ChapterOut } from "@/features/course-management/chapters-schema"
 import type { LessonOut } from "@/features/course-management/lessons-schema"
 import { useCourseBuilderBridge } from "@/features/course-management/course-builder-bridge"
+import { displayPosition } from "@/features/course-management/display-position"
 import { useChapterMutations } from "@/features/course-management/hooks/use-course-management-queries"
 
 export function ChapterCard({
@@ -170,9 +171,9 @@ export function ChapterCard({
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-xs font-medium text-muted-foreground">
-                {t("chapter_number", { n: chapter.order })}
+                {t("chapter_number", { n: displayPosition(chapter.order) })}
               </span>
-              <span className="block truncate text-sm font-semibold sm:text-base">
+              <span className="block min-w-0 flex-1 truncate text-sm font-semibold sm:text-base" dir="auto">
                 {chapter.title}
               </span>
             </span>
@@ -241,6 +242,7 @@ export function ChapterCard({
             <DialogTitle>{t("edit")}</DialogTitle>
           </DialogHeader>
           <Input
+            maxLength={200}
             value={editTitle}
             onChange={(e) => setEditTitle(e.target.value)}
             disabled={submitting}

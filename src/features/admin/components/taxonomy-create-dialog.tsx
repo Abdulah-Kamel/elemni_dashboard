@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useTaxonomyMutations } from "@/features/admin/hooks/use-taxonomy-mutations";
 import { useTaxonomyQuery } from "@/features/admin/hooks/use-taxonomy-queries";
@@ -45,16 +46,14 @@ export function TaxonomyCreateDialog({ kind, fields, open, onOpenChange }: Props
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("dialog_create_title", { kind: t(`title_${kind}`) })}</DialogTitle>
+          <DialogTitle>{t(`add_${kind === "grades" ? "grade" : kind === "streams" ? "stream" : "subject"}`)}</DialogTitle>
         </DialogHeader>
         <div className="grid grid-cols-1 gap-4">
           {fields.map((f) => (
-            <Input
-              key={f.key}
-              placeholder={t(f.labelKey)}
-              value={String(data[f.key] ?? "")}
-              onChange={(e) => setData((prev) => ({ ...prev, [f.key]: e.target.value }))}
-            />
+            <div key={f.key} className="grid gap-2">
+              <Label htmlFor={`taxonomy-create-${kind}-${f.key}`}>{t(f.labelKey)}</Label>
+              <Input id={`taxonomy-create-${kind}-${f.key}`} value={String(data[f.key] ?? "")} onChange={(e) => setData((prev) => ({ ...prev, [f.key]: e.target.value }))} />
+            </div>
           ))}
           {kind === "subjects" && <><div><p className="mb-2 text-sm font-medium">{t("table_grades")}</p><div className="flex flex-wrap gap-2">{grades.data?.map((grade) => <Button type="button" size="sm" variant={(data.grade_ids as number[] | undefined)?.includes(grade.id) ? "default" : "outline"} key={grade.id} onClick={() => toggle("grade_ids", grade.id)}>{grade.name}</Button>)}</div></div><div><p className="mb-2 text-sm font-medium">{t("title_streams")}</p><div className="flex flex-wrap gap-2">{streams.data?.map((stream) => <Button type="button" size="sm" variant={(data.stream_ids as number[] | undefined)?.includes(stream.id) ? "default" : "outline"} key={stream.id} onClick={() => toggle("stream_ids", stream.id)}>{stream.name}</Button>)}</div></div></>}
         </div>

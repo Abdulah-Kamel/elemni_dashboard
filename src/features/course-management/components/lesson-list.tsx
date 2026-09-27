@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef, useId } from "react";
 import { useQueries, useQueryClient } from "@tanstack/react-query";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslations } from "next-intl";
@@ -111,7 +111,8 @@ export function LessonList({
   nested?: boolean;
   onCountChange?: (count: number) => void;
 }) {
-  const t = useTranslations("lessons");
+  const t = useTranslations("lessons")
+  const dndId = useId();
   const { notifyCurriculumCommitted } = useCourseBuilderBridge();
   const queryClient = useQueryClient();
   const queryKey = courseManagementKeys.lessons(courseId, chapterId);
@@ -280,6 +281,16 @@ export function LessonList({
         </div>
       ) : (
         <DndContext
+          id={dndId}
+          accessibility={{
+            announcements: {
+              onDragStart: ({ active }) => t("sr_picked_up", { title: lessons.find((lesson) => String(lesson.id) === String(active.id))?.title ?? String(active.id) }),
+              onDragOver: ({ active, over }) => over ? t("sr_over", { title: lessons.find((lesson) => String(lesson.id) === String(active.id))?.title ?? String(active.id), position: lessons.findIndex((lesson) => String(lesson.id) === String(over.id)) + 1 }) : undefined,
+              onDragEnd: ({ active, over }) => over ? t("sr_dropped", { title: lessons.find((lesson) => String(lesson.id) === String(active.id))?.title ?? String(active.id), position: lessons.findIndex((lesson) => String(lesson.id) === String(over.id)) + 1 }) : t("sr_cancelled"),
+              onDragCancel: () => t("sr_cancelled"),
+            },
+            screenReaderInstructions: { draggable: t("drag_handle_description") },
+          }}
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragStart={handleDragStart}
@@ -349,6 +360,7 @@ export function LessonList({
                 value={createTitle}
                 onChange={(e) => setCreateTitle(e.target.value)}
                 placeholder={t("create_title_placeholder")}
+                maxLength={200}
                 disabled={submitting}
                 autoFocus
                 onKeyDown={(e) => {

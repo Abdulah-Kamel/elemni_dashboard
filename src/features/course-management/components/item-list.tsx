@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo, useRef } from "react";
+import { useState, useCallback, useMemo, useRef, useId } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslations } from "next-intl";
@@ -51,7 +51,7 @@ function SortableItemCard({
   onUpdate: (item: ItemOut) => void;
   onDelete: (itemId: number) => void;
 }) {
-  const t = useTranslations("items");
+  const t = useTranslations("items")
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: String(item.id),
   });
@@ -119,7 +119,8 @@ export function ItemList({
   const previousRef = useRef(_initialItems ?? []);
   const [parentRef] = useAutoAnimate({ duration: 200 });
 
-  const t = useTranslations("items");
+  const t = useTranslations("items")
+  const dndId = useId()
   const { notifyCurriculumCommitted } = useCourseBuilderBridge();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -250,6 +251,16 @@ export function ItemList({
       ) : (
         <>
           <DndContext
+            id={dndId}
+            accessibility={{
+              announcements: {
+                onDragStart: ({ active }) => t("sr_picked_up", { title: items.find((item) => String(item.id) === String(active.id))?.title ?? String(active.id) }),
+                onDragOver: ({ active, over }) => over ? t("sr_over", { title: items.find((item) => String(item.id) === String(active.id))?.title ?? String(active.id), position: items.findIndex((item) => String(item.id) === String(over.id)) + 1 }) : undefined,
+                onDragEnd: ({ active, over }) => over ? t("sr_dropped", { title: items.find((item) => String(item.id) === String(active.id))?.title ?? String(active.id), position: items.findIndex((item) => String(item.id) === String(over.id)) + 1 }) : t("sr_cancelled"),
+                onDragCancel: () => t("sr_cancelled"),
+              },
+              screenReaderInstructions: { draggable: t("drag_handle_description") },
+            }}
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragStart={handleDragStart}

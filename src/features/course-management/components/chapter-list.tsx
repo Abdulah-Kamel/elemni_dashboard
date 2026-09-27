@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useId } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslations } from "next-intl";
@@ -107,7 +107,8 @@ export function ChapterList({
   courseId: number;
   error: string | null;
 }) {
-  const t = useTranslations("chapters");
+  const t = useTranslations("chapters")
+  const dndId = useId();
   const { notifyCurriculumCommitted } = useCourseBuilderBridge();
   const queryClient = useQueryClient();
   const queryKey = courseManagementKeys.chapters(courseId);
@@ -245,6 +246,16 @@ export function ChapterList({
         ))
       ) : (
         <DndContext
+          id={dndId}
+          accessibility={{
+            announcements: {
+              onDragStart: ({ active }) => t("sr_picked_up", { title: chapters.find((chapter) => String(chapter.id) === String(active.id))?.title ?? String(active.id) }),
+              onDragOver: ({ active, over }) => over ? t("sr_moved", { title: chapters.find((chapter) => String(chapter.id) === String(active.id))?.title ?? String(active.id), position: chapters.findIndex((chapter) => String(chapter.id) === String(over.id)) + 1 }) : undefined,
+              onDragEnd: ({ active, over }) => over ? t("sr_dropped", { title: chapters.find((chapter) => String(chapter.id) === String(active.id))?.title ?? String(active.id), position: chapters.findIndex((chapter) => String(chapter.id) === String(over.id)) + 1 }) : t("sr_cancelled"),
+              onDragCancel: () => t("sr_cancelled"),
+            },
+            screenReaderInstructions: { draggable: t("drag_handle_description") },
+          }}
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragStart={handleDragStart}
@@ -306,13 +317,15 @@ export function ChapterList({
           <DialogHeader>
             <DialogTitle>{t("create")}</DialogTitle>
           </DialogHeader>
+          <label htmlFor="chapter-title" className="text-sm font-medium">{t("chapter_title")}</label>
           <Input
+            id="chapter-title"
+            maxLength={200}
             value={createTitle}
             onChange={(e) => setCreateTitle(e.target.value)}
             placeholder={t("create_placeholder")}
             disabled={submitting}
             autoFocus
-            aria-label={t("chapter_title")}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();

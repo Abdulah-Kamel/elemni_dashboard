@@ -281,7 +281,7 @@ export function StudentTeacherProfilePreview({
               </ProfilePreviewField>
 
               <div className="flex flex-wrap items-center justify-center gap-3 pt-2 text-xs font-bold text-slate-200 @sm/preview:text-sm @md/preview:justify-start">
-                <ProfilePreviewField
+                {model.experienceYears > 0 && <ProfilePreviewField
                   field="experience"
                   ariaLabel={fieldEditLabels.experience}
                   className="rounded-xl"
@@ -290,7 +290,7 @@ export function StudentTeacherProfilePreview({
                     <Award className="h-4 w-4 text-sky-400" />
                     <span>{copy.experience(model.experienceYears)}</span>
                   </div>
-                </ProfilePreviewField>
+                </ProfilePreviewField>}
                 <div className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3.5 py-1.5 backdrop-blur-md">
                   <BookOpen className="h-4 w-4 text-emerald-400" />
                   <span>{copy.availableCourses(model.courses.length)}</span>

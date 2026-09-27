@@ -51,7 +51,7 @@ function renderToHtml(element: React.ReactElement): Promise<string> {
 describe("AuthShell layout", () => {
   it("uses full-width container with a responsive max-width, not an invalid max-w-2/4", async () => {
     const html = await renderToHtml(
-      <AuthShell title="Sign In" children={<input />} />
+      <AuthShell title="Sign In"><input /></AuthShell>
     );
 
     // The inner wrapper div should NOT use spacing-colliding classes

@@ -155,7 +155,7 @@ export function BillingView({ data, filters, locale }: BillingViewProps) {
         <CardContent className="p-0">
           <form
             onSubmit={handleSubmit}
-            className="grid gap-3 border-b border-border p-4 sm:grid-cols-2 xl:grid-cols-7"
+            className="grid gap-3 border-b border-border p-4 sm:grid-cols-2 xl:grid-cols-4"
           >
             <div className="grid gap-1.5">
               <Label htmlFor="billing-start">{t("filters.start")}</Label>
@@ -221,7 +221,7 @@ export function BillingView({ data, filters, locale }: BillingViewProps) {
                 <option value="asc">{t("filters.asc")}</option>
               </select>
             </div>
-            <div className="flex items-end gap-2">
+            <div className="flex flex-wrap items-end gap-2 sm:col-span-2 xl:col-span-4 xl:justify-end">
               <Button type="submit" size="sm" className="flex-1">
                 {t("filters.apply")}
               </Button>

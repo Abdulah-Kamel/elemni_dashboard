@@ -19,6 +19,8 @@ import { CourseWorkspace } from "@/features/student-preview/course-workspace"
 import { buildCoursePreviewModel } from "@/features/student-preview/build-course-preview-model"
 import type { CourseFormValues } from "@/features/course-management/schema"
 import { loadCoursePreviewCurriculum } from "@/features/student-preview/server-actions"
+import { notFound } from "next/navigation"
+import { isApiNotFound, parsePositiveRouteId } from "@/lib/routes"
 
 export const dynamic = "force-dynamic"
 
@@ -38,6 +40,7 @@ async function CourseEditor({
     course = await getCourse(courseId)
   } catch (error: unknown) {
     const apiError = error as { type?: string }
+    if (isApiNotFound(error)) notFound()
     if (apiError.type === "Unauthorized") {
       return redirectToAuth(locale, `/${locale}/courses/${courseId}`)
     }
@@ -220,7 +223,8 @@ export default async function CourseDetailPage({
   params: Promise<{ locale: string; courseId: string }>
 }) {
   const { locale, courseId } = await params
-  const courseIdNum = Number(courseId)
+  const courseIdNum = parsePositiveRouteId(courseId)
+  if (courseIdNum === null) notFound()
   setRequestLocale(locale)
 
   const session = await verifySession()

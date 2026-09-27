@@ -6,6 +6,8 @@ import { redirectToAuth } from "@/lib/auth/redirect"
 import { Sidebar } from "@/features/shell/components/sidebar"
 import { Topbar } from "@/features/shell/components/topbar"
 import { MobileBottomNav } from "@/features/shell/components/mobile-bottom-nav"
+import { headers } from "next/headers"
+import { sanitizeNextPath } from "@/lib/routes"
 
 export const dynamic = "force-dynamic"
 
@@ -22,7 +24,9 @@ export default async function AdminLayout({
   const user = await verifySession()
 
   if (!user) {
-    const path = `/${locale}/admin`
+    const h = await headers()
+    const requested = sanitizeNextPath(locale, h.get("x-pathname"))
+    const path = requested ?? `/${locale}/admin`
     return redirectToAuth(locale, path)
   }
 

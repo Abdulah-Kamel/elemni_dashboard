@@ -59,6 +59,7 @@ export function CourseForm({
         <Label htmlFor="title">{t("title_label")}</Label>
         <Input
           id="title"
+          aria-invalid={Boolean(errors?.title)}
           value={values.title}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             update({ title: e.target.value })
@@ -74,6 +75,7 @@ export function CourseForm({
         <Label htmlFor="description">{t("description_label")}</Label>
         <Input
           id="description"
+          aria-invalid={Boolean(errors?.description)}
           value={values.description ?? ""}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             update({ description: e.target.value || null })

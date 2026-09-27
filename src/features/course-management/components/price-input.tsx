@@ -23,9 +23,10 @@ export function PriceInput({
         id="price"
         type="text"
         inputMode="decimal"
+        aria-invalid={Boolean(error)}
         placeholder="0.00"
         value={value}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => { const next = e.target.value; if (/^\d*(\.\d{0,2})?$/.test(next)) onChange(next) }}
         onBlur={() => onChange(formatCoursePrice(value))}
       />
       {error && <p className="text-xs text-destructive">{error}</p>}
