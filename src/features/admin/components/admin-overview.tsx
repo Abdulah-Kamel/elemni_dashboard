@@ -81,7 +81,7 @@ export async function AdminOverviewView({
         />
         <StatTile
           label={t("overview_revenue")}
-          value={<span dir="ltr" className="block text-lg break-words sm:text-2xl">{formatMoney(locale, overview.collected_revenue, overview.currency)}</span>}
+          value={<span dir="ltr" className="block whitespace-nowrap text-[clamp(1rem,4.6vw,1.5rem)]">{formatMoney(locale, overview.collected_revenue, overview.currency)}</span>}
           hint={c("tiles.revenue_hint")}
           icon={Banknote}
           href="/admin/subscriptions"

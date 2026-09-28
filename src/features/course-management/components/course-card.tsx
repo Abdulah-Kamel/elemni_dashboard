@@ -127,13 +127,13 @@ export function CourseCard({
           </div>
           <div className="px-2 py-2">
             <dt className="text-[0.7rem] text-on-surface-muted">{tw("metric_earnings")}</dt>
-            <dd className="mt-0.5 truncate text-sm font-semibold text-foreground tabular-nums">
+            <dd className="mt-0.5 text-sm font-semibold text-foreground tabular-nums [overflow-wrap:anywhere]">
               {formatEarnings(metrics?.earnings ?? null, locale)}
             </dd>
           </div>
           <div className="px-2 py-2">
             <dt className="text-[0.7rem] text-on-surface-muted">{t("price")}</dt>
-            <dd className="mt-0.5 truncate text-sm font-semibold text-primary tabular-nums">
+            <dd className="mt-0.5 text-sm font-semibold text-primary tabular-nums [overflow-wrap:anywhere]">
               {course.price === "0.00" ? t("free") : formatPrice(course.price, locale)}
             </dd>
           </div>

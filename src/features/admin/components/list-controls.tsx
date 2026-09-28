@@ -37,7 +37,7 @@ export function Segmented<T extends string>({
   onChange: (value: T) => void
 }) {
   return (
-    <div role="group" aria-label={label} className="inline-flex h-9 shrink-0 items-center rounded-lg border border-border bg-surface-muted p-0.5">
+    <div role="group" aria-label={label} className="inline-flex h-9 max-w-full shrink-0 items-center overflow-x-auto rounded-lg border border-border bg-surface-muted p-0.5 [scrollbar-width:none]">
       {options.map((option) => {
         const active = option.value === value
         return (
@@ -47,7 +47,7 @@ export function Segmented<T extends string>({
             aria-pressed={active}
             onClick={() => onChange(option.value)}
             className={cn(
-              "h-full rounded-md px-3 text-xs font-medium whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none",
+              "h-full shrink-0 rounded-md px-3 text-xs font-medium whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none",
               active ? "bg-surface text-foreground shadow-xs dark:bg-surface-strong" : "text-on-surface-muted hover:text-foreground",
             )}
           >
