@@ -33,6 +33,7 @@ import {
 import { ItemList } from "@/features/course-management/components/item-list"
 import type { LessonOut } from "@/features/course-management/lessons-schema"
 import { useCourseBuilderBridge } from "@/features/course-management/course-builder-bridge"
+import { displayPosition } from "@/features/course-management/display-position"
 import { useLessonMutations } from "@/features/course-management/hooks/use-course-management-queries"
 
 export function LessonCard({
@@ -209,16 +210,16 @@ export function LessonCard({
             ) : (
               <ChevronRight className="size-4 shrink-0 text-muted-foreground rtl:rotate-180" />
             )}
-            <span className="truncate text-sm font-medium">
-              {lesson.order}. {lesson.title}
+            <span className="min-w-0 flex-1 truncate text-sm font-medium" dir="auto">
+              {displayPosition(lesson.order)}. {lesson.title}
             </span>
           </Collapsible.Trigger>
           {itemCount != null && (
-            <span className="shrink-0 text-[11px] whitespace-nowrap text-muted-foreground">
+            <span className="hidden shrink-0 text-[11px] whitespace-nowrap text-muted-foreground sm:inline">
               {itemCount} {t("items")}
             </span>
           )}
-          {statusBadge}
+          <span className="hidden shrink-0 sm:inline-flex">{statusBadge}</span>
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
@@ -226,6 +227,7 @@ export function LessonCard({
                   variant="ghost"
                   size="icon-sm"
                   className="size-7 shrink-0"
+                  aria-label={t("more_actions")}
                 />
               }
             >
@@ -285,6 +287,7 @@ export function LessonCard({
                 {t("create_title_placeholder")}
               </label>
               <Input
+                maxLength={200}
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
                 disabled={submitting}

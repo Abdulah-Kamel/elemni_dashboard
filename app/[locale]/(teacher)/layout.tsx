@@ -8,6 +8,9 @@ import { Sidebar } from "@/features/shell/components/sidebar"
 import { Topbar } from "@/features/shell/components/topbar"
 import { MobileBottomNav } from "@/features/shell/components/mobile-bottom-nav"
 import { ChapterNavigationProvider } from "@/features/course-management/chapter-navigation-context"
+import { headers } from "next/headers"
+import { sanitizeNextPath } from "@/lib/routes"
+import { ClientMessageProvider } from "@/i18n/client-message-provider"
 
 export const dynamic = "force-dynamic"
 
@@ -24,7 +27,9 @@ export default async function TeacherLayout({
   const user = await verifySession()
 
   if (!user) {
-    const path = `/${locale}/dashboard`
+    const h = await headers()
+    const requested = sanitizeNextPath(locale, h.get("x-pathname"))
+    const path = requested ?? `/${locale}/dashboard`
     return redirectToAuth(locale, path)
   }
 
@@ -41,6 +46,7 @@ export default async function TeacherLayout({
   const teacherRole = t("teacher_role")
 
   return (
+    <ClientMessageProvider namespaces={["common", "topbar", "sidebar", "placeholder", "courses", "lessons", "items", "chapters", "profile", "settings", "student", "analytics", "billing", "earnings", "storage"]}>
     <DirectionProvider direction={(locale === "ar" ? "rtl" : "ltr") as never}>
       <div className="flex h-dvh overflow-hidden bg-page">
         <Sidebar teacherName={user.name} teacherRole={teacherRole} />
@@ -57,5 +63,6 @@ export default async function TeacherLayout({
         <MobileBottomNav />
       </div>
     </DirectionProvider>
+    </ClientMessageProvider>
   )
 }

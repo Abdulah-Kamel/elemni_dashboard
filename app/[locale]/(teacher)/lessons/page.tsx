@@ -1,58 +1,6 @@
-import { setRequestLocale } from "next-intl/server"
-import { getTranslations } from "next-intl/server"
-import { Placeholder } from "@/features/shell/components/placeholder"
-import { verifySession } from "@/lib/auth/dal"
-import { redirectToAuth } from "@/lib/auth/redirect"
-import { apiFetch } from "@/lib/api/client"
-import { courseOutSchema } from "@/features/shell/schema"
+import { redirect } from "next/navigation"
 
-export const dynamic = "force-dynamic"
-
-export default async function LessonsPage({
-  params,
-}: {
-  params: Promise<{ locale: string }>
-}) {
+export default async function LessonsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params
-  setRequestLocale(locale)
-  const t = await getTranslations({ locale, namespace: "lessons" })
-
-  const user = await verifySession()
-
-  if (!user) {
-    return redirectToAuth(locale, `/${locale}/lessons`)
-  }
-
-  let coursesCount = 0
-
-  try {
-    const courses = await apiFetch("/api/v1/courses", courseOutSchema.array())
-    coursesCount = courses.length
-  } catch (err) {
-    const errorType =
-      (err as Error)?.name?.replace("ApiError:", "") ?? "Upstream"
-    if (errorType === "Unauthorized") {
-      return redirectToAuth(locale, `/${locale}/lessons`)
-    }
-    return (
-      <Placeholder
-        state="error"
-        error={
-          {
-            type: errorType,
-            status: 0,
-            message: (err as Error)?.message ?? "Error",
-          } as never
-        }
-      />
-    )
-  }
-
-  return (
-    <Placeholder state="success">
-      <h1 className="text-lg font-medium text-foreground">
-        {t("course_count", { count: coursesCount })}
-      </h1>
-    </Placeholder>
-  )
+  redirect(`/${locale}/courses`)
 }

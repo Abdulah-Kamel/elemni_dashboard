@@ -6,6 +6,9 @@ import { redirectToAuth } from "@/lib/auth/redirect"
 import { Sidebar } from "@/features/shell/components/sidebar"
 import { Topbar } from "@/features/shell/components/topbar"
 import { MobileBottomNav } from "@/features/shell/components/mobile-bottom-nav"
+import { headers } from "next/headers"
+import { sanitizeNextPath } from "@/lib/routes"
+import { ClientMessageProvider } from "@/i18n/client-message-provider"
 
 export const dynamic = "force-dynamic"
 
@@ -22,7 +25,9 @@ export default async function AdminLayout({
   const user = await verifySession()
 
   if (!user) {
-    const path = `/${locale}/admin`
+    const h = await headers()
+    const requested = sanitizeNextPath(locale, h.get("x-pathname"))
+    const path = requested ?? `/${locale}/admin`
     return redirectToAuth(locale, path)
   }
 
@@ -37,6 +42,7 @@ export default async function AdminLayout({
   const t = await getTranslations({ locale, namespace: "common" })
 
   return (
+    <ClientMessageProvider namespaces={["common", "topbar", "sidebar", "placeholder", "admin", "student", "coupons"]}>
     <DirectionProvider direction={(locale === "ar" ? "rtl" : "ltr") as never}>
       <div className="flex h-dvh overflow-hidden bg-page">
         <Sidebar
@@ -55,5 +61,6 @@ export default async function AdminLayout({
         <MobileBottomNav userRole={user.role} />
       </div>
     </DirectionProvider>
+    </ClientMessageProvider>
   )
 }

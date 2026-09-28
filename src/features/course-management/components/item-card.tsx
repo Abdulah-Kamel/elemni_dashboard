@@ -24,7 +24,6 @@ import {
   requestVideoUpload,
 } from "@/features/course-management/items-actions"
 import { uploadToPresignedUrl } from "@/lib/upload"
-import { uploadVideoToBunnyTus } from "@/lib/tus-upload"
 import {
   Dialog,
   DialogContent,
@@ -200,6 +199,7 @@ export function ItemCard({
           return
         }
 
+        const { uploadVideoToBunnyTus } = await import("@/lib/tus-upload")
         await uploadVideoToBunnyTus(
           file,
           credentialsResult.data,
@@ -415,7 +415,7 @@ export function ItemCard({
         {type.icon}
       </span>
 
-      <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+      <span className="min-w-0 flex-1 truncate text-sm text-foreground" dir="auto">
         {item.title}
       </span>
 
@@ -423,6 +423,7 @@ export function ItemCard({
         <Badge
           variant={status.variant}
           className={cn(
+            "hidden sm:inline-flex",
             status.variant === "default" &&
               "border-success/20 bg-success-tint text-success",
             status.variant === "secondary" &&
@@ -572,6 +573,7 @@ export function ItemCard({
               </Label>
               <Input
                 id={`item-title-${item.id}`}
+                maxLength={200}
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
                 disabled={submitting}

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback, useMemo, useRef } from "react";
+import { useState, useCallback, useMemo, useRef, useId } from "react";
+import dynamic from "next/dynamic";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslations } from "next-intl";
@@ -24,7 +25,7 @@ import { Plus, GripVertical } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PortalDragOverlay } from "@/components/ui/portal-drag-overlay"
 import { ItemCard } from "./item-card";
-import { CreateItemDialog } from "./create-item-dialog";
+const CreateItemDialog = dynamic(() => import("./create-item-dialog").then((m) => m.CreateItemDialog), { loading: () => <div className="h-24 animate-pulse rounded-xl bg-muted" /> });
 import { useCreateItemFlow } from "@/features/course-management/hooks/use-create-item-flow";
 import { applyOptimisticReorder, buildReorderPayload, rollbackReorder } from "@/features/course-management/reorder-utils";
 import { toast } from "sonner";
@@ -51,7 +52,7 @@ function SortableItemCard({
   onUpdate: (item: ItemOut) => void;
   onDelete: (itemId: number) => void;
 }) {
-  const t = useTranslations("items");
+  const t = useTranslations("items")
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: String(item.id),
   });
@@ -119,7 +120,8 @@ export function ItemList({
   const previousRef = useRef(_initialItems ?? []);
   const [parentRef] = useAutoAnimate({ duration: 200 });
 
-  const t = useTranslations("items");
+  const t = useTranslations("items")
+  const dndId = useId()
   const { notifyCurriculumCommitted } = useCourseBuilderBridge();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -250,6 +252,16 @@ export function ItemList({
       ) : (
         <>
           <DndContext
+            id={dndId}
+            accessibility={{
+              announcements: {
+                onDragStart: ({ active }) => t("sr_picked_up", { title: items.find((item) => String(item.id) === String(active.id))?.title ?? String(active.id) }),
+                onDragOver: ({ active, over }) => over ? t("sr_over", { title: items.find((item) => String(item.id) === String(active.id))?.title ?? String(active.id), position: items.findIndex((item) => String(item.id) === String(over.id)) + 1 }) : undefined,
+                onDragEnd: ({ active, over }) => over ? t("sr_dropped", { title: items.find((item) => String(item.id) === String(active.id))?.title ?? String(active.id), position: items.findIndex((item) => String(item.id) === String(over.id)) + 1 }) : t("sr_cancelled"),
+                onDragCancel: () => t("sr_cancelled"),
+              },
+              screenReaderInstructions: { draggable: t("drag_handle_description") },
+            }}
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragStart={handleDragStart}
@@ -290,19 +302,21 @@ export function ItemList({
         </>
       )}
 
-      <CreateItemDialog
-        open={createDialogOpen}
-        onOpenChange={(open) => {
-          setCreateDialogOpen(open);
-          if (!open) createFlow.reset();
-        }}
-        onSubmit={(payload) => void createFlow.submit(payload)}
-        uploading={createFlow.uploading}
-        videoStatus={createFlow.videoStatus}
-        documentStatus={createFlow.documentStatus}
-        videoProgress={createFlow.videoProgress}
-        error={createFlow.error}
-      />
+      {createDialogOpen ? (
+        <CreateItemDialog
+          open={createDialogOpen}
+          onOpenChange={(open) => {
+            setCreateDialogOpen(open);
+            if (!open) createFlow.reset();
+          }}
+          onSubmit={(payload) => void createFlow.submit(payload)}
+          uploading={createFlow.uploading}
+          videoStatus={createFlow.videoStatus}
+          documentStatus={createFlow.documentStatus}
+          videoProgress={createFlow.videoProgress}
+          error={createFlow.error}
+        />
+      ) : null}
     </div>
   );
 }

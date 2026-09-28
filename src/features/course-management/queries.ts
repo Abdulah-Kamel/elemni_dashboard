@@ -1,4 +1,5 @@
 import "server-only"
+import { cache } from "react"
 import { apiFetch } from "@/lib/api/client"
 import { endpoints } from "@/lib/api/endpoints"
 import {
@@ -46,23 +47,26 @@ export async function getCourse(courseId: number): Promise<CourseOut> {
   })
 }
 
-export async function listSubjects(): Promise<SubjectOut[]> {
+export const listSubjects = cache(async (): Promise<SubjectOut[]> => {
   return apiFetch(endpoints.public.subjects, subjectOutSchema.array(), {
     noAuth: true,
+    tags: ["catalog:subjects"],
     revalidate: 3600,
   })
-}
+})
 
-export async function listGrades(): Promise<GradeOut[]> {
+export const listGrades = cache(async (): Promise<GradeOut[]> => {
   return apiFetch(endpoints.public.grades, gradeOutSchema.array(), {
     noAuth: true,
+    tags: ["catalog:grades"],
     revalidate: 3600,
   })
-}
+})
 
-export async function listStreams(): Promise<StreamOut[]> {
+export const listStreams = cache(async (): Promise<StreamOut[]> => {
   return apiFetch(endpoints.public.streams, streamOutSchema.array(), {
     noAuth: true,
+    tags: ["catalog:streams"],
     revalidate: 3600,
   })
-}
+})

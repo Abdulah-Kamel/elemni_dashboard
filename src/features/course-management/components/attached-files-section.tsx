@@ -13,7 +13,6 @@ import {
   confirmUpload,
 } from "@/features/course-management/items-actions"
 import { uploadToPresignedUrl } from "@/lib/upload"
-import { uploadVideoToBunnyTus } from "@/lib/tus-upload"
 import type { ItemOut } from "@/features/course-management/items-schema"
 import { validateItemUploadFile } from "../item-upload-validation"
 
@@ -87,6 +86,7 @@ export function AttachedFilesSection({
             return
           }
 
+          const { uploadVideoToBunnyTus } = await import("@/lib/tus-upload")
           await uploadVideoToBunnyTus(
             file,
             credentialsResult.data,

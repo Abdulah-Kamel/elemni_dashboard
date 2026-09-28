@@ -162,9 +162,8 @@ export function CreateItemDialog({
             <Label htmlFor="create-item-title">{t("create_placeholder")}</Label>
             <Input
               id="create-item-title"
-              aria-label="Item title"
-              value={title}
               maxLength={200}
+              value={title}
               autoFocus
               disabled={uploading}
               onChange={(event) => setTitle(event.target.value)}

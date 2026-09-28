@@ -7,7 +7,6 @@ import {
   requestUploadUrl,
   confirmUpload,
 } from "../items-actions"
-import { uploadVideoToBunnyTus } from "@/lib/tus-upload"
 import { uploadToPresignedUrl } from "@/lib/upload"
 
 export type UseCreateItemFlowOptions = {
@@ -90,6 +89,7 @@ export function useCreateItemFlow(options: UseCreateItemFlowOptions): CreateItem
           if (!videoResult.success) {
             throw new Error(videoResult.error.message || uploadErrorMessage)
           }
+          const { uploadVideoToBunnyTus } = await import("@/lib/tus-upload")
           await uploadVideoToBunnyTus(
             payload.videoFile,
             videoResult.data,

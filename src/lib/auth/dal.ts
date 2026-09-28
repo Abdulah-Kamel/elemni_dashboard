@@ -15,8 +15,8 @@ export type VerifySessionOptions = {
 }
 
 export const verifySession = cache(
-  async (options: VerifySessionOptions = {}): Promise<UserOut | null> => {
-    const allowRefresh = options.allowRefresh ?? false
+  async (options?: VerifySessionOptions): Promise<UserOut | null> => {
+    const allowRefresh = options?.allowRefresh ?? false
     const session = await getSession()
     if (!session?.access_token) {
       if (!allowRefresh) return null

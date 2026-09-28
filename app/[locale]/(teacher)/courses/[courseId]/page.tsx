@@ -7,6 +7,7 @@ import {
 } from "@/features/profile/queries"
 import { listChapters } from "@/features/course-management/chapters-queries"
 import { listLessons } from "@/features/course-management/lessons-queries"
+import { listItems } from "@/features/course-management/items-queries"
 import { ChapterList } from "@/features/course-management/components/chapter-list"
 import { LessonList } from "@/features/course-management/components/lesson-list"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -15,10 +16,11 @@ import { ArrowLeft, ArrowRight } from "lucide-react"
 import { Suspense } from "react"
 import { redirectToAuth } from "@/lib/auth/redirect"
 import type { LessonOut } from "@/features/course-management/lessons-schema"
-import { CourseWorkspace } from "@/features/student-preview/course-workspace"
+import { CourseWorkspaceLoader } from "@/features/student-preview/course-workspace-loader"
 import { buildCoursePreviewModel } from "@/features/student-preview/build-course-preview-model"
 import type { CourseFormValues } from "@/features/course-management/schema"
-import { loadCoursePreviewCurriculum } from "@/features/student-preview/server-actions"
+import { notFound } from "next/navigation"
+import { isApiNotFound, parsePositiveRouteId } from "@/lib/routes"
 
 export const dynamic = "force-dynamic"
 
@@ -34,10 +36,28 @@ async function CourseEditor({
   const lt = await getTranslations({ locale, namespace: "lessons" })
 
   let course: Awaited<ReturnType<typeof getCourse>>
+  let teacherProfile: Awaited<ReturnType<typeof getTeacherProfile>> | null
+  let chapters: Awaited<ReturnType<typeof listChapters>>
+  let allLessons: LessonOut[]
+  let chapterLoadError: unknown = null
   try {
-    course = await getCourse(courseId)
+    const [loadedCourse, loadedTeacherProfile, chapterResult, loadedLessons] = await Promise.all([
+      getCourse(courseId),
+      getTeacherProfile().catch(() => null),
+      listChapters(courseId).then(
+        (data) => ({ data, error: null }),
+        (error: unknown) => ({ data: [], error })
+      ),
+      listLessons(courseId),
+    ])
+    course = loadedCourse
+    teacherProfile = loadedTeacherProfile
+    chapters = chapterResult.data
+    chapterLoadError = chapterResult.error
+    allLessons = loadedLessons
   } catch (error: unknown) {
     const apiError = error as { type?: string }
+    if (isApiNotFound(error)) notFound()
     if (apiError.type === "Unauthorized") {
       return redirectToAuth(locale, `/${locale}/courses/${courseId}`)
     }
@@ -48,19 +68,54 @@ async function CourseEditor({
       </div>
     )
   }
+  if ((chapterLoadError as { type?: string } | null)?.type === "Unauthorized") {
+    return redirectToAuth(locale, `/${locale}/courses/${courseId}`)
+  }
 
-  const [teacherProfile, previewCurriculum] = await Promise.all([
-    getTeacherProfile().catch(() => null),
-    loadCoursePreviewCurriculum(courseId),
+  const [lessonItems, publicProfile] = await Promise.all([
+    Promise.all(
+      allLessons.map((lesson) => listItems(courseId, lesson.id).catch(() => []))
+    ),
+    teacherProfile
+      ? getPublicTeacherProfile(teacherProfile.slug).catch(() => null)
+      : Promise.resolve(null),
   ])
+  const itemsByLesson = new Map(allLessons.map((lesson, i) => [lesson.id, lessonItems[i]]))
+  const groupedLessons = new Map<number | null, LessonOut[]>()
+  for (const lesson of allLessons) {
+    const key = lesson.chapter_id ?? null
+    groupedLessons.set(key, [...(groupedLessons.get(key) ?? []), lesson])
+  }
+  const previewSections = [
+    ...chapters.map((chapter) => ({
+      id: chapter.id,
+      title: chapter.title,
+      lessons: (groupedLessons.get(chapter.id) ?? []).map((lesson) => ({
+        id: lesson.id, title: lesson.title, description: lesson.description,
+        durationMinutes: null,
+        items: (itemsByLesson.get(lesson.id) ?? []).map((item) => ({
+          id: item.id, title: item.title, hasVideo: !!item.bunny_stream_id,
+          hasDocument: !!item.document_path, hasExam: !!item.exam_id,
+        })),
+      })),
+    })),
+    ...(groupedLessons.has(null) ? [{
+      id: "ungrouped" as const, title: null,
+      lessons: (groupedLessons.get(null) ?? []).map((lesson) => ({
+        id: lesson.id, title: lesson.title, description: lesson.description,
+        durationMinutes: null,
+        items: (itemsByLesson.get(lesson.id) ?? []).map((item) => ({
+          id: item.id, title: item.title, hasVideo: !!item.bunny_stream_id,
+          hasDocument: !!item.document_path, hasExam: !!item.exam_id,
+        })),
+      })),
+    }] : []),
+  ]
   const subjects = teacherProfile?.subjects ?? []
   const grades = teacherProfile?.grades ?? []
   const streams = teacherProfile?.streams ?? []
   let teacherPreview: { name: string; avatarUrl: string | null } | null = null
   if (teacherProfile) {
-    const publicProfile = await getPublicTeacherProfile(
-      teacherProfile.slug
-    ).catch(() => null)
     const publicAvatarUrl = publicProfile?.img
     teacherPreview = {
       name: teacherProfile.name,
@@ -74,62 +129,29 @@ async function CourseEditor({
 
   let curriculum: React.ReactNode
   if (course.use_chapters) {
-    let chapters: Awaited<ReturnType<typeof listChapters>> = []
-    let chaptersError: string | null = null
+    const initialChapters = chapters
+    const chaptersError = chapterLoadError ? ct("error_upstream") : null
 
-    try {
-      chapters = await listChapters(courseId)
-    } catch (error: unknown) {
-      const apiError = error as { type?: string }
-      if (apiError.type === "Unauthorized") {
-        return redirectToAuth(locale, `/${locale}/courses/${courseId}`)
-      }
-      chaptersError = ct("error_upstream")
-    }
-
-    const lessonResults = await Promise.allSettled(
-      chapters.map((chapter) => listLessons(courseId, chapter.id))
-    )
     const lessonsByChapter: Record<number, LessonOut[]> = {}
-    const lessonErrorsByChapter: Record<number, string | null> = {}
-    lessonResults.forEach((result, index) => {
-      const chapterId = chapters[index]?.id
-      if (chapterId == null) return
-      if (result.status === "fulfilled") {
-        lessonsByChapter[chapterId] = result.value
-      } else {
-        lessonsByChapter[chapterId] = []
-        lessonErrorsByChapter[chapterId] = lt("error_upstream")
-      }
-    })
+    for (const chapter of initialChapters) {
+      lessonsByChapter[chapter.id] = groupedLessons.get(chapter.id) ?? []
+    }
 
     curriculum = (
       <ChapterList
-        initialChapters={chapters}
+        initialChapters={initialChapters}
         initialLessonsByChapter={lessonsByChapter}
-        lessonErrorsByChapter={lessonErrorsByChapter}
+        lessonErrorsByChapter={{}}
         courseId={courseId}
         error={chaptersError}
       />
     )
   } else {
-    let lessons: LessonOut[] = []
-    let lessonsError: string | null = null
-    try {
-      lessons = await listLessons(courseId)
-    } catch (error: unknown) {
-      const apiError = error as { type?: string }
-      if (apiError.type === "Unauthorized") {
-        return redirectToAuth(locale, `/${locale}/courses/${courseId}`)
-      }
-      lessonsError = lt("error_upstream")
-    }
-
     curriculum = (
       <LessonList
-        initialLessons={lessons}
+        initialLessons={allLessons}
         courseId={courseId}
-        error={lessonsError}
+        error={null}
       />
     )
   }
@@ -154,7 +176,7 @@ async function CourseEditor({
   return (
     <div className="space-y-6">
       <section className="animate-slide-up rounded-2xl border border-border bg-card p-4 shadow-xs animate-stagger-2 sm:p-6">
-        <CourseWorkspace
+        <CourseWorkspaceLoader
           model={buildCoursePreviewModel({
             courseId: course.id,
             values: {
@@ -172,7 +194,7 @@ async function CourseEditor({
             subjects,
             grades,
             streams,
-            sections: previewCurriculum.success ? previewCurriculum.data : [],
+            sections: previewSections,
             locale,
           })}
           locale={locale}
@@ -180,9 +202,7 @@ async function CourseEditor({
           isPublished={course.is_published}
           isArchived={course.is_archived}
           editorActions={editorActions}
-          initialSections={
-            previewCurriculum.success ? previewCurriculum.data : []
-          }
+          initialSections={previewSections}
           subjects={subjects}
           grades={grades}
           streams={streams}
@@ -220,7 +240,8 @@ export default async function CourseDetailPage({
   params: Promise<{ locale: string; courseId: string }>
 }) {
   const { locale, courseId } = await params
-  const courseIdNum = Number(courseId)
+  const courseIdNum = parsePositiveRouteId(courseId)
+  if (courseIdNum === null) notFound()
   setRequestLocale(locale)
 
   const session = await verifySession()

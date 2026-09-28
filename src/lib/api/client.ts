@@ -50,6 +50,18 @@ type FetchInit = {
   refreshOnUnauthorized?: boolean
 }
 
+function raceTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      const error = new Error("Request timeout")
+      error.name = "TimeoutError"
+      reject(error)
+    }, ms)
+  })
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer))
+}
+
 export async function apiFetch<T>(
   path: string,
   schema: z.ZodType<T>,
@@ -61,10 +73,11 @@ export async function apiFetch<T>(
   const refreshOnUnauthorized =
     init?.refreshOnUnauthorized ?? (!isGet && !init?.noAuth)
   const requestId = generateRequestId()
+  const cacheableGet = isGet && Boolean(init?.tags?.length || init?.revalidate)
 
   const headers: Record<string, string> = {
     "Accept-Language": await getAcceptLanguage(),
-    "X-Request-ID": requestId,
+    ...(!cacheableGet ? { "X-Request-ID": requestId } : {}),
     ...(init?.headers ?? {}),
   }
 
@@ -93,15 +106,17 @@ export async function apiFetch<T>(
         method,
         headers: requestHeaders,
         ...(init?.body ? { body: init.body } : {}),
-        // A retry gets a fresh timeout budget instead of reusing a signal
-        // that may have already been aborted by the first request.
-        signal: AbortSignal.timeout(timeoutMs),
+        // Cacheable GETs omit signals so Next can memoize/cache the request.
+        // All other calls keep a timeout; retries get a fresh timeout budget.
+        ...(!cacheableGet ? { signal: AbortSignal.timeout(timeoutMs) } : {}),
         next:
           init?.tags || init?.revalidate
             ? { tags: init.tags, revalidate: init.revalidate }
             : undefined,
       }
-      return await fetch(url, fetchOptions)
+      // Cacheable GETs can't carry an AbortSignal (it disables Next's
+      // memoization), so their timeout races the fetch instead of aborting it.
+      return await (cacheableGet ? raceTimeout(fetch(url, fetchOptions), timeoutMs) : fetch(url, fetchOptions))
     } catch (err) {
       if (err instanceof Error && err.name === "TimeoutError") {
         throw new ApiErrorImpl({
