@@ -4,7 +4,9 @@ import { NextIntlClientProvider } from "next-intl"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { CourseList, CourseListSkeleton } from "../components/course-list"
 import { mockCourses } from "./mocks"
-import messages from "@/i18n/messages/ar.json"
+import { messagesFor } from "@/i18n/messages/load"
+
+const messages = messagesFor("ar")
 
 function renderWithIntl(ui: React.ReactNode) {
   const queryClient = new QueryClient()

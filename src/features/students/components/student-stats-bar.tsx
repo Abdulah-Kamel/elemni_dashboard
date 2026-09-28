@@ -1,60 +1,98 @@
 "use client"
 
-import { CircleCheckBig, Clock3, Users } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { CircleCheckBig, Clock3, Hourglass, Users } from "lucide-react"
+import { useLocale, useTranslations } from "next-intl"
+import { StatTile } from "@/components/ui/stat-tile"
+import type { RosterStats } from "@/features/students/roster-model"
+
+export type StatFilter = "all" | "completed" | "pending" | "expiring"
 
 interface StudentStatsBarProps {
-  totalStudents: number
-  completedSubscriptions: number
-  pendingSubscriptions: number
+  stats: RosterStats
+  /** Which tile's filter is currently applied, if any. */
+  active: StatFilter | null
+  onSelect: (filter: StatFilter) => void
 }
 
-export function StudentStatsBar({
-  totalStudents,
-  completedSubscriptions,
-  pendingSubscriptions,
-}: StudentStatsBarProps) {
+/**
+ * Headline counts that double as one-click filters. Each tile is a toggle
+ * button: pressing an applied tile clears its filter.
+ */
+export function StudentStatsBar({ stats, active, onSelect }: StudentStatsBarProps) {
   const t = useTranslations("student")
+  const tw = useTranslations("teacherWorkspace.students")
+  const number = new Intl.NumberFormat(useLocale())
 
-  const cards = [
+  const tiles: {
+    id: StatFilter
+    label: string
+    value: number
+    hint: string
+    icon: typeof Users
+    tone: "default" | "primary" | "warning" | "success"
+  }[] = [
     {
+      id: "all",
       label: t("total_students"),
-      value: totalStudents,
+      value: stats.totalStudents,
+      hint: tw("tile_all_hint"),
       icon: Users,
-      iconClassName: "text-primary",
+      tone: "primary",
     },
     {
+      id: "completed",
       label: t("completed_subscriptions"),
-      value: completedSubscriptions,
+      value: stats.completed,
+      hint: tw("tile_filter_hint"),
       icon: CircleCheckBig,
-      iconClassName: "text-success",
+      tone: "success",
     },
     {
+      id: "pending",
       label: t("pending_subscriptions"),
-      value: pendingSubscriptions,
+      value: stats.pending,
+      hint: tw("tile_filter_hint"),
       icon: Clock3,
-      iconClassName: "text-warning",
+      tone: "warning",
+    },
+    {
+      id: "expiring",
+      label: tw("tile_expiring"),
+      value: stats.expiring,
+      hint: tw("tile_expiring_hint"),
+      icon: Hourglass,
+      tone: "warning",
     },
   ]
 
-  const stagger = ["animate-stagger-1", "animate-stagger-2", "animate-stagger-3"]
-
   return (
-    <div className="grid grid-cols-1 gap-md sm:grid-cols-3">
-      {cards.map(({ label, value, icon: Icon, iconClassName }, index) => (
-        <div
-          key={label}
-          className={`card-hover animate-slide-up ${stagger[index]} flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5 shadow-xs`}
-        >
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-on-surface-muted">
-              {label}
-            </p>
-            <Icon className={`size-4 ${iconClassName}`} aria-hidden="true" />
-          </div>
-          <p className="text-3xl font-bold text-primary">{value}</p>
-        </div>
-      ))}
+    <div
+      className="grid grid-cols-2 gap-3 lg:grid-cols-4"
+      role="group"
+      aria-label={tw("tiles_label")}
+    >
+      {tiles.map((tile) => {
+        const pressed = active === tile.id
+        return (
+          <button
+            key={tile.id}
+            type="button"
+            aria-pressed={pressed}
+            onClick={() => onSelect(tile.id)}
+            className="group rounded-xl text-start transition-transform focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none active:translate-y-px motion-reduce:transition-none"
+          >
+            <StatTile
+              label={tile.label}
+              value={number.format(tile.value)}
+              hint={tile.hint}
+              icon={tile.icon}
+              tone={pressed ? tile.tone : "default"}
+              className="h-full group-hover:border-primary/50 group-hover:bg-primary-tint/30"
+            />
+          </button>
+        )
+      })}
     </div>
   )
 }
+

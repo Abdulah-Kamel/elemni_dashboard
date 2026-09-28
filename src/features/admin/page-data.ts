@@ -12,6 +12,14 @@ import type {
 } from "@/features/admin/schema"
 import { logger } from "@/lib/logger"
 import type { ApiError } from "@/lib/api/errors"
+import {
+  countTeachersWithoutLibrary,
+  type AdminAttentionCounts,
+} from "@/features/admin/attention"
+
+/** The API caps page size at 100; with fewer teachers than that, one call sees them all. */
+const TEACHER_SCAN_LIMIT = 100
+const LATEST_LIMIT = 6
 
 type AdminPageData =
   | {
@@ -19,6 +27,7 @@ type AdminPageData =
       overview: AdminOverview
       teachers: AdminTeacherPage
       subscriptions: AdminSubscriptionPage
+      attention: AdminAttentionCounts
     }
   | {
       kind: "error"
@@ -31,19 +40,62 @@ const adminPageRequests = [
     execute: () => getAdminOverview(),
   },
   {
-    request: "/api/v1/admin/teachers?skip=0&limit=5",
-    execute: () => listAdminTeachers({ limit: 5 }),
+    request: `/api/v1/admin/teachers?skip=0&limit=${TEACHER_SCAN_LIMIT}`,
+    execute: () => listAdminTeachers({ limit: TEACHER_SCAN_LIMIT }),
   },
   {
-    request: "/api/v1/admin/subscriptions?skip=0&limit=5&payment_status=completed",
-    execute: () => listAdminSubscriptions({ limit: 5, paymentStatus: "completed" }),
+    request: `/api/v1/admin/subscriptions?skip=0&limit=${LATEST_LIMIT}&payment_status=completed`,
+    execute: () => listAdminSubscriptions({ limit: LATEST_LIMIT, paymentStatus: "completed" }),
   },
 ] as const
 
+/**
+ * Secondary counts for the attention panel. Each is the `total` of a filtered
+ * list request; a failure hides that one row instead of failing the page.
+ */
+const attentionRequests = [
+  {
+    key: "inactiveTeachers",
+    request: "/api/v1/admin/teachers?skip=0&limit=1&is_active=false",
+    execute: () => listAdminTeachers({ limit: 1, isActive: false }),
+  },
+  {
+    key: "pendingPayments",
+    request: "/api/v1/admin/subscriptions?skip=0&limit=1&payment_status=pending",
+    execute: () => listAdminSubscriptions({ limit: 1, paymentStatus: "pending" }),
+  },
+  {
+    key: "failedPayments",
+    request: "/api/v1/admin/subscriptions?skip=0&limit=1&payment_status=failed",
+    execute: () => listAdminSubscriptions({ limit: 1, paymentStatus: "failed" }),
+  },
+  {
+    key: "duplicatePayments",
+    request: "/api/v1/admin/subscriptions?skip=0&limit=1&payment_status=duplicate_paid",
+    execute: () => listAdminSubscriptions({ limit: 1, paymentStatus: "duplicate_paid" }),
+  },
+] as const
+
+async function loadAttentionTotals() {
+  const results = await Promise.allSettled(attentionRequests.map(({ execute }) => execute()))
+  const totals: Partial<Record<(typeof attentionRequests)[number]["key"], number | null>> = {}
+  results.forEach((result, index) => {
+    const { key, request } = attentionRequests[index]
+    if (result.status === "fulfilled") {
+      totals[key] = result.value.total
+      return
+    }
+    totals[key] = null
+    logger.error("Admin attention count failed", serializeAdminPageError(request, result.reason))
+  })
+  return totals
+}
+
 export async function loadAdminPageData(): Promise<AdminPageData> {
-  const results = await Promise.allSettled(
-    adminPageRequests.map(({ execute }) => execute())
-  )
+  const [results, totals] = await Promise.all([
+    Promise.allSettled(adminPageRequests.map(({ execute }) => execute())),
+    loadAttentionTotals(),
+  ])
 
   const failures = results.flatMap((result, index) =>
     result.status === "rejected"
@@ -79,6 +131,13 @@ export async function loadAdminPageData(): Promise<AdminPageData> {
     overview,
     teachers,
     subscriptions,
+    attention: {
+      duplicatePayments: totals.duplicatePayments ?? null,
+      failedPayments: totals.failedPayments ?? null,
+      teachersWithoutLibrary: countTeachersWithoutLibrary(teachers),
+      inactiveTeachers: totals.inactiveTeachers ?? null,
+      pendingPayments: totals.pendingPayments ?? null,
+    },
   }
 }
 

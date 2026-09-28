@@ -22,6 +22,14 @@ export const endpoints = {
   admin: {
     teacherPayments: (teacherProfileId: number) =>
       `/api/v1/admin/teachers/${teacherProfileId}/payments`,
+    coupons: {
+      list: "/api/v1/admin/coupons",
+      stats: "/api/v1/admin/coupons/stats",
+      detail: (code: string) => `/api/v1/admin/coupons/${encodeURIComponent(code)}`,
+      toggle: (code: string) => `/api/v1/admin/coupons/${encodeURIComponent(code)}/toggle`,
+      redemptions: (code: string) =>
+        `/api/v1/admin/coupons/${encodeURIComponent(code)}/redemptions`,
+    },
   },
   courses: {
     list: "/api/v1/courses",

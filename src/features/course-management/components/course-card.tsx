@@ -1,18 +1,26 @@
 "use client"
 
-import Image from "next/image"
 import Link from "next/link"
-import { useState } from "react"
-import { BookOpen, Layers3 } from "lucide-react"
+import { Layers3, PencilLine, Users } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import type { CourseOut } from "@/features/shell/schema"
+import { CourseCover } from "./course-overview/course-cover"
+import { CourseStatusBadge, PublishCourseButton } from "./course-overview/course-status"
+import { courseStatus } from "./course-overview/course-overview-model"
 
-function formatPrice(price: string, locale: string): string {
+export type CourseCardMetrics = {
+  /** null = the subscriptions list is unavailable, show a dash. */
+  students: number | null
+  pending: number
+  /** null = no earnings figure from the API for this course. */
+  earnings: number | null
+}
+
+export function formatPrice(price: string, locale: string): string {
   const num = Number(price)
   if (Number.isNaN(num)) return price
-  return new Intl.NumberFormat(locale === "ar" ? "ar-EG" : "en-EG", {
+  return new Intl.NumberFormat(locale, {
     style: "currency",
     currency: "EGP",
     minimumFractionDigits: 0,
@@ -20,11 +28,23 @@ function formatPrice(price: string, locale: string): string {
   }).format(num)
 }
 
+export function formatEarnings(value: number | null, locale: string): string {
+  if (value == null) return "—"
+  return new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency: "EGP",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value)
+}
+
 export function CourseCard({
   course,
+  teacherProfileId,
   locale,
   gradeName,
   streamName,
+  metrics,
   className,
 }: {
   course: CourseOut
@@ -32,64 +52,52 @@ export function CourseCard({
   locale: string
   gradeName?: string
   streamName?: string
+  metrics?: CourseCardMetrics
   className?: string
 }) {
   const t = useTranslations("courses")
-  const [imageFailed, setImageFailed] = useState(false)
-  const hasImage = course.img && !imageFailed
+  const tw = useTranslations("teacherWorkspace.courses")
+  const status = courseStatus(course)
+  const isDraft = status === "draft"
+  const href = `/${locale}/courses/${course.id}`
+  const number = new Intl.NumberFormat(locale)
 
   return (
     <article
       data-slot="card"
-      className={`group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-surface transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md ${className ?? ""}`}
+      data-status={status}
+      className={cn(
+        "group flex h-full flex-col overflow-hidden rounded-xl border bg-surface transition-colors hover:border-primary/40",
+        isDraft ? "border-dashed border-warning/60" : "border-border",
+        className
+      )}
     >
       <Link
-        href={`/${locale}/courses/${course.id}`}
-        className="relative block aspect-video overflow-hidden bg-primary-tint focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none focus-visible:ring-inset"
+        href={href}
+        className="relative block aspect-[5/2] overflow-hidden focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none focus-visible:ring-inset"
         aria-label={`${t("manage")}: ${course.title}`}
       >
-        {hasImage ? (
-          <Image
-            src={course.img ?? ""}
-            alt={course.title}
-            fill
-            unoptimized
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover transition-transform duration-300 group-hover:scale-[1.025]"
-            onError={() => setImageFailed(true)}
-          />
-        ) : (
-          <span className="absolute inset-0 flex items-center justify-center bg-linear-to-br from-primary-tint via-surface-muted to-primary-tint text-primary">
-            <span className="flex size-16 items-center justify-center rounded-2xl bg-surface/80 ring-1 ring-primary/10">
-              <BookOpen className="size-8" aria-hidden="true" />
-            </span>
-          </span>
-        )}
-        <span className="absolute inset-x-0 top-0 flex items-start justify-between bg-linear-to-b from-on-surface/45 to-transparent p-3">
-          <Badge
-            className={cn(
-              "border-0 shadow-xs",
-              course.is_archived
-                ? "bg-warning-tint text-warning"
-                : course.is_published
-                  ? "bg-success-tint text-success"
-                  : "bg-surface/95 text-on-surface-muted"
-            )}
-          >
-            {course.is_archived ? t("archived") : course.is_published ? t("published") : t("draft")}
-          </Badge>
+        <CourseCover
+          img={course.img}
+          title={course.title}
+          subjectId={course.subject_id}
+          subjectName={course.subject_name}
+          className={cn("absolute inset-0", status === "archived" && "grayscale")}
+        />
+        <span className="absolute top-2.5 start-2.5">
+          <CourseStatusBadge status={status} className="ring-1 ring-surface/70" />
         </span>
       </Link>
 
       <div className="flex flex-1 flex-col gap-3 p-4">
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <Link
-            href={`/${locale}/courses/${course.id}`}
-            className="line-clamp-2 text-title-lg font-bold text-on-surface transition-colors hover:text-primary focus-visible:rounded-sm focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+            href={href}
+            className="line-clamp-2 text-base font-semibold text-on-surface transition-colors hover:text-primary focus-visible:rounded-sm focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
           >
             {course.title}
           </Link>
-          <div className="flex flex-wrap items-center gap-1.5 text-label-md text-on-surface-muted">
+          <div className="flex flex-wrap items-center gap-1.5 text-xs text-on-surface-muted">
             {course.subject_name && <span>{course.subject_name}</span>}
             {gradeName && (
               <>
@@ -104,18 +112,72 @@ export function CourseCard({
               </>
             )}
           </div>
-        </div>
-
-        <div className="flex items-center justify-between gap-3 text-label-md text-on-surface-muted">
-          <span className="inline-flex items-center gap-1.5">
+          <p className="inline-flex items-center gap-1.5 text-xs text-on-surface-muted">
             <Layers3 className="size-3.5" aria-hidden="true" />
             {course.use_chapters ? t("chapters_organized") : t("flat_lessons")}
-          </span>
-          <span className="shrink-0 text-sm font-bold text-primary">
-            {course.price === "0.00"
-              ? t("free")
-              : formatPrice(course.price, locale)}
-          </span>
+          </p>
+        </div>
+
+        <dl className="grid grid-cols-3 divide-x divide-border rounded-lg border border-border bg-surface-muted/60 text-center">
+          <div className="px-2 py-2">
+            <dt className="text-[0.7rem] text-on-surface-muted">{tw("metric_students")}</dt>
+            <dd className="mt-0.5 text-sm font-semibold text-foreground tabular-nums">
+              {metrics?.students == null ? "—" : number.format(metrics.students)}
+            </dd>
+          </div>
+          <div className="px-2 py-2">
+            <dt className="text-[0.7rem] text-on-surface-muted">{tw("metric_earnings")}</dt>
+            <dd className="mt-0.5 truncate text-sm font-semibold text-foreground tabular-nums">
+              {formatEarnings(metrics?.earnings ?? null, locale)}
+            </dd>
+          </div>
+          <div className="px-2 py-2">
+            <dt className="text-[0.7rem] text-on-surface-muted">{t("price")}</dt>
+            <dd className="mt-0.5 truncate text-sm font-semibold text-primary tabular-nums">
+              {course.price === "0.00" ? t("free") : formatPrice(course.price, locale)}
+            </dd>
+          </div>
+        </dl>
+
+        {metrics && metrics.pending > 0 ? (
+          <p className="text-xs text-warning">
+            {tw("pending_count", { count: metrics.pending })}
+          </p>
+        ) : null}
+
+        {isDraft ? (
+          <p className="rounded-lg bg-warning-tint/60 px-3 py-2 text-xs text-on-surface">
+            {tw("draft_hint")}
+          </p>
+        ) : null}
+
+        <div className="mt-auto flex flex-wrap items-start gap-2 border-t border-border pt-3">
+          <Link
+            href={href}
+            className={cn(
+              "inline-flex h-7 items-center gap-1 rounded-md px-2.5 text-xs font-medium transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
+              isDraft
+                ? "bg-primary text-primary-foreground hover:bg-primary/85"
+                : "border border-border hover:bg-surface-muted"
+            )}
+          >
+            <PencilLine className="size-3.5" aria-hidden="true" />
+            {isDraft ? tw("continue_setup") : t("edit")}
+          </Link>
+          <Link
+            href={`/${locale}/students?course=${course.id}`}
+            className="inline-flex h-7 items-center gap-1 rounded-md border border-border px-2.5 text-xs font-medium transition-colors hover:bg-surface-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+          >
+            <Users className="size-3.5" aria-hidden="true" />
+            {tw("view_students")}
+          </Link>
+          {isDraft ? (
+            <PublishCourseButton
+              courseId={course.id}
+              teacherProfileId={teacherProfileId}
+              className="ms-auto"
+            />
+          ) : null}
         </div>
       </div>
     </article>

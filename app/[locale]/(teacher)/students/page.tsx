@@ -8,6 +8,10 @@ import { listCourses } from "@/features/course-management/queries"
 import type { ApiError } from "@/lib/api/errors"
 import type { CourseOut } from "@/features/shell/schema"
 import type { TeacherSubscription } from "@/features/students/schema"
+import {
+  parseStudentQuery,
+  serializeStudentQuery,
+} from "@/features/students/roster-model"
 
 export const dynamic = "force-dynamic"
 
@@ -16,6 +20,8 @@ type StudentsPageResult =
       kind: "ready"
       subscriptions: TeacherSubscription[]
       courses: CourseOut[]
+      /** When the data was fetched; the roster measures access windows from it. */
+      loadedAt: number
     }
   | { kind: "error"; error: ApiError }
 
@@ -28,7 +34,7 @@ async function loadStudentsData(
       listCourses(teacherProfileId),
     ])
 
-    return { kind: "ready", subscriptions, courses }
+    return { kind: "ready", subscriptions, courses, loadedAt: Date.now() }
   } catch (err) {
     return {
       kind: "error",
@@ -39,10 +45,13 @@ async function loadStudentsData(
 
 export default async function StudentsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
   const { locale } = await params
+  const initialQuery = parseStudentQuery(await searchParams)
   setRequestLocale(locale)
   const t = await getTranslations({ locale, namespace: "student" })
 
@@ -62,8 +71,8 @@ export default async function StudentsPage({
   }
 
   return (
-    <div className="space-y-7">
-      <header className="border-b border-border pb-5">
+    <div className="space-y-5">
+      <header>
         <h1 className="text-headline-md font-bold text-on-surface">
           {t("page_title")}
         </h1>
@@ -72,8 +81,12 @@ export default async function StudentsPage({
         </p>
       </header>
       <StudentRoster
+        // A real navigation (e.g. a deep link from the overview) resets local state.
+        key={serializeStudentQuery(initialQuery)}
         subscriptions={result.subscriptions}
         courses={result.courses}
+        initialQuery={initialQuery}
+        now={result.loadedAt}
       />
     </div>
   )

@@ -18,6 +18,9 @@ const row: StudentSubscriptionRow = {
   initials: "SO",
   email: "student@example.com",
   phone: null,
+  studentPhone: null,
+  whatsapp: null,
+  parentPhone: null,
   courseId: 12,
   course: "Calculus",
   purchasedAt: "2026-09-01T10:00:00+00:00",
@@ -25,7 +28,9 @@ const row: StudentSubscriptionRow = {
   totalPaid: 250,
   currency: "EGP",
   status: "duplicate_paid",
+  gradeId: null,
   grade: null,
+  streamId: null,
   stream: null,
 }
 

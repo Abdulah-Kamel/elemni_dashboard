@@ -1,204 +1,221 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { useLocale } from "next-intl"
 import type { CourseOut } from "@/features/shell/schema"
-import { StudentStatsBar } from "@/features/students/components/student-stats-bar"
-import { StudentFilters } from "@/features/students/components/student-filters"
+import { nextSort, sortRows } from "@/lib/sort"
 import {
-  StudentTable,
-  type StudentSubscriptionRow,
-} from "@/features/students/components/student-table"
+  StudentStatsBar,
+  type StatFilter,
+} from "@/features/students/components/student-stats-bar"
+import {
+  StudentFilters,
+  type FilterOption,
+} from "@/features/students/components/student-filters"
+import { StudentTable } from "@/features/students/components/student-table"
 import { StudentPagination } from "@/features/students/components/student-pagination"
+import { StudentDetailSheet } from "@/features/students/components/student-detail-sheet"
 import type { TeacherSubscription } from "@/features/students/schema"
+import {
+  ACCESS_FILTERS,
+  EMPTY_STUDENT_QUERY,
+  filterStudentRows,
+  getRosterStats,
+  serializeStudentQuery,
+  studentSortAccessors,
+  toStudentRow,
+  type AccessFilter,
+  type StudentQueryState,
+  type StudentSortKey,
+} from "@/features/students/roster-model"
 
 const ITEMS_PER_PAGE = 10
 
 type Props = {
   subscriptions: TeacherSubscription[]
   courses: CourseOut[]
+  /** Parsed from the URL on the server; see `parseStudentQuery`. */
+  initialQuery?: StudentQueryState
+  /** Server render time, used for "days left" so SSR and hydration agree. */
+  now?: number
 }
 
-function getInitials(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean)
-  if (parts.length === 0) return "ST"
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
-  return `${parts[0][0] ?? ""}${parts[1][0] ?? ""}`.toUpperCase()
+function uniqueOptions(entries: Array<[number | null, string | null]>): FilterOption[] {
+  const map = new Map<number, string>()
+  for (const [id, label] of entries) {
+    if (id != null && label && !map.has(id)) map.set(id, label)
+  }
+  return [...map.entries()]
+    .map(([id, label]) => ({ value: String(id), label }))
+    .sort((a, b) => a.label.localeCompare(b.label))
 }
 
-export function StudentRoster({ subscriptions, courses }: Props) {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [courseFilter, setCourseFilter] = useState("all")
-  const [gradeFilter, setGradeFilter] = useState("all")
-  const [streamFilter, setStreamFilter] = useState("all")
-  const [currentPage, setCurrentPage] = useState(1)
+function toId(value: string): number | null {
+  const parsed = Number(value)
+  return value !== "all" && Number.isInteger(parsed) && parsed > 0 ? parsed : null
+}
 
-  const rows = useMemo<StudentSubscriptionRow[]>(
+export function StudentRoster({
+  subscriptions,
+  courses,
+  initialQuery = EMPTY_STUDENT_QUERY,
+  now: serverNow,
+}: Props) {
+  const locale = useLocale()
+  const [now] = useState(() => serverNow ?? Date.now())
+  const [query, setQuery] = useState<StudentQueryState>(initialQuery)
+
+  // Mirror state into the URL so views can be shared, reloaded and deep-linked.
+  const queryString = serializeStudentQuery(query)
+  useEffect(() => {
+    const url = `${window.location.pathname}${queryString ? `?${queryString}` : ""}`
+    if (url !== `${window.location.pathname}${window.location.search}`) {
+      window.history.replaceState(window.history.state, "", url)
+    }
+  }, [queryString])
+
+  function update(patch: Partial<StudentQueryState>, resetPage = true) {
+    setQuery((current) => ({ ...current, ...patch, ...(resetPage ? { page: 1 } : {}) }))
+  }
+
+  const rows = useMemo(() => subscriptions.map(toStudentRow), [subscriptions])
+
+  const courseOptions = useMemo(
     () =>
-      [...subscriptions]
-        .sort(
-          (left, right) =>
-            new Date(right.purchased_at).getTime() -
-            new Date(left.purchased_at).getTime()
-        )
-        .map((subscription) => ({
-          enrollmentId: subscription.enrollment_id,
-          studentId: subscription.student_id,
-          name: subscription.student_name,
-          initials: getInitials(subscription.student_name),
-          email: subscription.student_email,
-          phone:
-            subscription.whatsapp_number ??
-            subscription.student_phone ??
-            subscription.parent_phone ??
-            null,
-          courseId: subscription.course.id,
-          course: subscription.course.title,
-          purchasedAt: subscription.purchased_at,
-          expiresAt: subscription.expires_at,
-          totalPaid: subscription.total_paid,
-          currency: subscription.currency || "EGP",
-          status: subscription.payment_status.toLowerCase(),
-          grade: subscription.grade_name ?? null,
-          stream: subscription.stream_name ?? null,
-        })),
-    [subscriptions]
+      uniqueOptions([
+        ...courses.map((course): [number, string] => [course.id, course.title]),
+        ...rows.map((row): [number, string] => [row.courseId, row.course]),
+      ]),
+    [courses, rows]
   )
-
-  const courseOptions = useMemo(() => {
-    const linkedCourses = rows.map((row) => row.course)
-    const allCourses = new Set([
-      ...courses.map((course) => course.title),
-      ...linkedCourses,
-    ])
-    return [...allCourses].sort()
-  }, [courses, rows])
-
   const gradeOptions = useMemo(
-    () =>
-      [
-        ...new Set(rows.map((row) => row.grade).filter(Boolean) as string[]),
-      ].sort(),
+    () => uniqueOptions(rows.map((row) => [row.gradeId, row.grade])),
     [rows]
   )
-
   const streamOptions = useMemo(
-    () =>
-      [
-        ...new Set(rows.map((row) => row.stream).filter(Boolean) as string[]),
-      ].sort(),
+    () => uniqueOptions(rows.map((row) => [row.streamId, row.stream])),
     [rows]
   )
+  const statusOptions = useMemo(() => {
+    const statuses = new Set(rows.map((row) => row.status))
+    if (query.status) statuses.add(query.status)
+    return [...statuses].sort()
+  }, [rows, query.status])
 
-  const statusOptions = useMemo(
-    () => [...new Set(rows.map((row) => row.status))].sort(),
-    [rows]
+  const filtered = useMemo(
+    () => filterStudentRows(rows, query, now),
+    [rows, query, now]
+  )
+  const sorted = useMemo(
+    () => sortRows(filtered, query.sort, studentSortAccessors, locale),
+    [filtered, query.sort, locale]
   )
 
-  const filteredStudents = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase()
-
-    return rows.filter((row) => {
-      const matchesSearch =
-        !term ||
-        row.name.toLowerCase().includes(term) ||
-        row.email.toLowerCase().includes(term) ||
-        row.course.toLowerCase().includes(term) ||
-        row.phone?.toLowerCase().includes(term)
-
-      const matchesStatus =
-        statusFilter === "all" || row.status === statusFilter
-      const matchesCourse =
-        courseFilter === "all" || row.course === courseFilter
-      const matchesGrade = gradeFilter === "all" || row.grade === gradeFilter
-      const matchesStream =
-        streamFilter === "all" || row.stream === streamFilter
-
-      return (
-        matchesSearch &&
-        matchesStatus &&
-        matchesCourse &&
-        matchesGrade &&
-        matchesStream
-      )
-    })
-  }, [courseFilter, gradeFilter, rows, searchTerm, statusFilter, streamFilter])
-
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredStudents.length / ITEMS_PER_PAGE)
-  )
-  const paginatedStudents = filteredStudents.slice(
+  const totalPages = Math.max(1, Math.ceil(sorted.length / ITEMS_PER_PAGE))
+  const currentPage = Math.min(query.page, totalPages)
+  const pageRows = sorted.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   )
 
-  const stats = useMemo(() => {
-    const uniqueStudents = new Set(rows.map((row) => row.studentId)).size
-    const completed = rows.filter((row) => row.status === "completed").length
-    const pending = rows.filter((row) => row.status === "pending").length
+  const stats = useMemo(() => getRosterStats(rows, now), [rows, now])
+  const activeTile: StatFilter | null =
+    query.access === "expiring" && !query.status
+      ? "expiring"
+      : !query.access && (query.status === "completed" || query.status === "pending")
+        ? query.status
+        : !query.access && !query.status
+          ? "all"
+          : null
 
-    return {
-      totalStudents: uniqueStudents,
-      completedSubscriptions: completed,
-      pendingSubscriptions: pending,
+  function handleTile(tile: StatFilter) {
+    if (tile === "all" || tile === activeTile) {
+      update({ status: null, access: null })
+    } else if (tile === "expiring") {
+      update({ status: null, access: "expiring" })
+    } else {
+      update({ status: tile, access: null })
     }
-  }, [rows])
-
-  function resetPagination() {
-    setCurrentPage(1)
   }
 
+  const selectedSubscriptions = useMemo(
+    () => (query.student ? rows.filter((row) => row.studentId === query.student) : []),
+    [rows, query.student]
+  )
+
+  const hasActiveFilters = Boolean(
+    query.q || query.status || query.course || query.grade || query.stream || query.access
+  )
+
   return (
-    <div className="flex flex-col gap-xl">
-      <div className="animate-slide-up">
-        <StudentStatsBar
-          totalStudents={stats.totalStudents}
-          completedSubscriptions={stats.completedSubscriptions}
-          pendingSubscriptions={stats.pendingSubscriptions}
-        />
-      </div>
-      <div className="flex animate-slide-up animate-stagger-1 flex-col gap-md">
+    <div className="flex flex-col gap-5">
+      <StudentStatsBar stats={stats} active={activeTile} onSelect={handleTile} />
+      <div className="flex flex-col gap-3">
         <StudentFilters
-          searchTerm={searchTerm}
-          onSearchChange={(value) => {
-            setSearchTerm(value)
-            resetPagination()
-          }}
-          statusFilter={statusFilter}
-          onStatusChange={(value) => {
-            setStatusFilter(value)
-            resetPagination()
-          }}
+          searchTerm={query.q}
+          onSearchChange={(value) => update({ q: value })}
+          statusFilter={query.status ?? "all"}
+          onStatusChange={(value) => update({ status: value === "all" ? null : value })}
           statusOptions={statusOptions}
-          courseFilter={courseFilter}
-          onCourseChange={(value) => {
-            setCourseFilter(value)
-            resetPagination()
-          }}
+          courseFilter={query.course ? String(query.course) : "all"}
+          onCourseChange={(value) => update({ course: toId(value) })}
           courses={courseOptions}
-          gradeFilter={gradeFilter}
-          onGradeChange={(value) => {
-            setGradeFilter(value)
-            resetPagination()
-          }}
+          gradeFilter={query.grade ? String(query.grade) : "all"}
+          onGradeChange={(value) => update({ grade: toId(value) })}
           grades={gradeOptions}
-          streamFilter={streamFilter}
-          onStreamChange={(value) => {
-            setStreamFilter(value)
-            resetPagination()
-          }}
+          streamFilter={query.stream ? String(query.stream) : "all"}
+          onStreamChange={(value) => update({ stream: toId(value) })}
           streams={streamOptions}
+          accessFilter={query.access ?? "all"}
+          onAccessChange={(value) =>
+            update({
+              access: (ACCESS_FILTERS as readonly string[]).includes(value)
+                ? (value as AccessFilter)
+                : null,
+            })
+          }
+          hasActiveFilters={hasActiveFilters}
+          onClear={() =>
+            update({ q: "", status: null, course: null, grade: null, stream: null, access: null })
+          }
         />
-        <StudentTable students={paginatedStudents} />
+        <StudentTable
+          students={pageRows}
+          sort={query.sort}
+          onSort={(column: StudentSortKey) =>
+            update({ sort: nextSort(query.sort, column) }, false)
+          }
+          onOpenStudent={(studentId) => update({ student: studentId }, false)}
+          selectedStudentId={query.student}
+          now={now}
+        />
         <StudentPagination
           currentPage={currentPage}
           totalPages={totalPages}
-          totalCount={filteredStudents.length}
+          totalCount={sorted.length}
           pageSize={ITEMS_PER_PAGE}
-          onPageChange={setCurrentPage}
+          onPageChange={(page) => update({ page }, false)}
         />
       </div>
+      <StudentDetailSheet
+        subscriptions={selectedSubscriptions}
+        open={query.student != null}
+        onOpenChange={(open) => {
+          if (!open) update({ student: null }, false)
+        }}
+        onFilterCourse={(courseId) =>
+          update({
+            student: null,
+            course: courseId,
+            q: "",
+            status: null,
+            grade: null,
+            stream: null,
+            access: null,
+          })
+        }
+        now={now}
+      />
     </div>
   )
 }

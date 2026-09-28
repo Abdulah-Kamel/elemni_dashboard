@@ -22,14 +22,14 @@ export function LocaleToggle() {
   return (
     <Button
       variant="ghost"
-      size="icon"
+      size="default"
       onClick={handleToggle}
       aria-label={targetLabel}
       title={targetLabel}
-      className="relative min-w-10 gap-1 px-2"
+      className="h-9 gap-1 px-2 text-on-surface-muted hover:bg-surface-muted hover:text-on-surface"
     >
-      <Globe className="size-5" aria-hidden="true" />
-      <span className="text-label-md text-label-md--line-height font-bold uppercase">
+      <Globe className="size-4" aria-hidden="true" />
+      <span className="text-label-md font-semibold uppercase">
         {targetCode}
       </span>
     </Button>

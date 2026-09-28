@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 import { MobileBottomNav } from "./mobile-bottom-nav"
+import { ADMIN_NAV, TEACHER_NAV } from "@/features/shell/nav-config"
 
 vi.mock("next-intl", () => ({
   useTranslations: vi.fn().mockReturnValue((key: string) => {
@@ -48,6 +49,23 @@ describe("MobileBottomNav", () => {
     expect(screen.getByRole("link", { name: "Usage" }).getAttribute("href")).toBe(
       "/usage"
     )
+  })
+
+  it("mirrors the shared nav config for both roles", () => {
+    const { unmount } = render(<MobileBottomNav />)
+    expect(screen.getAllByRole("link").map((a) => a.getAttribute("href"))).toEqual(
+      TEACHER_NAV.filter((item) => item.mobile).map((item) => item.href)
+    )
+    unmount()
+    render(<MobileBottomNav userRole="ADMIN" />)
+    expect(screen.getAllByRole("link").map((a) => a.getAttribute("href"))).toEqual(
+      ADMIN_NAV.filter((item) => item.mobile).map((item) => item.href)
+    )
+  })
+
+  it("marks the active destination for assistive tech", () => {
+    render(<MobileBottomNav />)
+    expect(screen.getByRole("link", { name: "Overview" }).getAttribute("aria-current")).toBe("page")
   })
 
   it("has minimum touch target size of 44px", () => {

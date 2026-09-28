@@ -44,7 +44,7 @@ export function EarningsCostChart({
   return (
     <ChartContainer
       config={config}
-      className="h-72 min-h-64 w-full px-4 pt-4 pb-6 text-body-md text-body-md--line-height sm:h-80"
+      className="h-72 min-h-64 w-full px-4 pt-4 pb-6 text-body-md sm:h-80"
       role="img"
       aria-label={ariaLabel}
     >

@@ -8,5 +8,4 @@ export const adminKeys = {
   payments: (teacherProfileId: number) =>
     ["admin", "teacher-payments", teacherProfileId] as const,
   taxonomy: (kind: string) => ["admin", kind] as const,
-  coupons: (params?: unknown) => ["admin", "coupons", params ?? {}] as const,
 };

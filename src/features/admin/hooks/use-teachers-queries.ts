@@ -1,9 +1,10 @@
 "use client"
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { adminKeys } from "@/features/admin/query-keys"
 import {
   createTeacher,
+  getTeacherAction,
   listTeachersAction,
   updateTeacher,
 } from "@/features/admin/actions"
@@ -13,6 +14,16 @@ export function useTeachersQuery(params: PageParams = {}) {
   return useQuery({
     queryKey: adminKeys.teachers(params),
     queryFn: () => listTeachersAction(params),
+    placeholderData: keepPreviousData,
+  })
+}
+
+/** One teacher for the side panel; skipped when the row is already loaded. */
+export function useTeacherQuery(id: number | null, enabled: boolean) {
+  return useQuery({
+    queryKey: adminKeys.teacher(id ?? 0),
+    queryFn: () => getTeacherAction(id as number),
+    enabled: enabled && id !== null,
   })
 }
 

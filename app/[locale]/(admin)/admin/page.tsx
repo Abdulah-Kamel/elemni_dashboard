@@ -27,6 +27,7 @@ export default async function AdminPage({
       overview={result.overview}
       teachers={result.teachers}
       subscriptions={result.subscriptions}
+      attention={result.attention}
     />
   )
 }

@@ -7,6 +7,7 @@ import { redirectToAuth } from "@/lib/auth/redirect"
 import { Sidebar } from "@/features/shell/components/sidebar"
 import { Topbar } from "@/features/shell/components/topbar"
 import { MobileBottomNav } from "@/features/shell/components/mobile-bottom-nav"
+import { CommandPaletteProvider } from "@/features/command-palette/command-palette"
 import { ChapterNavigationProvider } from "@/features/course-management/chapter-navigation-context"
 import { headers } from "next/headers"
 import { sanitizeNextPath } from "@/lib/routes"
@@ -46,22 +47,24 @@ export default async function TeacherLayout({
   const teacherRole = t("teacher_role")
 
   return (
-    <ClientMessageProvider namespaces={["common", "topbar", "sidebar", "placeholder", "courses", "lessons", "items", "chapters", "profile", "settings", "student", "analytics", "billing", "earnings", "storage"]}>
+    <ClientMessageProvider namespaces={["common", "topbar", "sidebar", "placeholder", "courses", "lessons", "items", "chapters", "profile", "settings", "student", "analytics", "billing", "earnings", "storage", "dashboardShell", "teacherWorkspace", "teacherHome"]}>
     <DirectionProvider direction={(locale === "ar" ? "rtl" : "ltr") as never}>
-      <div className="flex h-dvh overflow-hidden bg-page">
-        <Sidebar teacherName={user.name} teacherRole={teacherRole} />
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-          <Topbar teacherName={user.name} />
-          <main className="flex-1 overflow-auto pb-[calc(4rem+env(safe-area-inset-bottom,0px))] md:pb-0">
-            <ChapterNavigationProvider>
-              <div className="teacher-content-shell w-full animate-fade-in px-container-margin py-xl">
-                {children}
-              </div>
-            </ChapterNavigationProvider>
-          </main>
+      <CommandPaletteProvider role="teacher">
+        <div className="flex h-dvh overflow-hidden bg-page">
+          <Sidebar teacherName={user.name} teacherRole={teacherRole} userRole={user.role} />
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+            <Topbar userName={user.name} roleLabel={teacherRole} role="teacher" />
+            <main className="flex-1 overflow-auto pb-[calc(4rem+env(safe-area-inset-bottom,0px))] md:pb-0">
+              <ChapterNavigationProvider>
+                <div className="teacher-content-shell w-full animate-fade-in px-container-margin py-xl">
+                  {children}
+                </div>
+              </ChapterNavigationProvider>
+            </main>
+          </div>
+          <MobileBottomNav userRole={user.role} />
         </div>
-        <MobileBottomNav />
-      </div>
+      </CommandPaletteProvider>
     </DirectionProvider>
     </ClientMessageProvider>
   )

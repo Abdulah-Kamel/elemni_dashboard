@@ -5,8 +5,16 @@ import { join } from "node:path";
 const messagesDir = join(__dirname, "..", "..", "src", "i18n", "messages");
 
 function loadMessages(locale: string): Record<string, unknown> {
-  const raw = readFileSync(join(messagesDir, `${locale}.json`), "utf-8");
-  return JSON.parse(raw);
+  const merged: Record<string, unknown> = JSON.parse(readFileSync(join(messagesDir, `${locale}.json`), "utf-8"));
+  const areasDir = join(messagesDir, "areas");
+  for (const file of readdirSync(areasDir).filter((name) => name.endsWith(`.${locale}.json`))) {
+    const area = JSON.parse(readFileSync(join(areasDir, file), "utf-8")) as Record<string, unknown>;
+    for (const key of Object.keys(area)) {
+      if (key in merged) throw new Error(`${file} redefines the "${key}" namespace`);
+    }
+    Object.assign(merged, area);
+  }
+  return merged;
 }
 
 function flattenKeys(obj: Record<string, unknown>, prefix = ""): string[] {
