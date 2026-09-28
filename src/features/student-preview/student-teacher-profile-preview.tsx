@@ -400,7 +400,7 @@ export function StudentTeacherProfilePreview({
                     </div>
                   </div>
                   <div className="mt-2 p-5 pt-0">
-                    <div className="flex items-center justify-between gap-3 border-t border-[#F1F5F9] pt-3">
+                    <div className="flex items-center justify-between gap-3 border-t border-[#F1F5F9] pt-3 dark:border-border">
                       <div>
                         <span className="text-2xl font-black text-[var(--on-surface)]">
                           {course.price}
@@ -434,7 +434,7 @@ export function StudentTeacherProfilePreview({
                     </div>
                   </div>
                   {course.isSubscribed && isExpanded && (
-                    <div className="border-t border-[#F1F5F9] bg-[#F8FAFC] px-5 py-4">
+                    <div className="border-t border-[#F1F5F9] bg-[#F8FAFC] px-5 py-4 dark:border-border dark:bg-surface-muted">
                       {course.sections.length ? (
                         <div className="space-y-4">
                           {course.sections.map((section) => (
