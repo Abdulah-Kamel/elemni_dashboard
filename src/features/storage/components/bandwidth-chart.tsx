@@ -47,7 +47,7 @@ export function BandwidthChart() {
             onClick={() => setRange("7d")}
             className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
               range === "7d"
-                ? "bg-surface text-foreground shadow-xs"
+                ? "bg-surface text-foreground shadow-xs dark:bg-surface-strong"
                 : "text-on-surface-muted hover:text-foreground"
             }`}
           >
@@ -57,7 +57,7 @@ export function BandwidthChart() {
             onClick={() => setRange("30d")}
             className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
               range === "30d"
-                ? "bg-surface text-foreground shadow-xs"
+                ? "bg-surface text-foreground shadow-xs dark:bg-surface-strong"
                 : "text-on-surface-muted hover:text-foreground"
             }`}
           >

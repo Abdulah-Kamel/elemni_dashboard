@@ -235,7 +235,7 @@ export function CourseList({
                 className={cn(
                   "inline-flex size-8 items-center justify-center rounded-md transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
                   query.view === id
-                    ? "bg-surface text-foreground shadow-xs"
+                    ? "bg-surface text-foreground shadow-xs dark:bg-surface-strong"
                     : "text-on-surface-muted hover:text-foreground"
                 )}
               >
