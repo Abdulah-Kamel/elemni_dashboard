@@ -78,7 +78,7 @@
     --color-foreground: var(--on-surface);
     --color-card: var(--surface);
     --color-card-foreground: var(--on-surface);
-    --color-popover: var(--surface);
+    --color-popover: var(--surface-raised);
     --color-popover-foreground: var(--on-surface);
     --color-primary: var(--brand-indigo);
     --color-primary-foreground: var(--on-primary);
@@ -215,34 +215,36 @@
 }
 
 .dark {
+    /* Neutral charcoal: layering comes from lightness steps (page < surface <
+       raised), not hue. Sky blue is reserved for actions, selection and focus. */
     --brand-indigo: #38BDF8;
     --brand-indigo-deep: #0EA5E9;
-    --brand-indigo-tint: #0C2A44;
+    --brand-indigo-tint: #10232F;
     --brand-amber: #FB923C;
-    --brand-amber-tint: #422006;
+    --brand-amber-tint: #2A1D12;
     --brand-emerald: #4ADE80;
-    --brand-emerald-tint: #14532D;
+    --brand-emerald-tint: #11261A;
     --brand-rose: #F87171;
-    --brand-rose-tint: #450A0A;
+    --brand-rose-tint: #2E1517;
 
-    --page: #0B132B;
-    --surface: #0F172A;
-    --surface-raised: #162033;
-    --surface-muted: #162033;
-    --surface-subtle: #1E293B;
-    --surface-strong: #273449;
+    --page: #0C0F14;
+    --surface: #151A21;
+    --surface-raised: #1C222B;
+    --surface-muted: #1A2028;
+    --surface-subtle: #232A34;
+    --surface-strong: #2A313C;
 
-    --on-surface: #F8FAFC;
-    --on-surface-muted: #94A3B8;
-    --on-surface-subtle: #64748B;
-    --on-primary: #0B132B;
+    --on-surface: #E8ECF1;
+    --on-surface-muted: #9AA4B2;
+    --on-surface-subtle: #7A8494;
+    --on-primary: #0C0F14;
     --on-primary-tint: #BAE6FD;
 
-    --border: #1E293B;
-    --border-strong: #334155;
+    --border: #262D37;
+    --border-strong: #353D49;
 
-    --color-chart-grid: var(--zinc-800);
-    --color-chart-axis: var(--zinc-500);
+    --color-chart-grid: #232A34;
+    --color-chart-axis: #7A8494;
 }
 
 @layer base {

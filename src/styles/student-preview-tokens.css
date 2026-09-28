@@ -54,37 +54,37 @@
 
 /* Match the dashboard theme when previews are rendered inside .dark. */
 .dark .student-preview {
-  --page: #0B132B;
-  --surface: #0F172A;
-  --surface-raised: #162033;
-  --surface-muted: #162033;
-  --surface-subtle: #1E293B;
-  --surface-strong: #273449;
-  --surface-sunken: #0B132B;
+  --page: #0C0F14;
+  --surface: #151A21;
+  --surface-raised: #1C222B;
+  --surface-muted: #1A2028;
+  --surface-subtle: #232A34;
+  --surface-strong: #2A313C;
+  --surface-sunken: #0C0F14;
 
-  --on-surface: #F8FAFC;
-  --on-surface-strong: #F8FAFC;
-  --on-surface-body: #CBD5E1;
-  --on-surface-muted: #94A3B8;
-  --on-surface-subtle: #64748B;
-  --on-primary: #0B132B;
+  --on-surface: #E8ECF1;
+  --on-surface-strong: #F3F5F8;
+  --on-surface-body: #C3CAD4;
+  --on-surface-muted: #9AA4B2;
+  --on-surface-subtle: #7A8494;
+  --on-primary: #0C0F14;
   --on-primary-tint: #BAE6FD;
 
   --brand-indigo: #38BDF8;
   --brand-indigo-deep: #0EA5E9;
-  --brand-indigo-tint: #0C2A44;
-  --brand-indigo-border: #164E63;
-  --brand-indigo-icon: #64748B;
-  --brand-indigo-near-black: #F8FAFC;
+  --brand-indigo-tint: #10232F;
+  --brand-indigo-border: #1D4459;
+  --brand-indigo-icon: #7A8494;
+  --brand-indigo-near-black: #F3F5F8;
 
   --brand-amber: #FB923C;
-  --brand-amber-tint: #422006;
+  --brand-amber-tint: #2A1D12;
   --brand-emerald: #4ADE80;
-  --brand-emerald-tint: #14532D;
+  --brand-emerald-tint: #11261A;
   --brand-rose: #F87171;
-  --brand-rose-tint: #450A0A;
+  --brand-rose-tint: #2E1517;
 
-  --border: #1E293B;
-  --border-strong: #334155;
-  --border-subtle: #273449;
+  --border: #262D37;
+  --border-strong: #353D49;
+  --border-subtle: #1F252E;
 }

@@ -100,9 +100,9 @@ describe("student-preview token scoping", () => {
     it("defines a dark palette for previews inside the dashboard dark theme", () => {
       const darkBlock =
         css.match(/\.dark\s+\.student-preview\s*\{([^}]+)\}/)?.[1] ?? "";
-      expect(darkBlock).toContain("--page: #0B132B;");
-      expect(darkBlock).toContain("--surface: #0F172A;");
-      expect(darkBlock).toContain("--on-surface: #F8FAFC;");
+      expect(darkBlock).toContain("--page: #0C0F14;");
+      expect(darkBlock).toContain("--surface: #151A21;");
+      expect(darkBlock).toContain("--on-surface: #E8ECF1;");
     });
 
     it("surface-muted is #F0F9FF", () => {
