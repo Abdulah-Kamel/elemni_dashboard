@@ -9,16 +9,19 @@ export const itemOutSchema = z.object({
   document_path: z.string().nullable(),
   exam_id: z.number().int().nullable(),
   order: z.number(),
+  max_watch_count: z.number().int().positive().nullable().optional().transform((v) => v ?? null),
 });
 export type ItemOut = z.infer<typeof itemOutSchema>;
 
 export const itemCreateSchema = z.object({
   title: z.string().min(1).max(200),
+  max_watch_count: z.number().int().min(1).max(1000).nullable().optional(),
 });
 export type ItemCreate = z.infer<typeof itemCreateSchema>;
 
 export const itemUpdateSchema = z.object({
   title: z.string().min(1).max(200).optional(),
+  max_watch_count: z.number().int().min(1).max(1000).nullable().optional(),
 });
 export type ItemUpdate = z.infer<typeof itemUpdateSchema>;
 

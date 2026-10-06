@@ -36,6 +36,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { AttachedFilesSection } from "./attached-files-section"
+import { parseWatchLimit } from "../watch-limit"
 import { validateItemUploadFile } from "../item-upload-validation"
 import type { ItemOut } from "@/features/course-management/items-schema"
 import { useCourseBuilderBridge } from "@/features/course-management/course-builder-bridge"
@@ -130,6 +131,8 @@ export function ItemCard({
     Record<"video" | "document", HTMLInputElement | null>
   >({ video: null, document: null })
   const [editTitle, setEditTitle] = useState(item.title)
+  const [editWatchLimit, setEditWatchLimit] = useState(String(item.max_watch_count ?? ""))
+  const [watchLimitError, setWatchLimitError] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const submitting =
     update.isPending || remove.isPending || deletingMedia !== null
@@ -307,12 +310,23 @@ export function ItemCard({
 
   const handleSave = useCallback(async () => {
     const trimmed = editTitle.trim()
-    if (!trimmed) return
+    if (!trimmed || submitting) return
+    const limit = parseWatchLimit(editWatchLimit)
+    if (hasVideo && !limit.ok) {
+      setWatchLimitError(true)
+      return
+    }
+    setWatchLimitError(false)
     setError(null)
     try {
       const updatedItem = await update.mutateAsync({
         itemId: item.id,
-        data: { title: trimmed },
+        data: {
+          title: trimmed,
+          ...(hasVideo && limit.ok && limit.value !== (item.max_watch_count ?? null)
+            ? { max_watch_count: limit.value }
+            : {}),
+        },
       })
       onUpdate(updatedItem)
       setEditOpen(false)
@@ -323,7 +337,7 @@ export function ItemCard({
           : t("upload_error")
       )
     }
-  }, [editTitle, item.id, onUpdate, t, update])
+  }, [editTitle, editWatchLimit, hasVideo, item.id, item.max_watch_count, onUpdate, submitting, t, update])
 
   const handleUpdateTitle = useCallback(
     async (title: string) => {
@@ -419,6 +433,14 @@ export function ItemCard({
         {item.title}
       </span>
 
+      {hasVideo && (
+        <Badge variant="outline" className="text-xs">
+          {item.max_watch_count == null
+            ? t("watchLimit.unlimited")
+            : t("watchLimit.views", { count: item.max_watch_count })}
+        </Badge>
+      )}
+
       {status && (
         <Badge
           variant={status.variant}
@@ -492,6 +514,8 @@ export function ItemCard({
           className="size-6"
           onClick={() => {
             setEditTitle(item.title)
+            setEditWatchLimit(String(item.max_watch_count ?? ""))
+            setWatchLimitError(false)
             setError(null)
             setEditOpen(true)
           }}
@@ -586,6 +610,42 @@ export function ItemCard({
                 }}
               />
             </div>
+            {hasVideo && (
+              <div className="space-y-1.5">
+                <Label htmlFor={`item-watch-limit-${item.id}`}>
+                  {t("watchLimit.label")}
+                </Label>
+                <Input
+                  id={`item-watch-limit-${item.id}`}
+                  type="number"
+                  min={1}
+                  max={1000}
+                  step={1}
+                  value={editWatchLimit}
+                  disabled={submitting}
+                  aria-invalid={watchLimitError}
+                  aria-describedby={`item-watch-limit-hint-${item.id}${watchLimitError ? ` item-watch-limit-error-${item.id}` : ""}`}
+                  onChange={(event) => {
+                    setEditWatchLimit(event.target.value)
+                    setWatchLimitError(false)
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault()
+                      void handleSave()
+                    }
+                  }}
+                />
+                <p id={`item-watch-limit-hint-${item.id}`} className="text-xs text-muted-foreground">
+                  {t("watchLimit.hint")}
+                </p>
+                {watchLimitError && (
+                  <p id={`item-watch-limit-error-${item.id}`} role="alert" className="text-sm text-destructive">
+                    {t("watchLimit.invalid")}
+                  </p>
+                )}
+              </div>
+            )}
             <AttachedFilesSection
               item={item}
               onUpdate={onUpdate}

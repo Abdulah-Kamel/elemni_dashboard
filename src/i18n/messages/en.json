@@ -416,6 +416,13 @@
     "error_upstream": "Something went wrong while processing your request. Please try again."
   },
   "items": {
+    "watchLimit": {
+      "label": "Max views per student",
+      "hint": "Leave empty for unlimited views.",
+      "views": "{count, plural, one {# view} other {# views}}",
+      "unlimited": "Unlimited views",
+      "invalid": "Enter a whole number from 1 to 1000, or leave it empty."
+    },
     "title": "Items",
     "create": "Add Item",
     "create_placeholder": "Item title",

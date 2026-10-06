@@ -13,6 +13,7 @@ const bareItem: ItemOut = {
   document_path: null,
   exam_id: null,
   order: 1,
+  max_watch_count: null,
 }
 const videoItem: ItemOut = {
   ...bareItem,
