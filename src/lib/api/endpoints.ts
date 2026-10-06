@@ -79,6 +79,13 @@ export const endpoints = {
         `/api/v1/courses/${courseId}/lessons/${lessonId}/items/${itemId}/document`,
     },
   },
+  videoAnalytics: {
+    grants: {
+      create: "/api/v1/video-analytics/grants",
+      list: (userId: number) => `/api/v1/video-analytics/grants?user_id=${userId}`,
+      revoke: (grantId: number) => `/api/v1/video-analytics/grants/${grantId}`,
+    },
+  },
   public: {
     subjects: "/api/v1/subjects",
     grades: "/api/v1/grades",
