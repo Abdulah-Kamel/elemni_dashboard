@@ -1043,5 +1043,28 @@
       "refunded": "Refunded",
       "duplicate_paid": "Duplicate paid"
     }
+  },
+  "videoGrants": {
+    "title": "Extra video views",
+    "grant": "Grant extra views",
+    "noActiveSubscription": "This student has no active subscription with you.",
+    "course": "Course", "video": "Video", "views": "Extra views", "reason": "Reason (optional)", "expiry": "Expires on (optional)",
+    "limitN": "limit {count}", "unlimited": "unlimited",
+    "noLimitNote": "This video has no watch limit, so extra views are not needed yet.",
+    "submit": "Grant", "cancel": "Cancel", "granted": "Extra views granted.",
+    "remaining": "{remaining} of {granted} left",
+    "status": { "active": "Active", "usedUp": "Used up", "expired": "Expired", "revoked": "Revoked" },
+    "revoke": "Revoke", "revokeConfirm": "Revoke this grant? Unused views will be removed.",
+    "empty": "No extra views granted yet.", "loadError": "Could not load grants.", "retry": "Retry",
+    "videoFallback": "Video #{id}",
+    "invalidViews": "Enter a whole number from 1 to 1000.",
+    "errors": {
+      "not_enrolled": "This student has no active subscription to this course.",
+      "not_owner": "You can only grant views on your own videos.",
+      "not_found": "That video or grant no longer exists.",
+      "conflict": "This request was already sent with different values. Close the form and try again.",
+      "invalid": "Check the values and try again.",
+      "unknown": "Something went wrong on our side. Try again in a moment."
+    }
   }
 }

@@ -17,6 +17,7 @@ import {
   getAccessState,
   type StudentSubscriptionRow,
 } from "@/features/students/roster-model"
+import { GrantViewsSection } from "@/features/video-grants/components/grant-views-section"
 import { formatAmount } from "@/features/students/format"
 
 type Props = {
@@ -166,6 +167,7 @@ export function StudentDetailSheet({
               </ul>
               <p className="mt-4 text-xs text-on-surface-muted">{tw("amount_note")}</p>
             </section>
+            <GrantViewsSection key={student.studentId} studentId={student.studentId} subscriptions={subscriptions} now={now} />
           </>
         ) : null}
       </SheetContent>
