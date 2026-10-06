@@ -46,14 +46,17 @@ describe("watch limit", () => {
     expect(itemOutSchema.parse(base).max_watch_count).toBeNull()
   })
   it.each([["", { ok: true, value: null }], ["  ", { ok: true, value: null }], ["3", { ok: true, value: 3 }], ["1000", { ok: true, value: 1000 }],
-    ["0", { ok: false }], ["-2", { ok: false }], ["1001", { ok: false }], ["2.5", { ok: false }], ["abc", { ok: false }]] as const)(
+    ["0", { ok: false }], ["-1", { ok: false }], ["1001", { ok: true, value: 1001 }], ["5000", { ok: true, value: 5000 }], ["2.5", { ok: false }], ["abc", { ok: false }]] as const)(
     "empty limit saves null / parses %j", (input, expected) => { expect(parseWatchLimit(input)).toEqual(expected) })
-  it("update/create schemas accept null and reject out-of-range", () => {
+  it("update/create schemas accept null and positive integers without a business cap", () => {
     expect(itemUpdateSchema.parse({ max_watch_count: null })).toEqual({ max_watch_count: null })
     expect(itemCreateSchema.parse({ title: "V", max_watch_count: null })).toEqual({ title: "V", max_watch_count: null })
     for (const schema of [itemUpdateSchema, itemCreateSchema]) {
-      for (const max_watch_count of [0, -2, 1001, 2.5]) {
+      for (const max_watch_count of [0, -1, 2.5]) {
         expect(schema.safeParse({ title: "V", max_watch_count }).success).toBe(false)
+      }
+      for (const max_watch_count of [1, 1001, 5000]) {
+        expect(schema.safeParse({ title: "V", max_watch_count }).success).toBe(true)
       }
     }
   })
@@ -90,6 +93,23 @@ describe("watch limit", () => {
       expect(document.activeElement).toBe(button)
     }
   })
+  it("saves a title-only edit on an existing item with a 1001 limit", async () => {
+    mountCard(1001)
+    fireEvent.click(screen.getByRole("button", { name: "Edit item" }))
+    const limit = screen.getByRole("spinbutton", { name: "Max views per student" })
+    expect(limit.getAttribute("max")).toBeNull()
+    fireEvent.change(screen.getByRole("textbox", { name: "Item title" }), { target: { value: "Updated" } })
+    fireEvent.click(screen.getByRole("button", { name: "Save" }))
+    await waitFor(() => expect(actions.updateItem).toHaveBeenCalledWith(57, 1, { title: "Updated" }))
+  })
+  it.each([1001, 5000])("allows creating a video with limit %s", (value) => {
+    const onSubmit = mountCreate()
+    const limit = screen.getByRole("spinbutton", { name: "Max views per student" })
+    expect(limit.getAttribute("max")).toBeNull()
+    fireEvent.change(limit, { target: { value: String(value) } })
+    fireEvent.click(screen.getByRole("button", { name: "Create item" }))
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ max_watch_count: value }))
+  })
   it("empty limit saves null through updateItem", async () => {
     mountCard(3)
     fireEvent.click(screen.getByRole("button", { name: "Edit item" }))
@@ -106,12 +126,12 @@ describe("watch limit", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save" }))
     await waitFor(() => expect(actions.updateItem).toHaveBeenCalledWith(57, 1, { title: "V", max_watch_count: 3 }))
   })
-  it.each(["0", "-2", "1001", "2.5"])("rejects invalid edited limit %s", (value) => {
+  it.each(["0", "-1", "2.5"])("rejects invalid edited limit %s", (value) => {
     mountCard(3)
     fireEvent.click(screen.getByRole("button", { name: "Edit item" }))
     fireEvent.change(screen.getByRole("spinbutton", { name: "Max views per student" }), { target: { value } })
     fireEvent.click(screen.getByRole("button", { name: "Save" }))
-    expect(screen.getByText("Enter a whole number from 1 to 1000, or leave it empty.")).toBeDefined()
+    expect(screen.getByText("Enter a whole number of 1 or more, or leave it empty.")).toBeDefined()
     expect(actions.updateItem).not.toHaveBeenCalled()
   })
   it("keeps watch limits out of non-video edits", () => {
@@ -132,11 +152,11 @@ describe("watch limit", () => {
     expect(onSubmit).toHaveBeenCalledOnce()
     expect(onSubmit.mock.calls[0][0]).not.toHaveProperty("max_watch_count")
   })
-  it.each(["0", "-2", "1001", "2.5"])("rejects invalid create limit %s", (value) => {
+  it.each(["0", "-1", "2.5"])("rejects invalid create limit %s", (value) => {
     const onSubmit = mountCreate()
     fireEvent.change(screen.getByRole("spinbutton", { name: "Max views per student" }), { target: { value } })
     fireEvent.click(screen.getByRole("button", { name: "Create item" }))
-    expect(screen.getByText("Enter a whole number from 1 to 1000, or leave it empty.")).toBeDefined()
+    expect(screen.getByText("Enter a whole number of 1 or more, or leave it empty.")).toBeDefined()
     expect(onSubmit).not.toHaveBeenCalled()
   })
   it("forwards the create limit through the upload flow", async () => {

@@ -1,7 +1,7 @@
 "use server"
 
 import { revalidateTag } from "next/cache"
-import { headers } from "next/headers"
+import { getLocale } from "next-intl/server"
 import { z } from "zod"
 import { listLessons } from "@/features/course-management/lessons-queries"
 import { listItems } from "@/features/course-management/items-queries"
@@ -31,8 +31,7 @@ async function actionError(
   const elapsed = Math.round(performance.now() - start)
   if (err instanceof ApiErrorImpl && err.type === "Unauthorized") {
     logger.actionDone(name, { unauthorized: true }, elapsed)
-    const h = await headers()
-    const locale = h.get("Accept-Language")?.startsWith("en") ? "en" : "ar"
+    const locale = await getLocale()
     await redirectToAuth(locale, "/students")
   }
   logger.actionError(name, err, elapsed)

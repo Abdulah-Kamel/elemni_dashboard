@@ -51,6 +51,7 @@ const documentUrlResult = {
 }
 
 const actions = vi.hoisted(() => ({
+  updateItem: vi.fn(),
   requestVideoUpload: vi.fn(),
   confirmVideoUpload: vi.fn(),
   requestUploadUrl: vi.fn(),
@@ -63,6 +64,7 @@ const uploads = vi.hoisted(() => ({
 }))
 
 vi.mock("@/features/course-management/items-actions", () => ({
+  updateItem: (...args: unknown[]) => actions.updateItem(...args),
   requestVideoUpload: (...args: unknown[]) => actions.requestVideoUpload(...args),
   confirmVideoUpload: (...args: unknown[]) => actions.confirmVideoUpload(...args),
   requestUploadUrl: (...args: unknown[]) => actions.requestUploadUrl(...args),
@@ -472,4 +474,47 @@ describe("useCreateItemFlow", () => {
     resolveUpload!()
     await act(() => firstSubmit!)
   })
+  it.each([3, null])("patches a changed limit to %j before retrying a failed upload", async (limit) => {
+    createItem.mockResolvedValue({ ...bareItem, max_watch_count: 1 })
+    actions.requestVideoUpload.mockResolvedValue(videoCredentialsResult)
+    uploads.uploadVideoToBunnyTus.mockRejectedValueOnce(new Error("network")).mockResolvedValue(undefined)
+    actions.updateItem.mockResolvedValue({ success: true, data: { ...bareItem, max_watch_count: limit } })
+    actions.confirmVideoUpload.mockResolvedValue({ success: true, data: { ...videoItem, max_watch_count: limit } })
+    const payload: CreateItemPayload = { title: "Video", videoFile, documentFile: null, max_watch_count: 1 }
+    const { result } = renderHook(() => useCreateItemFlow(flowOptions()))
+    await act(() => result.current.submit(payload))
+    expect(result.current.videoStatus).toBe("failed")
+    expect(createItem).toHaveBeenCalledWith({ title: "Video", max_watch_count: 1 })
+    expect(actions.updateItem).not.toHaveBeenCalled()
+
+    const retry: CreateItemPayload = { title: "Video", videoFile, documentFile: null, ...(limit !== null ? { max_watch_count: limit } : {}) }
+    await act(() => result.current.submit(retry))
+    expect(actions.updateItem).toHaveBeenCalledExactlyOnceWith(1, 3, { max_watch_count: limit })
+    expect(actions.updateItem.mock.invocationCallOrder[0]).toBeLessThan(actions.requestVideoUpload.mock.invocationCallOrder[1])
+    expect(actions.updateItem.mock.invocationCallOrder[0]).toBeLessThan(uploads.uploadVideoToBunnyTus.mock.invocationCallOrder[1])
+    expect(onItemUpdated).toHaveBeenCalledWith({ ...bareItem, max_watch_count: limit })
+    expect(createItem).toHaveBeenCalledOnce()
+    expect(result.current.videoStatus).toBe("uploaded")
+  })
+
+  it("keeps the retained limit and stops uploads when the retry PATCH fails", async () => {
+    createItem.mockResolvedValue({ ...bareItem, max_watch_count: 1 })
+    actions.requestVideoUpload.mockResolvedValue(videoCredentialsResult)
+    uploads.uploadVideoToBunnyTus.mockRejectedValueOnce(new Error("network")).mockResolvedValue(undefined)
+    actions.updateItem.mockResolvedValueOnce({ success: false, error: { type: "Upstream", message: "Update failed" } })
+      .mockResolvedValueOnce({ success: true, data: { ...bareItem, max_watch_count: 3 } })
+    actions.confirmVideoUpload.mockResolvedValue({ success: true, data: { ...videoItem, max_watch_count: 3 } })
+    const payload: CreateItemPayload = { title: "Video", videoFile, documentFile: null, max_watch_count: 1 }
+    const { result } = renderHook(() => useCreateItemFlow(flowOptions()))
+    await act(() => result.current.submit(payload))
+    await act(() => result.current.submit({ ...payload, max_watch_count: 3 }))
+    expect(actions.updateItem).toHaveBeenCalledWith(1, 3, { max_watch_count: 3 })
+    expect(result.current.error).toBe("Update failed")
+    expect(actions.requestVideoUpload).toHaveBeenCalledOnce()
+    expect(onComplete).not.toHaveBeenCalled()
+    await act(() => result.current.submit({ ...payload, max_watch_count: 3 }))
+    expect(actions.updateItem).toHaveBeenCalledTimes(2)
+    expect(result.current.videoStatus).toBe("uploaded")
+  })
+
 })

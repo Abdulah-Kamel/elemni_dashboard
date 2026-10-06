@@ -216,7 +216,6 @@ export function CreateItemDialog({
                 id="create-item-watch-limit"
                 type="number"
                 min={1}
-                max={1000}
                 step={1}
                 value={watchLimit}
                 disabled={uploading}

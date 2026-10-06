@@ -421,7 +421,7 @@
       "hint": "Leave empty for unlimited views.",
       "views": "{count, plural, one {# view} other {# views}}",
       "unlimited": "Unlimited views",
-      "invalid": "Enter a whole number from 1 to 1000, or leave it empty."
+      "invalid": "Enter a whole number of 1 or more, or leave it empty."
     },
     "title": "Items",
     "create": "Add Item",

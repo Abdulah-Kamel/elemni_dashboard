@@ -1,12 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { ApiErrorImpl } from "@/lib/api/errors"
 
-const m = vi.hoisted(() => ({ apiFetch: vi.fn(), listLessons: vi.fn(), listItems: vi.fn(), redirect: vi.fn(), revalidateTag: vi.fn(), headers: vi.fn() }))
+const m = vi.hoisted(() => ({ apiFetch: vi.fn(), listLessons: vi.fn(), listItems: vi.fn(), redirect: vi.fn(), revalidateTag: vi.fn(), headers: vi.fn(), getLocale: vi.fn() }))
 vi.mock("@/lib/api/client", () => ({ apiFetch: m.apiFetch }))
 vi.mock("@/features/course-management/lessons-queries", () => ({ listLessons: m.listLessons }))
 vi.mock("@/features/course-management/items-queries", () => ({ listItems: m.listItems }))
 vi.mock("@/lib/auth/redirect", () => ({ redirectToAuth: m.redirect }))
 vi.mock("next/headers", () => ({ headers: m.headers }))
+vi.mock("next-intl/server", () => ({ getLocale: m.getLocale }))
 vi.mock("next/cache", () => ({ revalidateTag: m.revalidateTag }))
 vi.mock("@/lib/logger", () => ({ logger: { action: vi.fn(), actionDone: vi.fn(), actionError: vi.fn() } }))
 
@@ -17,6 +18,7 @@ const err = (type: string, status: number, message: string) => new ApiErrorImpl(
 beforeEach(() => {
   Object.values(m).forEach((f) => f.mockReset())
   m.headers.mockResolvedValue(new Headers())
+  m.getLocale.mockResolvedValue("ar")
 })
 
 describe("video grant actions", () => {
@@ -68,9 +70,18 @@ describe("video grant actions", () => {
   })
   it.each(["ar", "en"])("redirects to sign-in on Unauthorized with locale %s", async (locale) => {
     m.headers.mockResolvedValue(new Headers({ "Accept-Language": locale }))
+    m.getLocale.mockResolvedValue(locale)
     m.apiFetch.mockRejectedValue(err("Unauthorized", 401, "expired"))
     await listStudentGrants(5)
     expect(m.redirect).toHaveBeenCalledWith(locale, "/students")
+  })
+
+  it("uses the resolved Arabic locale for a 401 redirect despite English Accept-Language", async () => {
+    m.headers.mockResolvedValue(new Headers({ "Accept-Language": "en" }))
+    m.getLocale.mockResolvedValue("ar")
+    m.apiFetch.mockRejectedValue(err("Unauthorized", 401, "expired"))
+    await listStudentGrants(5)
+    expect(m.redirect).toHaveBeenCalledWith("ar", "/students")
   })
 
   it.each([0, 1001, 1.5])("rejects invalid views %s before calling the API", async (granted_views) => {

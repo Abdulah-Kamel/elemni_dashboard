@@ -6,6 +6,7 @@ import {
   confirmVideoUpload,
   requestUploadUrl,
   confirmUpload,
+  updateItem,
 } from "../items-actions"
 import { uploadToPresignedUrl } from "@/lib/upload"
 
@@ -80,6 +81,19 @@ export function useCreateItemFlow(options: UseCreateItemFlowOptions): CreateItem
           })
           itemRef.current = item
           await onCurriculumCommitted()
+        } else {
+          const maxWatchCount = payload.max_watch_count ?? null
+          if (maxWatchCount !== itemRef.current.max_watch_count) {
+            const updateResult = await updateItem(courseId, itemRef.current.id, {
+              max_watch_count: maxWatchCount,
+            })
+            if (!updateResult.success) {
+              throw new Error(updateResult.error.message || uploadErrorMessage)
+            }
+            itemRef.current = updateResult.data
+            onItemUpdated(updateResult.data)
+            await onCurriculumCommitted()
+          }
         }
 
         if (payload.videoFile && !videoCompletedRef.current) {

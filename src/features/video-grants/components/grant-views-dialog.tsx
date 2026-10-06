@@ -22,7 +22,11 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { createGrant } from "../actions"
-import { grantCreateSchema, type CourseVideo } from "../schema"
+import {
+  grantCreateSchema,
+  type CourseVideo,
+  type GrantCreate,
+} from "../schema"
 
 type Props = {
   studentId: number
@@ -30,6 +34,8 @@ type Props = {
   videos: Record<number, CourseVideo[]>
   onClose: () => void
   onGranted: () => void
+  getIdempotencyKey: (payload: GrantCreate) => string
+  onUnknownError: () => void
 }
 
 export function GrantViewsDialog({
@@ -38,12 +44,12 @@ export function GrantViewsDialog({
   videos,
   onClose,
   onGranted,
+  getIdempotencyKey,
+  onUnknownError,
 }: Props) {
   const t = useTranslations("videoGrants")
   const locale = useLocale()
   const id = useId()
-  const keyRef = useRef<string | null>(null)
-  if (keyRef.current === null) keyRef.current = crypto.randomUUID()
   const submitting = useRef(false)
   const [courseId, setCourseId] = useState<number | null>(() =>
     courses.length === 1 ? courses[0].id : null
@@ -92,15 +98,20 @@ export function GrantViewsDialog({
     setPending(true)
     setError(null)
     try {
-      const result = await createGrant(parsed.data, keyRef.current!)
+      const result = await createGrant(
+        parsed.data,
+        getIdempotencyKey(parsed.data)
+      )
       if (!result.success) {
         setError(t(`errors.${result.code}`))
+        if (result.code === "unknown") onUnknownError()
         return
       }
       toast.success(t("granted"))
       onGranted()
     } catch {
       setError(t("errors.unknown"))
+      onUnknownError()
     } finally {
       submitting.current = false
       setPending(false)

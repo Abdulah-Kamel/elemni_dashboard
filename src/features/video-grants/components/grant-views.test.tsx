@@ -210,6 +210,123 @@ describe("GrantViewsSection", () => {
       a.createGrant.mock.calls[0][1]
     )
   })
+  it("reuses the pending key after a lost response, cancel and reopen with the same payload", async () => {
+    a.createGrant.mockResolvedValueOnce({ success: false, code: "unknown" })
+    renderSection()
+    function fillDetails(dialog: HTMLElement) {
+      fireEvent.change(within(dialog).getByRole("spinbutton"), {
+        target: { value: "2" },
+      })
+      fireEvent.change(
+        within(dialog).getByRole("textbox", { name: "Reason (optional)" }),
+        { target: { value: "Revision" } }
+      )
+      fireEvent.change(within(dialog).getByLabelText("Expires on (optional)"), {
+        target: { value: "2027-01-01" },
+      })
+    }
+    let dialog = await openForm()
+    fillDetails(dialog)
+    submit(dialog)
+    await screen.findByText(
+      "Something went wrong on our side. Try again in a moment."
+    )
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }))
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull())
+    dialog = await openForm()
+    fillDetails(dialog)
+    submit(dialog)
+    await waitFor(() => expect(a.createGrant).toHaveBeenCalledTimes(2))
+    expect(a.createGrant.mock.calls[1][0]).toEqual(
+      a.createGrant.mock.calls[0][0]
+    )
+    expect(a.createGrant.mock.calls[1][1]).toBe(a.createGrant.mock.calls[0][1])
+  })
+  it.each(["views", "reason", "expiry", "video"])(
+    "uses a new key when the pending payload changes: %s",
+    async (field) => {
+      a.createGrant.mockResolvedValue({ success: false, code: "unknown" })
+      a.listCourseVideos.mockResolvedValue({
+        success: true,
+        data: [...videos, { ...videos[0], item_id: 320, title: "Lecture 2" }],
+      })
+      renderSection()
+      const dialog = await openForm()
+      submit(dialog)
+      await screen.findByText(
+        "Something went wrong on our side. Try again in a moment."
+      )
+      if (field === "views")
+        fireEvent.change(within(dialog).getByRole("spinbutton"), {
+          target: { value: "2" },
+        })
+      if (field === "reason")
+        fireEvent.change(
+          within(dialog).getByRole("textbox", { name: "Reason (optional)" }),
+          { target: { value: "Revision" } }
+        )
+      if (field === "expiry")
+        fireEvent.change(
+          within(dialog).getByLabelText("Expires on (optional)"),
+          { target: { value: "2027-01-01" } }
+        )
+      if (field === "video") {
+        fireEvent.click(within(dialog).getByRole("combobox", { name: "Video" }))
+        const option = await screen.findByRole("option", { name: /Lecture 2/ })
+        fireEvent.pointerDown(option, { pointerType: "mouse" })
+        fireEvent.click(option)
+        expect(
+          within(dialog).getByRole("combobox", { name: "Video" }).textContent
+        ).toContain("Lecture 2")
+      }
+      submit(dialog)
+      await waitFor(() => expect(a.createGrant).toHaveBeenCalledTimes(2))
+      expect(a.createGrant.mock.calls[1][0]).not.toEqual(
+        a.createGrant.mock.calls[0][0]
+      )
+      expect(a.createGrant.mock.calls[1][1]).not.toBe(
+        a.createGrant.mock.calls[0][1]
+      )
+      await waitFor(() =>
+        expect(
+          (
+            within(dialog).getByRole("button", {
+              name: "Grant",
+            }) as HTMLButtonElement
+          ).disabled
+        ).toBe(false)
+      )
+      submit(dialog)
+      await waitFor(() => expect(a.createGrant).toHaveBeenCalledTimes(3))
+      expect(a.createGrant.mock.calls[2][1]).toBe(
+        a.createGrant.mock.calls[1][1]
+      )
+    }
+  )
+  it("refetches grants after an unknown create failure without resetting the form", async () => {
+    a.createGrant.mockResolvedValue({ success: false, code: "unknown" })
+    renderSection()
+    const dialog = await openForm()
+    a.listStudentGrants.mockResolvedValue({
+      success: true,
+      data: [grant({ reason: "Committed despite the lost response" })],
+    })
+    fireEvent.change(within(dialog).getByRole("spinbutton"), {
+      target: { value: "2" },
+    })
+    submit(dialog)
+    await screen.findByText(
+      "Something went wrong on our side. Try again in a moment."
+    )
+    await waitFor(() => expect(a.listStudentGrants).toHaveBeenCalledTimes(2))
+    expect(
+      await screen.findByText("Committed despite the lost response")
+    ).toBeDefined()
+    expect(screen.getByRole("dialog")).toBe(dialog)
+    expect(
+      (within(dialog).getByRole("spinbutton") as HTMLInputElement).value
+    ).toBe("2")
+  })
   it("shows the enrolment error inline and keeps the form", async () => {
     a.createGrant.mockResolvedValue({ success: false, code: "not_enrolled" })
     renderSection()

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { StudentSubscriptionRow } from "@/features/students/components/student-table"
 import { listCourseVideos, listStudentGrants } from "../actions"
-import type { CourseVideo, Grant } from "../schema"
+import type { CourseVideo, Grant, GrantCreate } from "../schema"
 import { GrantViewsDialog } from "./grant-views-dialog"
 import { GrantList } from "./grant-list"
 
@@ -36,6 +36,25 @@ export function GrantViewsSection({ studentId, subscriptions, now }: Props) {
   const [error, setError] = useState(false)
   const [revision, setRevision] = useState(0)
   const [open, setOpen] = useState(false)
+  const [pendingGrant, setPendingGrant] = useState<{
+    payload: GrantCreate
+    key: string
+  } | null>(null)
+
+  function getIdempotencyKey(payload: GrantCreate) {
+    if (
+      pendingGrant &&
+      pendingGrant.payload.user_id === payload.user_id &&
+      pendingGrant.payload.item_id === payload.item_id &&
+      pendingGrant.payload.granted_views === payload.granted_views &&
+      pendingGrant.payload.reason === payload.reason &&
+      pendingGrant.payload.expires_at === payload.expires_at
+    )
+      return pendingGrant.key
+    const key = crypto.randomUUID()
+    setPendingGrant({ payload, key })
+    return key
+  }
 
   useEffect(() => {
     let current = true
@@ -69,8 +88,8 @@ export function GrantViewsSection({ studentId, subscriptions, now }: Props) {
     }
   }, [studentId, courses, revision])
 
-  function refresh() {
-    setLoaded(null)
+  function refresh(keepLoaded = false) {
+    if (!keepLoaded) setLoaded(null)
     setError(false)
     setRevision((value) => value + 1)
   }
@@ -108,7 +127,7 @@ export function GrantViewsSection({ studentId, subscriptions, now }: Props) {
       {error ? (
         <div role="alert" className="mt-3 space-y-2">
           <p>{t("loadError")}</p>
-          <Button type="button" variant="outline" onClick={refresh}>
+          <Button type="button" variant="outline" onClick={() => refresh()}>
             {t("retry")}
           </Button>
         </div>
@@ -132,7 +151,10 @@ export function GrantViewsSection({ studentId, subscriptions, now }: Props) {
           courses={courses}
           videos={loaded.videos}
           onClose={() => setOpen(false)}
+          getIdempotencyKey={getIdempotencyKey}
+          onUnknownError={() => refresh(true)}
           onGranted={() => {
+            setPendingGrant(null)
             setOpen(false)
             refresh()
           }}

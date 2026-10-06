@@ -627,7 +627,6 @@ export function ItemCard({
                   id={`item-watch-limit-${item.id}`}
                   type="number"
                   min={1}
-                  max={1000}
                   step={1}
                   value={editWatchLimit}
                   disabled={submitting}
