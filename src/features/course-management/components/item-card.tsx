@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
   Film,
+  Eye,
   FileText,
   ClipboardList,
   File,
@@ -36,6 +37,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { AttachedFilesSection } from "./attached-files-section"
+import { parseWatchLimit } from "../watch-limit"
 import { validateItemUploadFile } from "../item-upload-validation"
 import type { ItemOut } from "@/features/course-management/items-schema"
 import { useCourseBuilderBridge } from "@/features/course-management/course-builder-bridge"
@@ -130,12 +132,17 @@ export function ItemCard({
     Record<"video" | "document", HTMLInputElement | null>
   >({ video: null, document: null })
   const [editTitle, setEditTitle] = useState(item.title)
+  const [editWatchLimit, setEditWatchLimit] = useState(String(item.max_watch_count ?? ""))
+  const [watchLimitError, setWatchLimitError] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const submitting =
     update.isPending || remove.isPending || deletingMedia !== null
 
   const type = itemType(item)
   const status = itemStatus(item)
+  const watchLimitLabel = item.max_watch_count == null
+    ? t("watchLimit.unlimited")
+    : t("watchLimit.views", { count: item.max_watch_count })
   const hasVideo = Boolean(item.bunny_stream_id)
   const hasDocument = Boolean(item.document_path)
   const isSelected =
@@ -307,12 +314,23 @@ export function ItemCard({
 
   const handleSave = useCallback(async () => {
     const trimmed = editTitle.trim()
-    if (!trimmed) return
+    if (!trimmed || submitting) return
+    const limit = parseWatchLimit(editWatchLimit)
+    if (hasVideo && !limit.ok) {
+      setWatchLimitError(true)
+      return
+    }
+    setWatchLimitError(false)
     setError(null)
     try {
       const updatedItem = await update.mutateAsync({
         itemId: item.id,
-        data: { title: trimmed },
+        data: {
+          title: trimmed,
+          ...(hasVideo && limit.ok && limit.value !== (item.max_watch_count ?? null)
+            ? { max_watch_count: limit.value }
+            : {}),
+        },
       })
       onUpdate(updatedItem)
       setEditOpen(false)
@@ -323,7 +341,7 @@ export function ItemCard({
           : t("upload_error")
       )
     }
-  }, [editTitle, item.id, onUpdate, t, update])
+  }, [editTitle, editWatchLimit, hasVideo, item.id, item.max_watch_count, onUpdate, submitting, t, update])
 
   const handleUpdateTitle = useCallback(
     async (title: string) => {
@@ -402,7 +420,7 @@ export function ItemCard({
           clearSelectedNode(node)
         }
       }}
-      className={`group flex items-center gap-2.5 px-3.5 py-2 transition-colors hover:bg-surface-muted/30 ${isHovered ? "bg-sky-500/10 ring-2 ring-sky-400/70 ring-inset" : ""} ${isSelected ? "bg-primary/10 ring-2 ring-primary/35 ring-inset" : ""}`}
+      className={`group relative flex items-center gap-2.5 px-3.5 py-2 transition-colors hover:bg-surface-muted/30 ${isHovered ? "bg-sky-500/10 ring-2 ring-sky-400/70 ring-inset" : ""} ${isSelected ? "bg-primary/10 ring-2 ring-primary/35 ring-inset" : ""}`}
       onClick={() => selectNode(node)}
     >
       <span
@@ -419,11 +437,23 @@ export function ItemCard({
         {item.title}
       </span>
 
+      {hasVideo && (
+        <Badge
+          variant="outline"
+          className="shrink-0 gap-1 text-xs"
+          aria-label={watchLimitLabel}
+          title={watchLimitLabel}
+        >
+          <Eye className="size-3" aria-hidden="true" />
+          {item.max_watch_count ?? "∞"}
+        </Badge>
+      )}
+
       {status && (
         <Badge
           variant={status.variant}
           className={cn(
-            "hidden sm:inline-flex",
+            "hidden shrink-0 sm:inline-flex",
             status.variant === "default" &&
               "border-success/20 bg-success-tint text-success",
             status.variant === "secondary" &&
@@ -436,7 +466,7 @@ export function ItemCard({
         </Badge>
       )}
 
-      <div className="flex items-center gap-0.5 transition-opacity md:opacity-0 md:group-focus-within:opacity-100 md:group-hover:opacity-100">
+      <div className="flex items-center gap-0.5 transition-opacity md:absolute md:inset-y-0 md:end-2 md:my-auto md:h-fit md:rounded-md md:bg-card md:px-1 md:shadow-sm md:opacity-0 md:group-focus-within:opacity-100 md:group-hover:opacity-100">
         {(["video", "document"] as const).map((uploadType) => (
           <input
             key={uploadType}
@@ -492,6 +522,8 @@ export function ItemCard({
           className="size-6"
           onClick={() => {
             setEditTitle(item.title)
+            setEditWatchLimit(String(item.max_watch_count ?? ""))
+            setWatchLimitError(false)
             setError(null)
             setEditOpen(true)
           }}
@@ -586,6 +618,41 @@ export function ItemCard({
                 }}
               />
             </div>
+            {hasVideo && (
+              <div className="space-y-1.5">
+                <Label htmlFor={`item-watch-limit-${item.id}`}>
+                  {t("watchLimit.label")}
+                </Label>
+                <Input
+                  id={`item-watch-limit-${item.id}`}
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={editWatchLimit}
+                  disabled={submitting}
+                  aria-invalid={watchLimitError}
+                  aria-describedby={`item-watch-limit-hint-${item.id}${watchLimitError ? ` item-watch-limit-error-${item.id}` : ""}`}
+                  onChange={(event) => {
+                    setEditWatchLimit(event.target.value)
+                    setWatchLimitError(false)
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault()
+                      void handleSave()
+                    }
+                  }}
+                />
+                <p id={`item-watch-limit-hint-${item.id}`} className="text-xs text-muted-foreground">
+                  {t("watchLimit.hint")}
+                </p>
+                {watchLimitError && (
+                  <p id={`item-watch-limit-error-${item.id}`} role="alert" className="text-sm text-destructive">
+                    {t("watchLimit.invalid")}
+                  </p>
+                )}
+              </div>
+            )}
             <AttachedFilesSection
               item={item}
               onUpdate={onUpdate}

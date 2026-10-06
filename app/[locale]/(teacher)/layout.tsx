@@ -47,7 +47,7 @@ export default async function TeacherLayout({
   const teacherRole = t("teacher_role")
 
   return (
-    <ClientMessageProvider namespaces={["common", "topbar", "sidebar", "placeholder", "courses", "lessons", "items", "chapters", "profile", "settings", "student", "analytics", "billing", "earnings", "storage", "dashboardShell", "teacherWorkspace", "teacherHome"]}>
+    <ClientMessageProvider namespaces={["common", "topbar", "sidebar", "placeholder", "courses", "lessons", "items", "chapters", "profile", "settings", "student", "videoGrants", "analytics", "billing", "earnings", "storage", "dashboardShell", "teacherWorkspace", "teacherHome"]}>
     <DirectionProvider direction={(locale === "ar" ? "rtl" : "ltr") as never}>
       <CommandPaletteProvider role="teacher">
         <div className="flex h-dvh overflow-hidden bg-page">

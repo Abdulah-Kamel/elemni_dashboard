@@ -1,18 +1,19 @@
 import { useRef, useState, useCallback } from "react"
-import type { ItemOut } from "../items-schema"
+import type { ItemCreate, ItemOut } from "../items-schema"
 import type { CreateItemPayload, AttachmentUploadStatus } from "../components/create-item-dialog"
 import {
   requestVideoUpload,
   confirmVideoUpload,
   requestUploadUrl,
   confirmUpload,
+  updateItem,
 } from "../items-actions"
 import { uploadToPresignedUrl } from "@/lib/upload"
 
 export type UseCreateItemFlowOptions = {
   courseId: number
   lessonId: number
-  createItem: (data: { title: string }) => Promise<ItemOut>
+  createItem: (data: ItemCreate) => Promise<ItemOut>
   onItemUpdated: (item: ItemOut) => void
   onCurriculumCommitted: () => void | Promise<void>
   onComplete: () => void
@@ -72,9 +73,27 @@ export function useCreateItemFlow(options: UseCreateItemFlowOptions): CreateItem
 
       try {
         if (!itemRef.current) {
-          const item = await createItem({ title: payload.title })
+          const item = await createItem({
+            title: payload.title,
+            ...(payload.max_watch_count !== undefined
+              ? { max_watch_count: payload.max_watch_count }
+              : {}),
+          })
           itemRef.current = item
           await onCurriculumCommitted()
+        } else {
+          const maxWatchCount = payload.max_watch_count ?? null
+          if (maxWatchCount !== itemRef.current.max_watch_count) {
+            const updateResult = await updateItem(courseId, itemRef.current.id, {
+              max_watch_count: maxWatchCount,
+            })
+            if (!updateResult.success) {
+              throw new Error(updateResult.error.message || uploadErrorMessage)
+            }
+            itemRef.current = updateResult.data
+            onItemUpdated(updateResult.data)
+            await onCurriculumCommitted()
+          }
         }
 
         if (payload.videoFile && !videoCompletedRef.current) {

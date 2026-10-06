@@ -48,6 +48,7 @@ const videoOnlyItem: ItemOut = {
   document_path: null,
   exam_id: null,
   order: 1,
+  max_watch_count: null,
 }
 
 function StatefulItemCard({ initialItem }: { initialItem: ItemOut }) {

@@ -14,6 +14,7 @@ import {
   DialogTitle,
   DialogClose,
 } from "@/components/ui/dialog"
+import { parseWatchLimit } from "../watch-limit"
 import { Loader2 } from "lucide-react"
 import {
   mergeItemAttachmentFiles,
@@ -29,6 +30,7 @@ export type { AttachmentUploadStatus } from "./item-attachments-picker"
 
 export type CreateItemPayload = {
   title: string
+  max_watch_count?: number
   videoFile: File | null
   documentFile: File | null
 }
@@ -56,6 +58,8 @@ export function CreateItemDialog({
 }: CreateItemDialogProps) {
   const t = useTranslations("items")
   const [title, setTitle] = useState("")
+  const [watchLimit, setWatchLimit] = useState("")
+  const [watchLimitError, setWatchLimitError] = useState(false)
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [documentFile, setDocumentFile] = useState<File | null>(null)
   const [attachmentError, setAttachmentError] = useState<string | null>(null)
@@ -70,6 +74,8 @@ export function CreateItemDialog({
 
     wasOpenRef.current = true
     setTitle("")
+    setWatchLimit("")
+    setWatchLimitError(false)
     setVideoFile(null)
     setDocumentFile(null)
     setAttachmentError(null)
@@ -132,8 +138,21 @@ export function CreateItemDialog({
   const handleAction = useCallback(() => {
     const trimmed = title.trim()
     if (!trimmed || uploading || !hasAttachment) return
-    onSubmit({ title: trimmed, videoFile, documentFile })
-  }, [title, uploading, hasAttachment, onSubmit, videoFile, documentFile])
+    const limit = parseWatchLimit(watchLimit)
+    if (videoFile && !limit.ok) {
+      setWatchLimitError(true)
+      return
+    }
+    setWatchLimitError(false)
+    onSubmit({
+      title: trimmed,
+      videoFile,
+      documentFile,
+      ...(videoFile && limit.ok && limit.value !== null
+        ? { max_watch_count: limit.value }
+        : {}),
+    })
+  }, [title, watchLimit, uploading, hasAttachment, onSubmit, videoFile, documentFile])
 
   return (
     <Dialog
@@ -189,6 +208,34 @@ export function CreateItemDialog({
             onRemove={handleRemove}
             separateInputs
           />
+
+          {videoFile && (
+            <div className="space-y-2">
+              <Label htmlFor="create-item-watch-limit">{t("watchLimit.label")}</Label>
+              <Input
+                id="create-item-watch-limit"
+                type="number"
+                min={1}
+                step={1}
+                value={watchLimit}
+                disabled={uploading}
+                aria-invalid={watchLimitError}
+                aria-describedby={`create-item-watch-limit-hint${watchLimitError ? " create-item-watch-limit-error" : ""}`}
+                onChange={(event) => {
+                  setWatchLimit(event.target.value)
+                  setWatchLimitError(false)
+                }}
+              />
+              <p id="create-item-watch-limit-hint" className="text-xs text-muted-foreground">
+                {t("watchLimit.hint")}
+              </p>
+              {watchLimitError && (
+                <p id="create-item-watch-limit-error" role="alert" className="text-sm text-destructive">
+                  {t("watchLimit.invalid")}
+                </p>
+              )}
+            </div>
+          )}
 
           {!hasAttachment && (
             <p role="alert" className="text-xs text-destructive">

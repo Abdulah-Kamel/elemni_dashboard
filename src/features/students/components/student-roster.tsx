@@ -62,8 +62,13 @@ export function StudentRoster({
   now: serverNow,
 }: Props) {
   const locale = useLocale()
-  const [now] = useState(() => serverNow ?? Date.now())
+  const [now, setNow] = useState(() => serverNow ?? Date.now())
   const [query, setQuery] = useState<StudentQueryState>(initialQuery)
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 60_000)
+    return () => clearInterval(interval)
+  }, [])
 
   // Mirror state into the URL so views can be shared, reloaded and deep-linked.
   const queryString = serializeStudentQuery(query)
