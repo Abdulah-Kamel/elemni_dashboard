@@ -45,7 +45,9 @@ export function GrantViewsDialog({
   const keyRef = useRef<string | null>(null)
   if (keyRef.current === null) keyRef.current = crypto.randomUUID()
   const submitting = useRef(false)
-  const [courseId, setCourseId] = useState<number | null>(null)
+  const [courseId, setCourseId] = useState<number | null>(() =>
+    courses.length === 1 ? courses[0].id : null
+  )
   const [itemId, setItemId] = useState<number | null>(null)
   const [views, setViews] = useState("1")
   const [reason, setReason] = useState("")

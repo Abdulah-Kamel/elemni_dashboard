@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
   Film,
+  Eye,
   FileText,
   ClipboardList,
   File,
@@ -139,6 +140,9 @@ export function ItemCard({
 
   const type = itemType(item)
   const status = itemStatus(item)
+  const watchLimitLabel = item.max_watch_count == null
+    ? t("watchLimit.unlimited")
+    : t("watchLimit.views", { count: item.max_watch_count })
   const hasVideo = Boolean(item.bunny_stream_id)
   const hasDocument = Boolean(item.document_path)
   const isSelected =
@@ -416,7 +420,7 @@ export function ItemCard({
           clearSelectedNode(node)
         }
       }}
-      className={`group flex items-center gap-2.5 px-3.5 py-2 transition-colors hover:bg-surface-muted/30 ${isHovered ? "bg-sky-500/10 ring-2 ring-sky-400/70 ring-inset" : ""} ${isSelected ? "bg-primary/10 ring-2 ring-primary/35 ring-inset" : ""}`}
+      className={`group relative flex items-center gap-2.5 px-3.5 py-2 transition-colors hover:bg-surface-muted/30 ${isHovered ? "bg-sky-500/10 ring-2 ring-sky-400/70 ring-inset" : ""} ${isSelected ? "bg-primary/10 ring-2 ring-primary/35 ring-inset" : ""}`}
       onClick={() => selectNode(node)}
     >
       <span
@@ -434,10 +438,14 @@ export function ItemCard({
       </span>
 
       {hasVideo && (
-        <Badge variant="outline" className="text-xs">
-          {item.max_watch_count == null
-            ? t("watchLimit.unlimited")
-            : t("watchLimit.views", { count: item.max_watch_count })}
+        <Badge
+          variant="outline"
+          className="shrink-0 gap-1 text-xs"
+          aria-label={watchLimitLabel}
+          title={watchLimitLabel}
+        >
+          <Eye className="size-3" aria-hidden="true" />
+          {item.max_watch_count ?? "∞"}
         </Badge>
       )}
 
@@ -445,7 +453,7 @@ export function ItemCard({
         <Badge
           variant={status.variant}
           className={cn(
-            "hidden sm:inline-flex",
+            "hidden shrink-0 sm:inline-flex",
             status.variant === "default" &&
               "border-success/20 bg-success-tint text-success",
             status.variant === "secondary" &&
@@ -458,7 +466,7 @@ export function ItemCard({
         </Badge>
       )}
 
-      <div className="flex items-center gap-0.5 transition-opacity md:opacity-0 md:group-focus-within:opacity-100 md:group-hover:opacity-100">
+      <div className="flex items-center gap-0.5 transition-opacity md:absolute md:inset-y-0 md:end-2 md:my-auto md:h-fit md:rounded-md md:bg-card md:px-1 md:shadow-sm md:opacity-0 md:group-focus-within:opacity-100 md:group-hover:opacity-100">
         {(["video", "document"] as const).map((uploadType) => (
           <input
             key={uploadType}

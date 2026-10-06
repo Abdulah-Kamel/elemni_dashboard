@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest"
-import { render, screen, fireEvent, waitFor } from "@testing-library/react"
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react"
 import { NextIntlClientProvider } from "next-intl"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import messages from "@/i18n/messages/en.json"
@@ -57,9 +57,38 @@ describe("watch limit", () => {
       }
     }
   })
-  it.each([[3, "3 views"], [null, "Unlimited views"]] as const)("shows the video badge for %j", (limit, text) => {
-    mountCard(limit)
-    expect(screen.getByText(text)).toBeDefined()
+  it.each([[3, "3", "3 views"], [null, "∞", "Unlimited views"]] as const)(
+    "shows a compact video badge with a full accessible label for %j", (limit, value, label) => {
+      mountCard(limit)
+      const badge = screen.getByLabelText(label)
+      expect(badge.textContent).toBe(value)
+      expect(badge.getAttribute("title")).toBe(label)
+      expect(badge.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true")
+    }
+  )
+  it("overlays desktop row actions while retaining their natural keyboard order", () => {
+    mountCard(3)
+    const upload = screen.getByRole("button", { name: "Upload Document" }) as HTMLButtonElement
+    const edit = screen.getByRole("button", { name: "Edit item" }) as HTMLButtonElement
+    const remove = screen.getByRole("button", { name: "Delete" }) as HTMLButtonElement
+    const group = upload.parentElement!
+    const row = group.parentElement!
+
+    expect(row.classList.contains("relative")).toBe(true)
+    for (const token of ["md:absolute", "md:inset-y-0", "md:end-2", "md:my-auto", "md:h-fit"]) {
+      expect(group.classList.contains(token)).toBe(true)
+    }
+    expect(group.classList.contains("absolute")).toBe(false)
+    expect(group.classList.contains("md:opacity-0")).toBe(true)
+    expect(group.classList.contains("md:group-hover:opacity-100")).toBe(true)
+    expect(group.classList.contains("md:group-focus-within:opacity-100")).toBe(true)
+    expect(Array.from(group.querySelectorAll("button"))).toEqual([upload, edit, remove])
+    for (const button of [upload, edit, remove]) {
+      expect(button.disabled).toBe(false)
+      expect(button.tabIndex).toBe(0)
+      act(() => button.focus())
+      expect(document.activeElement).toBe(button)
+    }
   })
   it("empty limit saves null through updateItem", async () => {
     mountCard(3)

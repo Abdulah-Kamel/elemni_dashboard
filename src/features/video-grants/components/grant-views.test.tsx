@@ -109,6 +109,70 @@ describe("GrantViewsSection", () => {
     await screen.findByText("No extra views granted yet.")
     expect(a.listCourseVideos).not.toHaveBeenCalled()
   })
+  it.each([
+    ["Revoked", { revoked_at: "2026-10-01T00:00:00Z" }],
+    ["Expired", { expires_at: "2026-01-01T00:00:00Z" }],
+  ] as const)(
+    "shows used views instead of remaining views for %s grants",
+    async (status, dates) => {
+      renderSection(
+        [subscription],
+        [
+          grant({
+            granted_views: 2,
+            consumed_views: 0,
+            remaining_views: 2,
+            ...dates,
+          }),
+        ]
+      )
+      const chip = await screen.findByText(status)
+      const row = within(chip.closest("li")!)
+      expect(row.getByText("0 of 2 used")).toBeDefined()
+      expect(row.queryByText("2 of 2 left")).toBeNull()
+      expect(row.queryByRole("button", { name: "Revoke" })).toBeNull()
+    }
+  )
+  it("pre-selects the only eligible course and immediately makes its videos available", async () => {
+    renderSection([
+      subscription,
+      {
+        ...subscription,
+        enrollmentId: 2,
+        courseId: 58,
+        course: "Expired course",
+        expiresAt: "2026-01-01T00:00:00Z",
+      },
+      {
+        ...subscription,
+        enrollmentId: 3,
+        courseId: 59,
+        course: "Pending course",
+        status: "pending",
+      },
+    ])
+    const button = screen.getByRole("button", { name: "Grant extra views" })
+    await waitFor(() =>
+      expect((button as HTMLButtonElement).disabled).toBe(false)
+    )
+    fireEvent.click(button)
+    const dialog = await screen.findByRole("dialog")
+    expect(
+      within(dialog).getByRole("combobox", { name: "Course" }).textContent
+    ).toContain("Physics")
+    expect(a.listCourseVideos).toHaveBeenCalledExactlyOnceWith(57)
+    const videoSelect = within(dialog).getByRole("combobox", { name: "Video" })
+    expect((videoSelect as HTMLButtonElement).disabled).toBe(false)
+    fireEvent.click(videoSelect)
+    fireEvent.click(await screen.findByRole("option", { name: /Lecture 1/ }))
+    submit(dialog)
+    await waitFor(() =>
+      expect(a.createGrant).toHaveBeenCalledWith(
+        { user_id: 5, item_id: 319, granted_views: 1 },
+        expect.any(String)
+      )
+    )
+  })
   it("grants views and refreshes the list", async () => {
     renderSection()
     const dialog = await openForm()
@@ -181,6 +245,14 @@ describe("GrantViewsSection", () => {
     )
     for (const status of ["Active", "Expired", "Revoked", "Used up"])
       expect(await screen.findByText(status)).toBeDefined()
+    expect(
+      within(screen.getByText("Active").closest("li")!).getByText("2 of 3 left")
+    ).toBeDefined()
+    expect(
+      within(screen.getByText("Used up").closest("li")!).getByText(
+        "0 of 3 left"
+      )
+    ).toBeDefined()
     const buttons = screen.getAllByRole("button", {
       name: "Revoke",
     })

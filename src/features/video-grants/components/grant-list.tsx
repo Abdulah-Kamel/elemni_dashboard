@@ -87,10 +87,15 @@ export function GrantList({
                 </span>
               </div>
               <p className="text-sm tabular-nums">
-                {t("remaining", {
-                  remaining: grant.remaining_views,
-                  granted: grant.granted_views,
-                })}
+                {status === "revoked" || status === "expired"
+                  ? t("used", {
+                      consumed: grant.consumed_views,
+                      granted: grant.granted_views,
+                    })
+                  : t("remaining", {
+                      remaining: grant.remaining_views,
+                      granted: grant.granted_views,
+                    })}
               </p>
               {grant.reason && (
                 <p className="text-xs break-words text-muted-foreground">

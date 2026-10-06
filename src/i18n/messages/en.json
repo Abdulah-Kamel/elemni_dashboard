@@ -1053,6 +1053,7 @@
     "noLimitNote": "This video has no watch limit, so extra views are not needed yet.",
     "submit": "Grant", "cancel": "Cancel", "granted": "Extra views granted.",
     "remaining": "{remaining} of {granted} left",
+    "used": "{consumed} of {granted} used",
     "status": { "active": "Active", "usedUp": "Used up", "expired": "Expired", "revoked": "Revoked" },
     "revoke": "Revoke", "revokeConfirm": "Revoke this grant? Unused views will be removed.",
     "empty": "No extra views granted yet.", "loadError": "Could not load grants.", "retry": "Retry",
