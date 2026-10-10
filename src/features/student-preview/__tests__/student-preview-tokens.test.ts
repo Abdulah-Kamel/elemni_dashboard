@@ -78,6 +78,24 @@ describe("student-preview token scoping", () => {
     }
   });
 
+  it("scopes every sticker and preview selector, including dark variants", () => {
+    const withoutComments = css.replace(/\/\*[\s\S]*?\*\//g, "");
+    for (const rule of withoutComments.matchAll(/([^{}]+)\{[^{}]*\}/g)) {
+      const selectors = rule[1].trim();
+      if (selectors.startsWith("@")) continue;
+      for (const selector of selectors.split(",")) expect(selector.trim()).toMatch(/^(?:\.dark\s+)?\.student-preview(?:\s|\s*\{|$)/);
+    }
+  });
+
+  it("defines scoped sticker material tokens for both themes", () => {
+    const tokens = parseTokens(css);
+    expect(tokens.get("color-ink")).toBe("#0F172A");
+    expect(tokens.get("color-sticker-shadow")).toBe("#0F172A");
+    const darkBlock = css.match(/\.dark\s+\.student-preview\s*\{([^}]+)\}/)?.[1] ?? "";
+    expect(darkBlock).toContain("--color-sticker-shadow: #05070A;");
+    expect(darkBlock).toContain("--preview-hero: #151A21;");
+  });
+
   describe("exact token values", () => {
     let tokens: Map<string, string>;
 

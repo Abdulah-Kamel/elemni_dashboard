@@ -3,6 +3,7 @@ import type { StudentCoursePreviewModel, StudentPreviewSection } from "./types";
 
 export function buildCoursePreviewModel({
   courseId,
+  createdAt,
   values,
   coverObjectUrl,
   publicCoverUrl,
@@ -14,6 +15,7 @@ export function buildCoursePreviewModel({
   locale = "ar",
 }: {
   courseId: string | number | null;
+  createdAt?: string | null;
   values: CourseFormValues;
   coverObjectUrl: string | null;
   publicCoverUrl: string | null;
@@ -27,6 +29,7 @@ export function buildCoursePreviewModel({
   const isArabic = locale.toLowerCase().startsWith("ar");
   return {
     id: courseId ?? "preview",
+    createdAt,
     title: values.title || (isArabic ? "عنوان الكورس" : "Course title"),
     description: values.description || (isArabic ? "وصف الكورس" : "Course description"),
     coverUrl: coverObjectUrl ?? publicCoverUrl ?? null,

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { StudentTeacherProfilePreview } from "../student-teacher-profile-preview";
+import { ProfilePreviewBridgeProvider } from "../profile-preview-bridge";
 import type { StudentTeacherPreviewModel } from "../types";
 
 const baseModel: StudentTeacherPreviewModel = {
@@ -58,6 +59,29 @@ const baseModel: StudentTeacherPreviewModel = {
 };
 
 describe("StudentTeacherProfilePreview", () => {
+  it.each(["avatar", "name", "experience", "bio", "location"] as const)("keeps empty %s hover and selection wired", (field) => {
+    const { container } = render(
+      <ProfilePreviewBridgeProvider>
+        <StudentTeacherProfilePreview model={{ ...baseModel, avatarUrl: null, name: "", bio: "", experienceYears: 0, location: "" }} locale="en" interactionMode="local-only" />
+      </ProfilePreviewBridgeProvider>
+    );
+    const target = container.querySelector(`[data-profile-preview-field="${field}"]`)!;
+    expect(target).not.toBeNull();
+    fireEvent.mouseEnter(target);
+    expect(target.getAttribute("data-profile-preview-state")).toBe("hovered");
+    fireEvent.mouseLeave(target);
+    expect(target.getAttribute("data-profile-preview-state")).toBe("idle");
+    fireEvent.click(target.querySelector("button")!);
+    expect(target.getAttribute("data-profile-preview-state")).toBe("selected");
+    expect(target.className).toContain("ring-2");
+    if (field === "location") expect(target.textContent).toContain("Online");
+  });
+
+  it("shows the published-course empty state", () => {
+    render(<StudentTeacherProfilePreview model={{ ...baseModel, courses: [] }} locale="ar" interactionMode="local-only" />);
+    expect(screen.getByText("لم ينشر المدرس كورسات بعد.")).toBeDefined();
+  });
+
   it("renders without crashing", () => {
     render(
       <StudentTeacherProfilePreview model={baseModel} locale="ar" interactionMode="local-only" />
@@ -121,11 +145,11 @@ describe("StudentTeacherProfilePreview", () => {
     }
   });
 
-  it("shows profile background image", () => {
+  it("shows the blue grid profile banner", () => {
     const { container } = render(
       <StudentTeacherProfilePreview model={baseModel} locale="ar" interactionMode="local-only" />
     );
-    const bgImg = container.querySelector("img[alt='']");
+    const bgImg = container.querySelector(".preview-profile-banner");
     expect(bgImg).not.toBeNull();
   });
 
@@ -207,7 +231,7 @@ describe("StudentTeacherProfilePreview", () => {
     render(
       <StudentTeacherProfilePreview model={baseModel} locale="ar" interactionMode="local-only" />
     );
-    expect(screen.getByText(/2.*كورس/)).toBeDefined();
+    expect(screen.getByText("كورسان")).toBeDefined();
   });
 
   it("shows location", () => {
@@ -223,9 +247,9 @@ describe("StudentTeacherProfilePreview", () => {
     );
     expect(container.firstElementChild?.getAttribute("dir")).toBe("ltr");
     expect(screen.getByText("All teachers")).toBeDefined();
-    expect(screen.getByText("Available courses")).toBeDefined();
+    expect(screen.getByText("Courses")).toBeDefined();
     expect(screen.getByText("5 years of experience")).toBeDefined();
-    expect(screen.getByText("Subscribe now")).toBeDefined();
+    expect(screen.getByText("Subscribe")).toBeDefined();
     expect(screen.getByText("Course content")).toBeDefined();
   });
 
@@ -234,7 +258,7 @@ describe("StudentTeacherProfilePreview", () => {
       <StudentTeacherProfilePreview model={baseModel} locale="ar" interactionMode="local-only" />
     );
     const courseGrid = Array.from(container.querySelectorAll("div")).find((element) =>
-      element.className.includes("@sm/preview:grid-cols-2")
+      element.className.includes("@xl/preview:grid-cols-2")
     );
     expect(courseGrid).toBeDefined();
   });

@@ -11,7 +11,7 @@ import {
   ArrowRight,
   BookOpen,
   Clock,
-  CheckCircle2,
+  GraduationCap,
   Award,
   Share2,
   MapPin,
@@ -20,23 +20,13 @@ import {
   FileText,
   ClipboardList,
 } from "lucide-react"
-import profileBackground from "@/assets/student-preview/profile-background.webp"
-import lessonCalculus from "@/assets/student-preview/lesson-calculus.webp"
-import lessonMechanics from "@/assets/student-preview/lesson-mechanics.webp"
-import lessonStudySkills from "@/assets/student-preview/lesson-study-skills.webp"
-import lessonArabic from "@/assets/student-preview/lesson-arabic.webp"
+import { getSubjectArt } from "./subject-art"
+import { StudentPreviewCover } from "./student-preview-cover"
 import { cn } from "@/lib/utils"
 import {
   type ProfilePreviewField,
   useProfilePreviewBridge,
 } from "./profile-preview-bridge"
-
-const courseThumbnails = [
-  lessonCalculus,
-  lessonMechanics,
-  lessonStudySkills,
-  lessonArabic,
-]
 
 type ProfilePreviewCopy = {
   fallbackName: string
@@ -45,10 +35,7 @@ type ProfilePreviewCopy = {
   share: string
   experience: (years: number) => string
   availableCourses: (count: number) => string
-  publishedCourses: string
   online: string
-  teachingLocation: string
-  coursesEyebrow: string
   coursesTitle: string
   courseFallbackTitle: string
   courseFallbackDescription: string
@@ -58,6 +45,14 @@ type ProfilePreviewCopy = {
   subscribe: string
   emptyCourseContent: string
   courseSubjectFallback: string
+  experiencePlaceholder: string
+  emptyCourses: string
+  hideContent: string
+  gradesLabel: string
+  includesExams: string
+  includesDocuments: string
+  durationUnknown: string
+  free: string
 }
 
 const PROFILE_PREVIEW_COPY: Record<"ar" | "en", ProfilePreviewCopy> = {
@@ -66,42 +61,78 @@ const PROFILE_PREVIEW_COPY: Record<"ar" | "en", ProfilePreviewCopy> = {
     fallbackBio: "نبذة عن المدرس",
     backToTeachers: "كل المدرسين",
     share: "مشاركة",
-    experience: (years) => `${years} سنوات خبرة`,
-    availableCourses: (count) => `${count} كورسات متاحة`,
-    publishedCourses: "كورسات منشورة",
+    experience: (years) =>
+      years === 1
+        ? "سنة خبرة"
+        : years === 2
+          ? "سنتان خبرة"
+          : `${years} ${new Intl.PluralRules("ar").select(years) === "few" ? "سنوات" : "سنة"} خبرة`,
+    availableCourses: (count) =>
+      count === 0
+        ? "لا كورسات منشورة"
+        : count === 1
+          ? "كورس واحد"
+          : count === 2
+            ? "كورسان"
+            : `${count} ${new Intl.PluralRules("ar").select(count) === "few" ? "كورسات" : new Intl.PluralRules("ar").select(count) === "many" ? "كورساً" : "كورس"}`,
     online: "أونلاين",
-    teachingLocation: "مكان التدريس",
-    coursesEyebrow: "تصفح المحاضرات والاشتراكات",
-    coursesTitle: "الكورسات المتاحة",
+    coursesTitle: "الكورسات",
     courseFallbackTitle: "عنوان الكورس",
     courseFallbackDescription: "وصف الكورس",
-    sessions: (count) => `${count} محاضرة`,
+    sessions: (count) =>
+      count === 0
+        ? "بدون دروس بعد"
+        : count === 1
+          ? "درس واحد"
+          : count === 2
+            ? "درسان"
+            : `${count} ${new Intl.PluralRules("ar").select(count) === "few" ? "دروس" : new Intl.PluralRules("ar").select(count) === "many" ? "درساً" : "درس"}`,
     monthlyPrice: "ج.م / الشهر",
     courseContent: "محتوى الكورس",
     subscribe: "اشترك الآن",
     emptyCourseContent: "لم يضف المدرس محتوى للكورس بعد.",
     courseSubjectFallback: "الكورس",
+    experiencePlaceholder: "سنوات الخبرة",
+    emptyCourses: "لم ينشر المدرس كورسات بعد.",
+    hideContent: "إخفاء المحتوى",
+    gradesLabel: "الصفوف الدراسية",
+    includesExams: "اختبارات",
+    includesDocuments: "ملفات",
+    durationUnknown: "المدة غير محددة",
+    free: "مجاني",
   },
   en: {
     fallbackName: "Teacher name",
     fallbackBio: "Teacher bio",
     backToTeachers: "All teachers",
     share: "Share",
-    experience: (years) => `${years} years of experience`,
-    availableCourses: (count) => `${count} available courses`,
-    publishedCourses: "Published courses",
+    experience: (years) =>
+      `${years} ${years === 1 ? "year" : "years"} of experience`,
+    availableCourses: (count) =>
+      count === 0
+        ? "No published courses"
+        : `${count} ${count === 1 ? "course" : "courses"}`,
     online: "Online",
-    teachingLocation: "Teaching location",
-    coursesEyebrow: "Browse lessons and subscriptions",
-    coursesTitle: "Available courses",
+    coursesTitle: "Courses",
     courseFallbackTitle: "Course title",
     courseFallbackDescription: "Course description",
-    sessions: (count) => `${count} ${count === 1 ? "session" : "sessions"}`,
+    sessions: (count) =>
+      count === 0
+        ? "No lessons yet"
+        : `${count} ${count === 1 ? "lesson" : "lessons"}`,
     monthlyPrice: "EGP / month",
     courseContent: "Course content",
-    subscribe: "Subscribe now",
-    emptyCourseContent: "The teacher has not added course content yet.",
+    subscribe: "Subscribe",
+    emptyCourseContent: "No content added yet.",
     courseSubjectFallback: "Course",
+    experiencePlaceholder: "Years of experience",
+    emptyCourses: "No published courses yet.",
+    hideContent: "Hide content",
+    gradesLabel: "Grades",
+    includesExams: "Exams",
+    includesDocuments: "Files",
+    durationUnknown: "Duration not set",
+    free: "Free",
   },
 }
 
@@ -148,7 +179,7 @@ function ProfilePreviewField({
         active &&
           (insetRing
             ? "bg-white/10 shadow-[inset_0_0_22px_rgb(125_211_252_/_0.25)] ring-2 ring-sky-300/90 ring-inset"
-            : "shadow-[0_0_24px_rgb(125_211_252_/_0.3)] ring-2 ring-sky-300/90 ring-offset-2 ring-offset-slate-950")
+            : "shadow-[0_0_24px_rgb(125_211_252_/_0.3)] ring-2 ring-sky-300/90 ring-offset-2 ring-offset-[var(--color-surface)]")
       )}
       onMouseEnter={() => enabled && setHoveredField(field)}
       onMouseLeave={() => setHoveredField(null)}
@@ -158,7 +189,7 @@ function ProfilePreviewField({
         <button
           type="button"
           aria-label={ariaLabel}
-          className="absolute inset-0 z-10 cursor-pointer rounded-[inherit] border-0 bg-transparent p-0 outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+          className="absolute inset-0 z-10 cursor-pointer rounded-[inherit] border-0 bg-transparent p-0 outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
           onMouseEnter={() => setHoveredField(field)}
           onMouseLeave={() => setHoveredField(null)}
           onClick={() => selectField(field)}
@@ -200,49 +231,94 @@ export function StudentTeacherProfilePreview({
     setExpandedCourses((prev) => ({ ...prev, [courseId]: !prev[courseId] }))
   }
 
+  const nameIsPlaceholder = !model.name || model.name === copy.fallbackName
+  const bioIsPlaceholder = !model.bio || model.bio === copy.fallbackBio
+  const initials = displayName
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((word) => word[0])
+    .join("")
+  const subjects = model.subjects.length ? model.subjects : [model.subject]
+  const doodles = [
+    [6, 18, 56, -14],
+    [24, 58, 40, 10],
+    [44, 14, 48, 6],
+    [62, 52, 60, -8],
+    [80, 20, 44, 16],
+    [93, 62, 36, -20],
+  ]
+
   return (
     <div
       dir={lang === "ar" ? "rtl" : "ltr"}
-      className="student-preview bg-[var(--page)] pb-16 text-[var(--on-surface)]"
+      className="student-preview min-h-full bg-[var(--color-page)] pb-16 text-[var(--color-ink)]"
     >
-      {/* Hero banner */}
-      <div className="relative overflow-hidden bg-slate-950 pt-24 text-white shadow-xl">
-        <img
-          src={profileBackground.src}
-          alt=""
-          className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center opacity-25 mix-blend-overlay"
-        />
-        <div className="pointer-events-none absolute inset-0 bg-slate-950/80" />
-
-        <div className="relative z-10 mx-auto flex max-w-7xl items-center justify-between px-4 pt-6 @sm/preview:px-6 @lg/preview:px-8">
-          <span className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-xs font-extrabold text-white backdrop-blur-md @sm/preview:text-sm">
-            {lang === "ar" ? (
-              <ArrowRight className="h-4 w-4" />
-            ) : (
-              <ArrowLeft className="h-4 w-4" />
-            )}
-            <span>{copy.backToTeachers}</span>
-          </span>
-
-          <button
-            disabled
-            aria-disabled="true"
-            className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl border border-sky-400/30 bg-sky-500/20 px-4 py-2 text-xs font-extrabold text-sky-200 opacity-60 backdrop-blur-md @sm/preview:text-sm"
-          >
-            <Share2 className="h-4 w-4" />
-            <span>{copy.share}</span>
-          </button>
-        </div>
-
-        <div className="relative z-10 mx-auto max-w-7xl px-4 pt-10 pb-16 @sm/preview:px-6 @sm/preview:pb-20 @lg/preview:px-8">
-          <div className="flex flex-col items-center gap-6 text-center @sm/preview:gap-8 @md/preview:flex-row @md/preview:items-end @md/preview:text-start">
-            <ProfilePreviewField
-              field="avatar"
-              ariaLabel={fieldEditLabels.avatar}
-              className="shrink-0 rounded-3xl"
+      <div className="mx-auto w-full max-w-[1400px] px-4 pt-6 @sm/preview:px-6 @sm/preview:pt-8 @5xl/preview:px-8">
+        <header className="sticker-tile overflow-hidden">
+          <div className="preview-profile-banner relative h-40 overflow-hidden border-b-2 border-[var(--color-line)] @sm/preview:h-52">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 [background-image:linear-gradient(to_right,white_1px,transparent_1px),linear-gradient(to_bottom,white_1px,transparent_1px)] [background-size:28px_28px] opacity-25"
+            />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 text-white/35"
             >
-              <div className="h-52 w-44 rounded-3xl bg-gradient-to-tr from-amber-400/80 via-sky-400/80 to-[var(--brand-indigo)]/80 p-1.5 shadow-2xl @sm/preview:h-64 @sm/preview:w-56 @md/preview:h-72 @md/preview:w-64">
-                <div className="relative h-full w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
+              {doodles.map(([start, top, size, rotation], index) => {
+                const { Icon } = getSubjectArt(
+                  subjects[index % subjects.length]
+                )
+                return (
+                  <span
+                    key={index}
+                    className="absolute"
+                    style={{
+                      insetInlineStart: `${start}%`,
+                      top: `${top}%`,
+                      transform: `rotate(${rotation}deg)`,
+                    }}
+                  >
+                    <Icon
+                      style={{ width: size, height: size }}
+                      strokeWidth={1.5}
+                    />
+                  </span>
+                )
+              })}
+            </div>
+            <div className="relative flex items-start justify-between gap-3 p-4 @sm/preview:p-5">
+              <span
+                aria-disabled="true"
+                className="sticker-btn-outline inline-flex min-h-11 items-center gap-2 px-4 text-sm font-black"
+              >
+                {lang === "ar" ? (
+                  <ArrowRight className="size-4" aria-hidden="true" />
+                ) : (
+                  <ArrowLeft className="size-4" aria-hidden="true" />
+                )}
+                {copy.backToTeachers}
+              </span>
+              <button
+                type="button"
+                disabled
+                aria-disabled="true"
+                className="sticker-btn-outline inline-flex min-h-11 items-center gap-2 px-4 text-sm font-black"
+              >
+                <Share2 className="size-4" aria-hidden="true" />
+                {copy.share}
+              </button>
+            </div>
+          </div>
+
+          <div className="relative px-5 pb-5 @sm/preview:px-8 @sm/preview:pb-6">
+            <div className="relative z-10 -mt-16 flex justify-center @sm/preview:-mt-20 @3xl/preview:absolute @3xl/preview:start-8 @3xl/preview:top-0 @3xl/preview:mt-0 @3xl/preview:-translate-y-1/2">
+              <ProfilePreviewField
+                field="avatar"
+                ariaLabel={fieldEditLabels.avatar}
+                className="shrink-0 -rotate-3 rounded-[1.75rem]"
+              >
+                <div className="sticker-shadow size-32 overflow-hidden rounded-[1.75rem] border-2 border-[var(--color-line)] bg-[var(--brand-indigo-tint)] @sm/preview:size-40">
                   {model.avatarUrl ? (
                     <img
                       src={model.avatarUrl}
@@ -250,243 +326,296 @@ export function StudentTeacherProfilePreview({
                       className="h-full w-full object-cover object-center"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-[var(--brand-indigo-tint)] text-2xl font-black text-[var(--brand-indigo-deep)]">
-                      {displayName.charAt(0)}
+                    <div className="flex h-full w-full items-center justify-center text-5xl font-black text-[var(--on-primary-tint)] @sm/preview:text-6xl">
+                      {initials}
                     </div>
                   )}
                 </div>
-              </div>
-            </ProfilePreviewField>
-
-            <div className="flex-1 space-y-3">
-              <div className="flex flex-wrap items-center justify-center gap-2 @md/preview:justify-start">
-                {model.subjects.map((sub, idx) => (
-                  <span
-                    key={idx}
-                    className="rounded-full border border-sky-400/40 bg-sky-500/20 px-3 py-1 text-xs font-extrabold text-sky-200 backdrop-blur-md"
-                  >
-                    {sub}
-                  </span>
-                ))}
-              </div>
-
+              </ProfilePreviewField>
+            </div>
+            <div className="mt-4 text-center @3xl/preview:mt-0 @3xl/preview:ps-52 @3xl/preview:pt-5 @3xl/preview:text-start">
               <ProfilePreviewField
                 field="name"
                 ariaLabel={fieldEditLabels.name}
                 className="rounded-xl"
               >
-                <h1 className="line-clamp-2 text-3xl font-black tracking-tight text-white @sm/preview:text-4xl @lg/preview:line-clamp-1 @lg/preview:text-5xl">
+                <h1
+                  className={cn(
+                    "text-3xl font-black tracking-tight text-balance break-words @sm/preview:text-4xl @5xl/preview:text-5xl",
+                    nameIsPlaceholder && "text-[var(--color-muted)]"
+                  )}
+                >
                   {displayName}
                 </h1>
               </ProfilePreviewField>
-
-              <div className="flex flex-wrap items-center justify-center gap-3 pt-2 text-xs font-bold text-slate-200 @sm/preview:text-sm @md/preview:justify-start">
-                {model.experienceYears > 0 && <ProfilePreviewField
-                  field="experience"
-                  ariaLabel={fieldEditLabels.experience}
-                  className="rounded-xl"
+              {model.subjects.length > 0 && (
+                <ul className="mt-3 flex flex-wrap justify-center gap-2 @3xl/preview:justify-start">
+                  {model.subjects.map((subject, index) => (
+                    <li
+                      key={`${subject}-${index}`}
+                      className="sticker-badge bg-[var(--brand-indigo-tint)] px-3 py-1 text-xs font-black text-[var(--on-primary-tint)]"
+                    >
+                      {subject}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <ProfilePreviewField
+                field="bio"
+                ariaLabel={fieldEditLabels.bio}
+                className="mx-auto mt-4 max-w-[65ch] rounded-xl @3xl/preview:mx-0"
+              >
+                <p
+                  className={cn(
+                    "text-sm leading-7 font-medium whitespace-pre-line @sm/preview:text-base",
+                    bioIsPlaceholder
+                      ? "text-[var(--color-muted)] italic"
+                      : "text-[var(--color-ink)]/75"
+                  )}
                 >
-                  <div className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3.5 py-1.5 backdrop-blur-md">
-                    <Award className="h-4 w-4 text-sky-400" />
-                    <span>{copy.experience(model.experienceYears)}</span>
-                  </div>
-                </ProfilePreviewField>}
-                <div className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3.5 py-1.5 backdrop-blur-md">
-                  <BookOpen className="h-4 w-4 text-emerald-400" />
-                  <span>{copy.availableCourses(model.courses.length)}</span>
-                </div>
-              </div>
-              <div className="mx-auto grid max-w-7xl gap-8 @lg/preview:grid-cols-[1.4fr_1fr]">
-                <ProfilePreviewField
-                  field="bio"
-                  ariaLabel={fieldEditLabels.bio}
-                  className="rounded-xl"
+                  {displayBio}
+                </p>
+              </ProfilePreviewField>
+            </div>
+            <div className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2 border-t-2 border-dashed border-[var(--color-ink)]/10 pt-4 text-sm font-bold text-[var(--color-ink)]/80 @3xl/preview:justify-start">
+              <span className="inline-flex items-center gap-2 tabular-nums">
+                <BookOpen
+                  className="size-4 text-[var(--brand-indigo)]"
+                  aria-hidden="true"
+                />
+                {copy.availableCourses(model.courses.length)}
+              </span>
+              {model.grades.length > 0 && (
+                <span className="inline-flex items-center gap-2">
+                  <GraduationCap
+                    className="size-4 shrink-0 text-[var(--brand-indigo)]"
+                    aria-hidden="true"
+                  />
+                  <span className="sr-only">{copy.gradesLabel}: </span>
+                  <span dir="auto">{model.grades.join(" · ")}</span>
+                </span>
+              )}
+              <ProfilePreviewField
+                field="experience"
+                ariaLabel={fieldEditLabels.experience}
+                className="rounded-lg"
+              >
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-2 tabular-nums",
+                    model.experienceYears <= 0 &&
+                      "text-[var(--color-muted)] italic"
+                  )}
                 >
-                  <p className="mt-3 line-clamp-4 text-lg leading-10 font-bold">
-                    {displayBio}
-                  </p>
-                </ProfilePreviewField>
-                <div className="grid h-full grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/15 bg-white/10 backdrop-blur-md">
-                  <div className="bg-white/5 p-4">
-                    <BookOpen className="mb-3 size-5 text-sky-300" />
-                    <strong className="block text-xl font-black text-white">
-                      {model.courses.length}
-                    </strong>
-                    <span className="text-xs text-slate-300">
-                      {copy.publishedCourses}
-                    </span>
-                  </div>
-                  <ProfilePreviewField
-                    field="location"
-                    ariaLabel={fieldEditLabels.location}
-                    insetRing
-                    className="bg-white/5 p-4"
-                  >
-                    <MapPin className="mb-3 size-5 text-amber-300" />
-                    <strong className="block truncate text-sm leading-6 font-black text-white">
-                      {model.location ?? copy.online}
-                    </strong>
-                    <span className="text-xs text-slate-300">
-                      {copy.teachingLocation}
-                    </span>
-                  </ProfilePreviewField>
-                </div>
-              </div>
+                  <Award
+                    className="size-4 text-[var(--brand-indigo)]"
+                    aria-hidden="true"
+                  />
+                  {model.experienceYears > 0
+                    ? copy.experience(model.experienceYears)
+                    : copy.experiencePlaceholder}
+                </span>
+              </ProfilePreviewField>
+              <ProfilePreviewField
+                field="location"
+                ariaLabel={fieldEditLabels.location}
+                className="rounded-lg"
+              >
+                <span className="inline-flex items-center gap-2">
+                  <MapPin
+                    className="size-4 shrink-0 text-[var(--brand-amber)]"
+                    aria-hidden="true"
+                  />
+                  <span dir="auto">{model.location || copy.online}</span>
+                </span>
+              </ProfilePreviewField>
             </div>
           </div>
-        </div>
+        </header>
       </div>
 
-      {/* About section */}
-      <section className="border-b border-[var(--border)] bg-[var(--surface)] py-10"></section>
-
-      {/* Courses section */}
-      <div className="mx-auto max-w-7xl px-4 py-10 @sm/preview:px-6 @sm/preview:py-14 @lg/preview:px-8">
-        <section className="space-y-6">
-          <div className="flex flex-col items-start justify-between gap-4 border-b border-[var(--border)] pb-2 @sm/preview:flex-row @sm/preview:items-center">
-            <div>
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-[var(--brand-indigo-tint)] px-3.5 py-1 text-xs font-extrabold text-[var(--brand-indigo)]">
-                <BookOpen className="h-3.5 w-3.5" />
-                <span>{copy.coursesEyebrow}</span>
-              </div>
-              <h2 className="text-2xl font-black text-[var(--on-surface)] @sm/preview:text-3xl">
-                {copy.coursesTitle}
-              </h2>
-            </div>
+      <div className="mx-auto mt-8 w-full max-w-[1400px] px-4 @sm/preview:px-6 @5xl/preview:px-8">
+        <section aria-labelledby="teacher-preview-courses-title">
+          <div className="mb-5 flex items-center gap-3">
+            <h2
+              id="teacher-preview-courses-title"
+              className="text-2xl font-black tracking-tight @sm/preview:text-3xl"
+            >
+              {copy.coursesTitle}
+            </h2>
+            <span className="rounded-full bg-[var(--color-brand-600)] px-2.5 py-0.5 text-sm font-black text-white tabular-nums">
+              {model.courses.length}
+            </span>
           </div>
-
-          <div className="grid grid-cols-1 items-stretch gap-6 @sm/preview:grid-cols-2">
-            {model.courses.slice(0, 2).map((course, index) => {
-              const isExpanded = expandedCourses[course.id]
-              const thumbnail =
-                course.coverUrl ||
-                courseThumbnails[index % courseThumbnails.length]
-
-              return (
-                <article
-                  key={course.id}
-                  className="group flex flex-col justify-between overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-md"
-                >
-                  <div>
-                    <div className="relative aspect-video w-full overflow-hidden bg-slate-900">
-                      <img
-                        src={
-                          typeof thumbnail === "string"
-                            ? thumbnail
-                            : thumbnail.src
-                        }
-                        alt={course.title}
-                        loading="lazy"
-                        className="h-full w-full object-cover"
+          {model.courses.length === 0 ? (
+            <div className="sticker-tile flex min-h-48 flex-col items-center justify-center gap-3 p-8 text-center">
+              <BookOpen
+                className="size-9 text-[var(--brand-indigo)]"
+                aria-hidden="true"
+              />
+              <p className="text-sm font-bold text-[var(--color-muted)]">
+                {copy.emptyCourses}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 items-stretch gap-6 @xl/preview:grid-cols-2 @5xl/preview:grid-cols-3">
+              {model.courses.map((course) => {
+                const isExpanded = expandedCourses[course.id]
+                const items = course.sections.flatMap((section) =>
+                  section.lessons.flatMap((lesson) => lesson.items)
+                )
+                return (
+                  <article
+                    key={course.id}
+                    className="sticker-tile group flex h-full min-w-0 flex-col overflow-hidden"
+                  >
+                    <div className="relative aspect-[16/9] overflow-hidden border-b-2 border-[var(--color-line)]">
+                      <StudentPreviewCover
+                        src={course.coverUrl}
+                        subject={model.subject}
+                        alt={course.title || copy.courseFallbackTitle}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
-                      <div className="absolute end-3 top-3 rounded-full bg-[var(--brand-indigo)]/90 px-3 py-1 text-xs font-black text-white shadow-sm backdrop-blur-md">
-                        {model.subject || copy.courseSubjectFallback}
-                      </div>
-                      {course.duration && (
-                        <div className="absolute start-3 bottom-3 flex items-center gap-1 rounded-lg bg-slate-900/80 px-2.5 py-1 text-xs font-bold text-slate-200 backdrop-blur-md">
-                          <Clock className="h-3 w-3 text-sky-400" />
-                          <span>{course.duration}</span>
-                        </div>
-                      )}
+                      <span className="absolute end-3 bottom-3 inline-flex items-center gap-1.5 rounded-full border-2 border-white/20 bg-slate-950/75 px-2.5 py-1 text-[11px] font-bold text-white">
+                        <Clock className="size-3.5" aria-hidden="true" />
+                        {course.duration || copy.durationUnknown}
+                      </span>
                     </div>
-                    <div className="space-y-1 p-5">
-                      <h3 className="line-clamp-2 text-xl leading-snug font-black text-[var(--on-surface)]">
+                    <div className="flex flex-1 flex-col gap-3 p-5">
+                      <h3 className="line-clamp-2 text-lg leading-snug font-black">
                         {course.title || copy.courseFallbackTitle}
                       </h3>
-                      <p className="text-md line-clamp-2 leading-relaxed font-medium text-[var(--on-surface-muted)]">
+                      <p className="line-clamp-2 text-[13px] leading-6 font-medium text-[var(--color-muted)]">
                         {course.description || copy.courseFallbackDescription}
                       </p>
+                      <ul className="mt-auto flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-bold text-[var(--color-muted)]">
+                        <li className="inline-flex items-center gap-1.5 tabular-nums">
+                          <BookOpen
+                            className="size-3.5 text-[var(--brand-indigo)]"
+                            aria-hidden="true"
+                          />
+                          {copy.sessions(course.sessionsCount)}
+                        </li>
+                        {items.some((item) => item.hasExam) && (
+                          <li className="inline-flex items-center gap-1.5">
+                            <ClipboardList
+                              className="size-3.5 text-amber-600"
+                              aria-hidden="true"
+                            />
+                            {copy.includesExams}
+                          </li>
+                        )}
+                        {items.some((item) => item.hasDocument) && (
+                          <li className="inline-flex items-center gap-1.5">
+                            <FileText
+                              className="size-3.5 text-emerald-600"
+                              aria-hidden="true"
+                            />
+                            {copy.includesDocuments}
+                          </li>
+                        )}
+                      </ul>
                     </div>
-                  </div>
-                  <div className="mt-2 p-5 pt-0">
-                    <div className="flex items-center justify-between gap-3 border-t border-[#F1F5F9] pt-3 dark:border-border">
-                      <div>
-                        <span className="text-2xl font-black text-[var(--on-surface)]">
-                          {course.price}
-                        </span>
-                        <span className="ms-1 text-xs font-bold text-[var(--on-surface-muted)]">
-                          {copy.monthlyPrice}
-                        </span>
-                      </div>
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-t-2 border-dashed border-[var(--color-ink)]/10 px-5 py-4">
+                      <p className="min-w-0 whitespace-nowrap">
+                        {Number(course.price) > 0 ? (
+                          <>
+                            <span className="text-2xl font-black tabular-nums">
+                              {course.price}
+                            </span>
+                            <span className="ms-1 text-xs font-bold text-[var(--color-muted)]">
+                              {copy.monthlyPrice}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-2xl font-black text-emerald-700 dark:text-emerald-400">
+                            {copy.free}
+                          </span>
+                        )}
+                      </p>
                       {course.isSubscribed ? (
                         <button
                           type="button"
                           onClick={() => toggleExpand(course.id)}
                           aria-expanded={!!isExpanded}
-                          className="flex cursor-pointer items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-black text-white shadow-md transition-all @sm/preview:text-sm"
+                          className="sticker-btn-outline inline-flex min-h-11 shrink-0 items-center gap-2 px-5 text-sm font-black"
                         >
                           <ChevronDown
-                            className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                            className={cn(
+                              "size-4 transition-transform motion-reduce:transition-none",
+                              isExpanded && "rotate-180"
+                            )}
+                            aria-hidden="true"
                           />
-                          <span>{copy.courseContent}</span>
+                          <span>
+                            {isExpanded ? copy.hideContent : copy.courseContent}
+                          </span>
                         </button>
                       ) : (
                         <button
+                          type="button"
                           disabled
                           aria-disabled="true"
-                          className="flex cursor-not-allowed items-center gap-2 rounded-xl bg-[var(--brand-indigo)] px-5 py-2.5 text-xs font-black text-white opacity-60 shadow-md @sm/preview:text-sm"
+                          className="sticker-btn inline-flex min-h-11 shrink-0 items-center gap-2 px-5 text-sm font-black"
                         >
-                          <BookOpen className="h-4 w-4" />
-                          <span>{copy.subscribe}</span>
+                          {copy.subscribe}
                         </button>
                       )}
                     </div>
-                  </div>
-                  {course.isSubscribed && isExpanded && (
-                    <div className="border-t border-[#F1F5F9] bg-[#F8FAFC] px-5 py-4 dark:border-border dark:bg-surface-muted">
-                      {course.sections.length ? (
-                        <div className="space-y-4">
-                          {course.sections.map((section) => (
-                            <div key={section.id}>
-                              {section.title && (
-                                <h4 className="mb-2 text-sm font-black text-[var(--on-surface)]">
-                                  {section.title}
-                                </h4>
-                              )}
-                              <div className="space-y-2">
-                                {section.lessons.map((lesson) => (
-                                  <div
-                                    key={lesson.id}
-                                    className="border-b border-[var(--border-subtle)] pb-2 last:border-0"
-                                  >
-                                    <p className="text-xs font-extrabold text-[var(--on-surface)]">
-                                      {lesson.title}
-                                    </p>
-                                    <div className="mt-2 flex flex-wrap gap-2">
-                                      {lesson.items.map((item) => (
-                                        <span
-                                          key={item.id}
-                                          className="inline-flex items-center gap-1.5 text-xs font-bold text-[var(--on-surface-muted)]"
-                                        >
-                                          {item.hasVideo ? (
-                                            <PlayCircle className="size-3.5 text-[var(--brand-indigo)]" />
-                                          ) : item.hasDocument ? (
-                                            <FileText className="size-3.5 text-emerald-600" />
-                                          ) : (
-                                            <ClipboardList className="size-3.5 text-amber-600" />
-                                          )}
-                                          {item.title}
-                                        </span>
-                                      ))}
+                    {course.isSubscribed && isExpanded && (
+                      <div className="border-t-2 border-[var(--color-ink)]/10 bg-[var(--color-surface-muted)] px-5 py-4 dark:border-border dark:bg-surface-muted">
+                        {course.sections.length ? (
+                          <div className="space-y-4">
+                            {course.sections.map((section) => (
+                              <div key={section.id}>
+                                {section.title && (
+                                  <h4 className="mb-2 text-sm font-black text-[var(--color-ink)]">
+                                    {section.title}
+                                  </h4>
+                                )}
+                                <div className="space-y-2">
+                                  {section.lessons.map((lesson) => (
+                                    <div
+                                      key={lesson.id}
+                                      className="border-b border-[var(--border-subtle)] pb-2 last:border-0"
+                                    >
+                                      <p className="text-xs font-extrabold text-[var(--color-ink)]">
+                                        {lesson.title}
+                                      </p>
+                                      <div className="mt-2 flex flex-wrap gap-2">
+                                        {lesson.items.map((item) => (
+                                          <span
+                                            key={item.id}
+                                            className="inline-flex items-center gap-1.5 text-xs font-bold text-[var(--color-muted)]"
+                                          >
+                                            {item.hasVideo ? (
+                                              <PlayCircle className="size-3.5 text-[var(--brand-indigo)]" />
+                                            ) : item.hasDocument ? (
+                                              <FileText className="size-3.5 text-emerald-600" />
+                                            ) : (
+                                              <ClipboardList className="size-3.5 text-amber-600" />
+                                            )}
+                                            {item.title}
+                                          </span>
+                                        ))}
+                                      </div>
                                     </div>
-                                  </div>
-                                ))}
+                                  ))}
+                                </div>
                               </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-xs font-bold text-[var(--on-surface-muted)]">
-                          {copy.emptyCourseContent}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </article>
-              )
-            })}
-          </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs font-bold text-[var(--color-muted)]">
+                            {copy.emptyCourseContent}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </article>
+                )
+              })}
+            </div>
+          )}
         </section>
       </div>
     </div>

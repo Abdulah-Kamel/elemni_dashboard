@@ -200,11 +200,15 @@ describe("CourseWorkspace", () => {
     expect(titleInput.className).not.toContain("ring-primary/30")
   })
 
-  it("focuses the matching editor field when a preview title is clicked", async () => {
+  it.each([
+    ["title", "Title"],
+    ["description", "Description"],
+    ["price", "Price"],
+  ])("focuses the matching editor field when preview %s is clicked", async (field, label) => {
     render(<CourseWorkspace model={mockModel} locale="en" viewer="guest" />)
 
-    fireEvent.click(await screen.findByRole("button", { name: "Edit course title" }))
-    expect(document.activeElement).toBe(screen.getByLabelText("Title"))
+    fireEvent.click(await screen.findByRole("button", { name: `Edit course ${field}` }))
+    expect(document.activeElement).toBe(screen.getByLabelText(label))
   })
 
   it("focuses a curriculum editor node when its preview lesson is clicked", async () => {

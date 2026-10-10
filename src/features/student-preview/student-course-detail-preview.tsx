@@ -8,15 +8,15 @@ import type {
   PreviewInteractionMode,
 } from "./types"
 import {
-  ArrowLeft,
-  ArrowRight,
   BookOpen,
   ChevronDown,
   ChevronLeft,
   ClipboardList,
   Clock3,
+  CalendarDays,
+  CheckCircle2,
+  ShieldCheck,
   FileText,
-  FolderOpen,
   LockKeyhole,
   PlayCircle,
   Video,
@@ -25,6 +25,8 @@ import { useCourseBuilderBridge } from "@/features/course-management/course-buil
 import type { CourseBuilderField } from "@/features/course-management/course-builder-bridge"
 import type { CourseBuilderNode } from "./types"
 import { cn } from "@/lib/utils"
+import { MarkerHighlight } from "./marker-highlight"
+import { StudentPreviewCover } from "./student-preview-cover"
 
 type CoursePreviewCopy = {
   backToDiscovery: string
@@ -35,11 +37,21 @@ type CoursePreviewCopy = {
   durationUnknown: string
   durationMinutes: (count: number) => string
   durationHours: (hours: number, minutes: number) => string
-  subscribeCta: (price: string) => string
-  sectionCount: (count: number) => string
-  navLabel: string
-  tabs: readonly string[]
-  comingSoon: (tab: string) => string
+  fallbackTitle: string
+  placeholderDescription: string
+  subscribeCta: string
+  checkoutPrice: string
+  securePayment: string
+  couponLabel: string
+  couponPlaceholder: string
+  couponApply: string
+  accessDuration: string
+  publishedContent: string
+  signInToContinue: string
+  currency: string
+  lastUpdated: string
+  dateUnknown: string
+  curriculumDescription: string
   contentTitle: string
   contentSummary: (lessons: number, duration: string) => string
   contentSummaryEmpty: string
@@ -61,26 +73,58 @@ const COURSE_PREVIEW_COPY: Record<"ar" | "en", CoursePreviewCopy> = {
     backToDiscovery: "العودة إلى الاستكشاف",
     teacherLabel: (subject) => `مدرس ${subject || "الكورس"}`,
     fallbackDescription: "تابع محتوى الكورس ودروس المدرس من مكان واحد.",
-    lessonCount: (count) => `${count} درس`,
+    lessonCount: (count) =>
+      count === 0
+        ? "لا توجد دروس"
+        : count === 1
+          ? "درس واحد"
+          : count === 2
+            ? "درسان"
+            : `${count} ${new Intl.PluralRules("ar").select(count) === "few" ? "دروس" : new Intl.PluralRules("ar").select(count) === "many" ? "درساً" : "درس"}`,
     examCount: (count) => `${count} اختبار`,
     durationUnknown: "المدة غير محددة",
-    durationMinutes: (count) => `${count} دقيقة`,
-    durationHours: (hours, minutes) =>
-      minutes ? `${hours} س ${minutes} د` : `${hours} ساعات`,
-    subscribeCta: (price) => `اشترك الآن - ${price} ج.م`,
-    sectionCount: (count) => `${count} ${count === 1 ? "وحدة" : "وحدات"}`,
-    navLabel: "أقسام الكورس",
-    tabs: ["المحتوى", "الاختبارات"],
-    comingSoon: (tab) => `${tab} - قريباً`,
+    durationMinutes: (count) =>
+      count === 1
+        ? "دقيقة واحدة"
+        : count === 2
+          ? "دقيقتان"
+          : `${count} ${new Intl.PluralRules("ar").select(count) === "few" ? "دقائق" : "دقيقة"}`,
+    durationHours: (hours, minutes) => {
+      const duration =
+        hours === 1
+          ? "ساعة واحدة"
+          : hours === 2
+            ? "ساعتان"
+            : `${hours} ${new Intl.PluralRules("ar").select(hours) === "few" ? "ساعات" : "ساعة"}`
+      return minutes
+        ? `${duration} ${COURSE_PREVIEW_COPY.ar.durationMinutes(minutes)}`
+        : duration
+    },
+    fallbackTitle: "عنوان الكورس",
+    placeholderDescription: "وصف الكورس",
+    subscribeCta: "اشترك في الكورس",
+    checkoutPrice: "السعر المستحق",
+    securePayment: "دفع آمن",
+    couponLabel: "كود الخصم",
+    couponPlaceholder: "ادخل كود الخصم",
+    couponApply: "تطبيق",
+    accessDuration: "اشتراك لمدة 30 يوماً",
+    publishedContent: "المحتوى المنشور",
+    signInToContinue: "سجل الدخول للمتابعة",
+    currency: "ج.م",
+    lastUpdated: "آخر تحديث",
+    dateUnknown: "التاريخ غير محدد",
+    curriculumDescription: "راجع الوحدات والدروس قبل أن تبدأ رحلة التعلم.",
     contentTitle: "خطة الكورس",
     contentSummary: (lessons, duration) => `${lessons} درس · ${duration}`,
     contentSummaryEmpty: "سيظهر المحتوى المنشور هنا",
     emptyTitle: "محتوى الكورس غير متاح حالياً",
     emptyBody: "عند نشر المدرس للدروس والمواد التعليمية ستظهر هنا تلقائياً.",
     chapterFallback: "دروس الكورس",
-    chapterSummary: (lessons, duration) => `${lessons} دروس · ${duration}`,
+    chapterSummary: (lessons, duration) =>
+      `${COURSE_PREVIEW_COPY.ar.lessonCount(lessons)} · ${duration}`,
     video: "فيديو",
-    files: "ملفات",
+    files: "ملف",
     exam: "اختبار",
     itemFallback: "محتوى الدرس",
     accessRequired: "يتطلب الاشتراك",
@@ -88,37 +132,50 @@ const COURSE_PREVIEW_COPY: Record<"ar" | "en", CoursePreviewCopy> = {
     selectItem: "تحديد العنصر للتعديل",
   },
   en: {
-    backToDiscovery: "Back to discovery",
+    backToDiscovery: "Back to explore",
     teacherLabel: (subject) => `${subject || "Course"} instructor`,
     fallbackDescription: "Follow the course content and lessons in one place.",
-    lessonCount: (count) => `${count} ${count === 1 ? "lesson" : "lessons"}`,
+    lessonCount: (count) =>
+      count === 0
+        ? "No lessons"
+        : `${count} ${count === 1 ? "lesson" : "lessons"}`,
     examCount: (count) => `${count} ${count === 1 ? "exam" : "exams"}`,
     durationUnknown: "Duration not specified",
-    durationMinutes: (count) => `${count} min`,
+    durationMinutes: (count) =>
+      `${count} ${count === 1 ? "minute" : "minutes"}`,
     durationHours: (hours, minutes) =>
-      minutes
-        ? `${hours}h ${minutes}m`
-        : `${hours} ${hours === 1 ? "hour" : "hours"}`,
-    subscribeCta: (price) => `Subscribe now - ${price} EGP`,
-    sectionCount: (count) => `${count} ${count === 1 ? "section" : "sections"}`,
-    navLabel: "Course sections",
-    tabs: ["Content", "Quizzes", "Files", "Discussions", "Progress"],
-    comingSoon: (tab) => `${tab} - Coming soon`,
+      `${hours} ${hours === 1 ? "hour" : "hours"}${minutes ? ` ${minutes} ${minutes === 1 ? "minute" : "minutes"}` : ""}`,
+    fallbackTitle: "Course title",
+    placeholderDescription: "Course description",
+    subscribeCta: "Enroll in this course",
+    checkoutPrice: "Amount due",
+    securePayment: "Secure payment",
+    couponLabel: "Coupon code",
+    couponPlaceholder: "Enter coupon code",
+    couponApply: "Apply",
+    accessDuration: "30-day access",
+    publishedContent: "Published content",
+    signInToContinue: "Sign in to continue",
+    currency: "EGP",
+    lastUpdated: "Last updated",
+    dateUnknown: "Date not specified",
+    curriculumDescription:
+      "Review the sections and lessons before you start learning.",
     contentTitle: "Course plan",
     contentSummary: (lessons, duration) =>
       `${lessons} ${lessons === 1 ? "lesson" : "lessons"} · ${duration}`,
     contentSummaryEmpty: "Published content will appear here",
     emptyTitle: "Course content is not available yet",
     emptyBody:
-      "Once the teacher publishes lessons and learning materials, they will appear here automatically.",
+      "Lessons and materials will appear here when the teacher publishes them.",
     chapterFallback: "Course lessons",
     chapterSummary: (lessons, duration) =>
       `${lessons} ${lessons === 1 ? "lesson" : "lessons"} · ${duration}`,
     video: "Video",
-    files: "Files",
-    exam: "Quiz",
+    files: "File",
+    exam: "Exam",
     itemFallback: "Lesson content",
-    accessRequired: "Subscription required",
+    accessRequired: "Enrollment required",
     emptyLesson: "No materials have been added to this lesson yet.",
     selectItem: "Select item to edit",
   },
@@ -361,213 +418,291 @@ export function StudentCourseDetailPreview({
           price: "Edit course price",
         }
 
+  const titleIsPlaceholder = !model.title || model.title === copy.fallbackTitle
+  const descriptionIsPlaceholder =
+    !model.description || model.description === copy.placeholderDescription
+  const date = model.createdAt ? new Date(model.createdAt) : null
+  const displayDate =
+    date && !Number.isNaN(date.getTime())
+      ? new Intl.DateTimeFormat(lang === "ar" ? "ar-EG-u-nu-latn" : "en-GB", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        }).format(date)
+      : copy.dateUnknown
+
   return (
     <div
       dir={lang === "ar" ? "rtl" : "ltr"}
-      className="student-preview min-h-full bg-[var(--page)] text-[var(--on-surface)]"
+      className="student-preview min-h-full bg-[var(--color-page)] text-[var(--color-ink)]"
     >
-      <div className="mx-auto max-w-7xl px-4 py-7 @sm/preview:px-6 @sm/preview:py-8 @lg/preview:px-8">
-        {/* The preview keeps this navigation inert, while preserving the student-facing styling. */}
+      <div className="mx-auto max-w-7xl px-4 py-7 @sm/preview:px-6 @sm/preview:py-8 @5xl/preview:px-8">
         <span
           aria-disabled="true"
-          className="mb-5 inline-flex items-center gap-2 text-sm font-bold text-[var(--on-surface-muted)] transition-colors hover:text-[var(--brand-indigo-deep)]"
+          className="mb-5 inline-flex items-center gap-2 text-sm font-bold text-[var(--color-muted)]"
         >
-          <ChevronLeft
-            className={`size-4 ${lang === "ar" ? "rotate-180" : ""}`}
-          />
+          <ChevronLeft className="size-4 rtl:rotate-180" aria-hidden="true" />
           {copy.backToDiscovery}
         </span>
 
-        {/* Course hero */}
-        <section
-          className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 @sm/preview:p-7"
-          aria-labelledby="course-preview-title"
-        >
-          <div className="grid gap-7 @lg/preview:grid-cols-[1fr_auto] @lg/preview:items-end">
-            <div>
-              <div className="mb-4 flex flex-wrap gap-2">
-                {model.subject && (
-                  <span className="rounded-full bg-[var(--brand-indigo)]/5 px-3 py-1 text-xs font-bold text-[var(--brand-indigo-deep)]">
-                    {model.subject}
-                  </span>
-                )}
-                {(model.grade || model.stream) && (
-                  <span className="rounded-full bg-[var(--surface-muted)] px-3 py-1 text-xs font-bold text-[var(--on-surface-body)]">
-                    {[model.grade, model.stream].filter(Boolean).join(" - ")}
-                  </span>
-                )}
-              </div>
-              <CoursePreviewField
-                field="title"
-                ariaLabel={fieldEditLabels.title}
-                className="rounded-lg"
-              >
-                <h1
-                  id="course-preview-title"
-                  className="text-3xl leading-tight font-black text-[var(--on-surface)] @sm/preview:text-4xl"
-                >
-                  {model.title}
-                </h1>
-              </CoursePreviewField>
-              {model.teacher && (
-                <div className="mt-5 flex w-fit items-center gap-3 rounded-lg">
-                  {model.teacher.avatarUrl ? (
-                    <img
-                      src={model.teacher.avatarUrl}
-                      alt={model.teacher.name}
-                      className="size-11 rounded-full border border-[var(--border)] object-cover"
-                    />
-                  ) : (
-                    <span className="flex size-11 items-center justify-center rounded-full bg-[var(--brand-indigo-tint)] text-sm font-black text-[var(--brand-indigo-deep)]">
-                      {model.teacher.name.charAt(0)}
+        <div className="grid items-start gap-8 @5xl/preview:grid-cols-[minmax(19rem,24rem)_minmax(0,1fr)]">
+          {/* Contents on phones places checkout between hero and curriculum, as on the student page. */}
+          <div className="contents @5xl/preview:order-2 @5xl/preview:block @5xl/preview:min-w-0 @5xl/preview:space-y-8">
+            <section
+              className="preview-hero order-1 min-w-0 overflow-hidden"
+              aria-labelledby="course-preview-title"
+            >
+              <div className="grid @5xl/preview:grid-cols-[minmax(0,1fr)_minmax(0,36%)]">
+                <div className="order-2 flex min-w-0 flex-col justify-between p-6 @sm/preview:p-9 @5xl/preview:order-1 @5xl/preview:p-10">
+                  <div>
+                    <div className="mb-5 flex flex-wrap gap-2 text-xs font-black">
+                      {model.subject && (
+                        <span className="sticker-badge -rotate-1 bg-amber-300 px-3 py-1.5 text-slate-950">
+                          {model.subject}
+                        </span>
+                      )}
+                      {(model.grade || model.stream) && (
+                        <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[#D6E5F2]">
+                          {[model.grade, model.stream]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </span>
+                      )}
+                    </div>
+                    <CoursePreviewField
+                      field="title"
+                      ariaLabel={fieldEditLabels.title}
+                      className="rounded-lg"
+                    >
+                      <h1
+                        id="course-preview-title"
+                        className={cn(
+                          "text-3xl leading-[1.12] font-black tracking-[-0.025em] text-balance break-words @sm/preview:text-4xl @5xl/preview:text-[2.9rem]",
+                          titleIsPlaceholder &&
+                            "text-[var(--preview-hero-muted)]"
+                        )}
+                      >
+                        <MarkerHighlight>
+                          {model.title || copy.fallbackTitle}
+                        </MarkerHighlight>
+                      </h1>
+                    </CoursePreviewField>
+                    <CoursePreviewField
+                      field="description"
+                      ariaLabel={fieldEditLabels.description}
+                      className="mt-5 rounded-lg"
+                    >
+                      <p
+                        className={cn(
+                          "text-sm leading-7 whitespace-pre-line text-[var(--preview-hero-muted)] @sm/preview:text-base",
+                          descriptionIsPlaceholder && "italic"
+                        )}
+                      >
+                        {model.description || copy.placeholderDescription}
+                      </p>
+                    </CoursePreviewField>
+                    {model.teacher && (
+                      <div className="mt-7 inline-flex w-fit items-center gap-3 rounded-xl">
+                        {model.teacher.avatarUrl ? (
+                          <img
+                            src={model.teacher.avatarUrl}
+                            alt={model.teacher.name}
+                            className="size-12 rounded-full border border-white/20 object-cover"
+                          />
+                        ) : (
+                          <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#BFE8FF] text-lg font-semibold text-[#075985]">
+                            {model.teacher.name.charAt(0)}
+                          </span>
+                        )}
+                        <span>
+                          <strong className="block text-sm font-black text-white">
+                            {model.teacher.name}
+                          </strong>
+                          <span className="mt-0.5 block text-xs text-[#A9C0D2]">
+                            {copy.teacherLabel(model.subject ?? "")}
+                          </span>
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-8 grid grid-cols-2 gap-3 border-t border-white/10 pt-5 text-xs font-bold text-[var(--preview-hero-muted)] @sm/preview:flex @sm/preview:flex-wrap @sm/preview:gap-x-7">
+                    <span className="inline-flex items-center gap-2">
+                      <PlayCircle
+                        className="size-4 shrink-0 text-sky-300"
+                        aria-hidden="true"
+                      />
+                      {copy.lessonCount(totalLessons)}
                     </span>
-                  )}
-                  <span>
-                    <strong className="block text-sm font-black">
-                      {model.teacher.name}
-                    </strong>
-                    <span className="text-xs text-[var(--on-surface-muted)]">
-                      {copy.teacherLabel(model.subject ?? "")}
+                    <span className="inline-flex items-center gap-2">
+                      <Clock3
+                        className="size-4 shrink-0 text-sky-300"
+                        aria-hidden="true"
+                      />
+                      {formatDuration(totalDuration, copy)}
                     </span>
-                  </span>
+                    <span className="inline-flex items-center gap-2">
+                      <BookOpen
+                        className="size-4 shrink-0 text-sky-300"
+                        aria-hidden="true"
+                      />
+                      {copy.examCount(totalExams)}
+                    </span>
+                    <span
+                      className="inline-flex items-center gap-2"
+                      title={copy.lastUpdated}
+                    >
+                      <CalendarDays
+                        className="size-4 shrink-0 text-sky-300"
+                        aria-hidden="true"
+                      />
+                      {displayDate}
+                    </span>
+                  </div>
                 </div>
-              )}
-              <CoursePreviewField
-                field="description"
-                ariaLabel={fieldEditLabels.description}
-                className="mt-5 rounded-lg"
-              >
-                <p className="text-sm leading-7 text-[var(--on-surface-body)] @sm/preview:text-base">
-                  {model.description || copy.fallbackDescription}
-                </p>
-              </CoursePreviewField>
-            </div>
-
-            <div className="w-full @lg/preview:w-auto">
-              {model.coverUrl && (
-                <img
-                  src={model.coverUrl}
-                  alt={model.title}
-                  className="mb-5 w-full rounded-xl border border-[var(--border)] object-cover @sm/preview:h-40 @lg/preview:h-48"
-                />
-              )}
-              <div className="mb-5 grid grid-cols-3 gap-5 text-center text-xs font-bold text-[var(--on-surface-body)] @sm/preview:flex @sm/preview:justify-end">
-                <span className="grid justify-items-center gap-1">
-                  <PlayCircle className="size-5 text-[var(--brand-indigo)]" />
-                  {copy.lessonCount(totalLessons)}
-                </span>
-                <span className="grid justify-items-center gap-1">
-                  <Clock3 className="size-5 text-[var(--brand-indigo)]" />
-                  {formatDuration(totalDuration, copy)}
-                </span>
-                <span className="grid justify-items-center gap-1">
-                  <ClipboardList className="size-5 text-[var(--brand-indigo)]" />
-                  {copy.examCount(totalExams)}
-                </span>
+                <div className="relative order-1 aspect-[16/10] min-h-56 overflow-hidden bg-[var(--preview-hero-cover)] @5xl/preview:order-2 @5xl/preview:aspect-auto @5xl/preview:min-h-[25rem]">
+                  <StudentPreviewCover
+                    src={model.coverUrl}
+                    subject={model.subject}
+                    alt={model.title || copy.fallbackTitle}
+                  />
+                  <div className="pointer-events-none absolute inset-0 bg-[#07131F]/20" />
+                </div>
               </div>
-              <CoursePreviewField
-                field="price"
-                ariaLabel={fieldEditLabels.price}
-                overlay={false}
-                className="rounded-xl"
-              >
-                <button
-                  type="button"
-                  aria-disabled="true"
-                  className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[var(--brand-indigo)] px-7 text-sm font-black text-[var(--on-primary)] transition-colors hover:bg-[var(--brand-indigo-deep)] @lg/preview:w-auto"
-                >
-                  {copy.subscribeCta(formatPrice(model.price, lang))}
-                  {lang === "ar" ? (
-                    <ArrowLeft className="size-4" />
-                  ) : (
-                    <ArrowRight className="size-4" />
-                  )}
-                </button>
-              </CoursePreviewField>
-            </div>
-          </div>
+            </section>
 
-          <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-[var(--border)] pt-4 text-xs font-bold text-[var(--on-surface-muted)]">
-            {!!sections.length && (
-              <span className="inline-flex items-center gap-2">
-                <FolderOpen className="size-4 text-[var(--brand-indigo)]" />
-                {copy.sectionCount(sections.length)}
-              </span>
+            {!hideCurriculum && (
+              <section
+                id="course-preview-content"
+                className="order-3 min-w-0 scroll-mt-24"
+                aria-labelledby="course-preview-content-title"
+              >
+                <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+                  <div>
+                    <h2
+                      id="course-preview-content-title"
+                      className="text-3xl font-black tracking-tight @sm/preview:text-4xl"
+                    >
+                      <MarkerHighlight color="sky">
+                        {copy.contentTitle}
+                      </MarkerHighlight>
+                    </h2>
+                    <p className="mt-2 max-w-[65ch] text-sm font-medium text-[var(--color-muted)]">
+                      {copy.curriculumDescription}
+                    </p>
+                  </div>
+                  <p className="sticker-badge bg-[var(--color-surface)] px-3 py-1 text-xs font-black text-[var(--color-muted)]">
+                    {totalLessons
+                      ? copy.lessonCount(totalLessons)
+                      : copy.contentSummaryEmpty}
+                  </p>
+                </div>
+                {hasContent ? (
+                  <div className="space-y-3">
+                    {sections.map((section, sectionIndex) => (
+                      <Section
+                        key={`${section.id}-${sectionIndex}`}
+                        section={section}
+                        sectionIndex={sectionIndex}
+                        expanded={expandedChapterId === section.id}
+                        expandedLessonId={expandedLessonId}
+                        onToggleChapter={() => toggleChapter(section.id)}
+                        onToggleLesson={toggleLesson}
+                        copy={copy}
+                        selectedNode={selectedNode}
+                        onSelectNode={selectPreviewNode}
+                        showEditAffordance={showEditAffordance}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="sticker-tile flex min-h-64 flex-col items-center justify-center px-5 text-center">
+                    <BookOpen
+                      className="mb-4 size-10 text-[var(--color-muted)]"
+                      aria-hidden="true"
+                    />
+                    <h3 className="text-lg font-black">
+                      <MarkerHighlight color="pink">
+                        {copy.emptyTitle}
+                      </MarkerHighlight>
+                    </h3>
+                    <p className="mt-2 w-full text-sm leading-6 text-[var(--color-muted)]">
+                      {copy.emptyBody}
+                    </p>
+                  </div>
+                )}
+              </section>
             )}
           </div>
-        </section>
 
-        {/* Tabs (disabled except content) */}
-        <nav
-          className="mt-8 flex gap-2 overflow-x-auto border-b border-[var(--border)]"
-          aria-label={copy.navLabel}
-        >
-          {copy.tabs.map((tab, index) => (
-            <button
-              key={tab}
-              type="button"
-              disabled={index !== 0}
-              title={index !== 0 ? copy.comingSoon(tab) : undefined}
-              className={`shrink-0 border-b-2 px-4 py-3 text-sm font-black ${index === 0 ? "border-[var(--brand-indigo)] text-[var(--brand-indigo-deep)]" : "cursor-not-allowed border-transparent text-[var(--on-surface-subtle)]"}`}
+          <aside className="order-2 min-w-0 @5xl/preview:sticky @5xl/preview:top-6 @5xl/preview:order-1">
+            <section
+              className="sticker-tile p-5 @sm/preview:p-6"
+              aria-label={copy.checkoutPrice}
             >
-              {tab}
-            </button>
-          ))}
-        </nav>
-
-        {/* Content section */}
-        {!hideCurriculum && (
-          <section
-            id="course-preview-content"
-            className="scroll-mt-24 pt-8"
-            aria-labelledby="course-preview-content-title"
-          >
-          <div className="mb-5 flex flex-wrap items-end justify-between gap-3 px-1">
-            <h2
-              id="course-preview-content-title"
-              className="text-2xl font-black text-[var(--on-surface)] @sm/preview:text-3xl"
-            >
-              {copy.contentTitle}
-            </h2>
-            <p className="text-xs font-bold text-[var(--on-surface-muted)]">
-              {totalLessons
-                ? copy.contentSummary(
-                    totalLessons,
-                    formatDuration(totalDuration, copy)
-                  )
-                : copy.contentSummaryEmpty}
-            </p>
-          </div>
-
-          {hasContent ? (
-            <div className="space-y-3">
-              {sections.map((section, sectionIndex) => (
-                <Section
-                  key={`${section.id}-${sectionIndex}`}
-                  section={section}
-                  sectionIndex={sectionIndex}
-                  expanded={expandedChapterId === section.id}
-                  expandedLessonId={expandedLessonId}
-                  onToggleChapter={() => toggleChapter(section.id)}
-                  onToggleLesson={toggleLesson}
-                  copy={copy}
-                  selectedNode={selectedNode}
-                  onSelectNode={selectPreviewNode}
-                  showEditAffordance={showEditAffordance}
+              <div className="flex flex-wrap items-end justify-between gap-3 border-b-2 border-[var(--color-ink)]/10 pb-5">
+                <CoursePreviewField
+                  field="price"
+                  ariaLabel={fieldEditLabels.price}
+                  className="min-w-0 rounded-lg"
+                >
+                  <p className="text-xs font-black text-[var(--color-muted)]">
+                    {copy.checkoutPrice}
+                  </p>
+                  <p className="sticker-numeral mt-1 text-4xl font-black tracking-tight">
+                    {formatPrice(model.price, lang)}{" "}
+                    <span className="text-lg">{copy.currency}</span>
+                  </p>
+                </CoursePreviewField>
+                <span className="sticker-badge inline-flex -rotate-1 items-center gap-1.5 bg-[var(--brand-indigo-tint)] px-3 py-1.5 text-xs font-black text-[var(--on-primary-tint)]">
+                  <ShieldCheck className="size-4" aria-hidden="true" />
+                  {copy.securePayment}
+                </span>
+              </div>
+              <div className="flex gap-2 border-b-2 border-[var(--color-ink)]/10 py-4">
+                <input
+                  disabled
+                  aria-label={copy.couponLabel}
+                  placeholder={copy.couponPlaceholder}
+                  className="h-11 min-w-0 flex-1 rounded-xl border-2 border-dashed border-[var(--color-ink)]/25 bg-[var(--color-surface)] px-3 text-sm font-bold placeholder:text-[var(--color-muted)] disabled:opacity-50"
                 />
-              ))}
-            </div>
-          ) : (
-            <div className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 text-center">
-              <BookOpen className="mb-4 size-10 text-[var(--brand-indigo-icon)]" />
-              <h3 className="text-lg font-black">{copy.emptyTitle}</h3>
-              <p className="mt-2 w-full text-sm leading-6 text-[var(--on-surface-muted)]">
-                {copy.emptyBody}
+                <button
+                  type="button"
+                  disabled
+                  className="sticker-btn-outline h-11 shrink-0 px-4 text-sm font-black disabled:opacity-50"
+                >
+                  {copy.couponApply}
+                </button>
+              </div>
+              <div className="space-y-3 py-5 text-sm font-medium text-[var(--color-muted)]">
+                <p className="flex items-start gap-2">
+                  <CheckCircle2
+                    className="mt-0.5 size-4 shrink-0 text-[var(--brand-indigo)]"
+                    aria-hidden="true"
+                  />
+                  {copy.accessDuration}
+                </p>
+                <p className="flex items-start gap-2">
+                  <CheckCircle2
+                    className="mt-0.5 size-4 shrink-0 text-[var(--brand-indigo)]"
+                    aria-hidden="true"
+                  />
+                  {copy.publishedContent}
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-disabled="true"
+                className="sticker-btn flex min-h-13 w-full items-center justify-center px-5 py-3.5 text-sm font-black"
+              >
+                {copy.subscribeCta}
+              </button>
+              <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-xs font-bold text-[var(--color-muted)]">
+                <LockKeyhole className="size-3.5" aria-hidden="true" />
+                {copy.signInToContinue}
               </p>
-            </div>
-          )}
-        </section>
-        )}
+            </section>
+          </aside>
+        </div>
       </div>
     </div>
   )
@@ -606,7 +741,7 @@ function Section({
 
   return (
     <section
-      className="overflow-hidden rounded-xl border border-[var(--border-strong)] bg-[var(--surface)]"
+      className="sticker-tile overflow-hidden"
       aria-labelledby={headingId}
     >
       <button
@@ -621,20 +756,27 @@ function Section({
         data-course-preview-node-id={section.id}
         onMouseEnter={() => enabled && setHoveredNode(node)}
         onMouseLeave={() => setHoveredNode(null)}
-        className={`flex min-h-15 w-full cursor-pointer items-center gap-4 px-4 py-4 text-start transition-colors @sm/preview:px-5 ${expanded ? "bg-[var(--surface-muted)]" : "hover:bg-[var(--surface-strong)]"} ${isHovered ? "ring-2 ring-sky-400/70 ring-inset" : ""} ${isSelected ? "ring-2 ring-[var(--brand-indigo)] ring-inset" : ""}`}
+        className={`flex min-h-16 w-full cursor-pointer items-center gap-4 px-4 py-4 text-start transition-colors @sm/preview:px-5 ${expanded ? "bg-[var(--brand-indigo-tint)]" : "hover:bg-[var(--surface-muted)]"} ${isHovered ? "ring-2 ring-sky-400/70 ring-inset" : ""} ${isSelected ? "ring-2 ring-[var(--brand-indigo)] ring-inset" : ""}`}
       >
         <span className="flex min-w-0 flex-1 items-center gap-2">
           <h3
             id={headingId}
-            className={`truncate text-base font-black @sm/preview:text-lg ${expanded ? "text-[var(--brand-indigo-deep)]" : "text-[var(--on-surface-strong)]"}`}
+            className={`truncate text-base font-black @sm/preview:text-lg ${expanded ? "text-[var(--brand-indigo-deep)]" : "text-[var(--color-ink)]"}`}
           >
             {section.title || copy.chapterFallback}
           </h3>
-          <ChevronDown
-            className={`size-4 shrink-0 text-[var(--on-surface-muted)] transition-transform motion-reduce:transition-none ${expanded ? "rotate-180" : ""}`}
-          />
+          <span
+            className={cn(
+              "flex size-8 shrink-0 items-center justify-center rounded-full border-2 transition-transform motion-reduce:transition-none",
+              expanded
+                ? "rotate-180 border-[var(--color-line)] bg-slate-900 text-white dark:bg-sky-600"
+                : "border-[var(--color-ink)]/20 text-[var(--color-muted)]"
+            )}
+          >
+            <ChevronDown className="size-4" aria-hidden="true" />
+          </span>
         </span>
-        <span className="shrink-0 text-xs font-medium text-[var(--on-surface-muted)]">
+        <span className="sticker-numeral max-w-[45%] shrink-0 text-xs font-black text-[var(--color-muted)]">
           {copy.chapterSummary(
             section.lessons.length,
             formatDuration(duration, copy)
@@ -784,9 +926,9 @@ function LessonRow({
         data-course-preview-node-id={lesson.id}
         onMouseEnter={() => enabled && setHoveredNode(node)}
         onMouseLeave={() => setHoveredNode(null)}
-        className={`flex min-h-18 w-full cursor-pointer items-center gap-3 px-4 py-3.5 text-start transition-colors hover:bg-[var(--surface-muted)] @sm/preview:px-5 ${isHovered ? "ring-2 ring-sky-400/70 ring-inset" : ""} ${isSelected ? "bg-[var(--surface-muted)] ring-2 ring-[var(--brand-indigo)] ring-inset" : ""}`}
+        className={`flex min-h-16 w-full cursor-pointer items-center gap-3 px-4 py-3.5 text-start transition-colors hover:bg-[var(--surface-muted)] @sm/preview:px-5 ${isHovered ? "ring-2 ring-sky-400/70 ring-inset" : ""} ${isSelected ? "bg-[var(--surface-muted)] ring-2 ring-[var(--brand-indigo)] ring-inset" : ""}`}
       >
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--surface-muted)] text-[var(--brand-indigo)]">
+        <span className="sticker-badge flex size-9 shrink-0 items-center justify-center bg-[var(--brand-indigo-tint)] text-[var(--on-primary-tint)]">
           {hasVideo ? (
             <PlayCircle className="size-5" />
           ) : hasDocument ? (
@@ -796,10 +938,10 @@ function LessonRow({
           )}
         </span>
         <span className="min-w-0 flex-1">
-          <strong className="block text-sm leading-6 font-bold text-[var(--on-surface-strong)] @sm/preview:text-base">
+          <strong className="block text-sm leading-6 font-bold text-[var(--color-ink)] @sm/preview:text-base">
             {lesson.title}
           </strong>
-          <span className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-[var(--on-surface-muted)]">
+          <span className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-[var(--color-muted)]">
             <span>{formatDuration(lesson.durationMinutes, copy)}</span>
             {hasVideo && <span>{copy.video}</span>}
             {hasDocument && <span>{copy.files}</span>}
@@ -807,18 +949,18 @@ function LessonRow({
           </span>
         </span>
         <ChevronLeft
-          className={`size-4 shrink-0 text-[var(--on-surface-subtle)] transition-transform motion-reduce:transition-none ${expanded ? "-rotate-90" : ""}`}
+          className={`size-4 shrink-0 text-[var(--color-muted)] transition-transform motion-reduce:transition-none ${expanded ? "-rotate-90" : "ltr:rotate-180"}`}
         />
       </button>
 
       {expanded && (
         <div
           id={contentId}
-          className="space-y-2 overflow-hidden bg-[var(--surface-strong)] px-4 py-4 @sm/preview:ps-16"
+          className="space-y-2 overflow-hidden bg-[var(--color-surface-muted)] px-4 py-4 @sm/preview:ps-16"
         >
           {lesson.description && (
             <p
-              className="pb-2 text-sm leading-6 text-[var(--on-surface-muted)]"
+              className="pb-2 text-sm leading-6 text-[var(--color-muted)]"
               data-course-preview-node-type="lesson"
               data-course-preview-node-id={lesson.id}
               onMouseEnter={() => enabled && setHoveredNode(node)}
@@ -852,16 +994,16 @@ function LessonRow({
                   selectedNode={selectedNode}
                   onSelectNode={onSelectNode}
                 >
-                  <ItemIcon className="size-5 shrink-0 text-[var(--on-surface-muted)]" />
+                  <ItemIcon className="size-5 shrink-0 text-[var(--color-muted)]" />
                   <span className="min-w-0 flex-1">
                     <strong className="block truncate text-sm">
                       {item.title}
                     </strong>
-                    <span className="text-xs text-[var(--on-surface-muted)]">
+                    <span className="text-xs text-[var(--color-muted)]">
                       {itemMeta || copy.itemFallback}
                     </span>
                   </span>
-                  <span className="inline-flex shrink-0 items-center gap-1 text-xs font-bold text-[var(--on-surface-subtle)]">
+                  <span className="inline-flex shrink-0 items-center gap-1 text-xs font-bold text-[var(--color-muted)]">
                     <LockKeyhole className="size-3.5" />
                     {copy.accessRequired}
                   </span>
@@ -872,7 +1014,7 @@ function LessonRow({
               )
             })
           ) : (
-            <p className="text-sm font-medium text-[var(--on-surface-muted)]">
+            <p className="text-sm font-medium text-[var(--color-muted)]">
               {copy.emptyLesson}
             </p>
           )}

@@ -36,6 +36,14 @@ const sections: StudentPreviewSection[] = [
 ];
 
 describe('buildCoursePreviewModel', () => {
+  it('preserves the optional creation date for the hero stats', () => {
+    const result = buildCoursePreviewModel({
+      courseId: 42, values: baseValues, coverObjectUrl: null, publicCoverUrl: null,
+      teacher, subjects, grades, streams, sections, createdAt: '2026-01-15T12:00:00Z',
+    });
+    expect(result.createdAt).toBe('2026-01-15T12:00:00Z');
+  });
+
   it('maps all fields correctly for a fully populated course', () => {
     const result = buildCoursePreviewModel({
       courseId: 42,

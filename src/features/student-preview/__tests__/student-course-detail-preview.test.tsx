@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { StudentCourseDetailPreview } from "../student-course-detail-preview";
+import { CourseBuilderBridgeProvider } from "@/features/course-management/course-builder-bridge";
 import type { StudentCoursePreviewModel } from "../types";
 
 const baseModel: StudentCoursePreviewModel = {
@@ -111,7 +112,7 @@ describe("StudentCourseDetailPreview", () => {
     render(
       <StudentCourseDetailPreview model={baseModel} locale="ar" viewer="guest" interactionMode="local-only" />
     );
-    expect(screen.getByText("الصف الثالث الثانوي - علمي")).toBeDefined();
+    expect(screen.getByText("الصف الثالث الثانوي · علمي")).toBeDefined();
   });
 
   it("shows course stats (lessons, duration, exams)", () => {
@@ -128,7 +129,7 @@ describe("StudentCourseDetailPreview", () => {
     render(
       <StudentCourseDetailPreview model={baseModel} locale="ar" viewer="guest" interactionMode="local-only" />
     );
-    const btn = screen.getByText(/اشترك الآن/);
+    const btn = screen.getByText("السعر المستحق").parentElement!;
     // ar-EG formats 200 as ٢٠٠ (Arabic-Indic numerals)
     expect(btn.textContent).toMatch(/[٢2][\u0660\u06F00]/);
   });
@@ -137,7 +138,7 @@ describe("StudentCourseDetailPreview", () => {
     render(
       <StudentCourseDetailPreview model={baseModel} locale="ar" viewer="guest" interactionMode="local-only" />
     );
-    const btn = screen.getByText(/اشترك الآن/).closest("button");
+    const btn = screen.getByText(/اشترك في الكورس/).closest("button");
     expect(btn!.disabled).toBe(false);
     expect(btn!.getAttribute("aria-disabled")).toBe("true");
     expect(btn!.className).not.toContain("opacity-60");
@@ -244,13 +245,44 @@ describe("StudentCourseDetailPreview", () => {
     expect(iframes.length).toBe(0);
   });
 
-  it("tabs are rendered but disabled except content", () => {
-    render(
-      <StudentCourseDetailPreview model={baseModel} locale="ar" viewer="guest" interactionMode="local-only" />
+  it("shows an inert purchase panel instead of fake tabs", () => {
+    render(<StudentCourseDetailPreview model={baseModel} locale="ar" interactionMode="local-only" />);
+    expect(screen.queryByRole("navigation", { name: "أقسام الكورس" })).toBeNull();
+    expect(screen.getByText("دفع آمن")).toBeDefined();
+    expect(screen.getByText("اشتراك لمدة 30 يوماً")).toBeDefined();
+    expect((screen.getByRole("textbox", { name: "كود الخصم" }) as HTMLInputElement).disabled).toBe(true);
+  });
+
+  it.each(["title", "description", "price"] as const)("keeps %s hover and selection wired to the bridge", (field) => {
+    const { container } = render(
+      <CourseBuilderBridgeProvider>
+        <StudentCourseDetailPreview model={baseModel} locale="en" interactionMode="local-only" showEditAffordance />
+      </CourseBuilderBridgeProvider>
     );
-    expect(screen.getByText("المحتوى")).toBeDefined();
-    const examsTab = screen.getByText("الاختبارات");
-    expect(examsTab.closest("button")!.disabled).toBeTruthy();
+    const target = container.querySelector(`[data-course-preview-field="${field}"]`)!;
+    fireEvent.mouseEnter(target);
+    expect(target.getAttribute("data-course-preview-state")).toBe("hovered");
+    expect(target.className).toContain("ring-2");
+    fireEvent.mouseLeave(target);
+    expect(target.getAttribute("data-course-preview-state")).toBe("idle");
+    fireEvent.click(target.querySelector("button")!);
+    expect(target.getAttribute("data-course-preview-state")).toBe("selected");
+    if (field === "price") expect(target.closest("aside")).not.toBeNull();
+  });
+
+  it.each([["chapter", 1], ["lesson", 10], ["item", 20]] as const)("keeps %s hover and selection rings", (type, id) => {
+    const { container } = render(
+      <CourseBuilderBridgeProvider>
+        <StudentCourseDetailPreview model={baseModel} locale="en" interactionMode="local-only" showEditAffordance />
+      </CourseBuilderBridgeProvider>
+    );
+    const target = container.querySelector(`[data-course-preview-node-type="${type}"][data-course-preview-node-id="${id}"]`)!;
+    fireEvent.mouseEnter(target);
+    expect(target.className).toContain("ring-sky-400/70");
+    fireEvent.mouseLeave(target);
+    expect(target.className).not.toContain("ring-sky-400/70");
+    fireEvent.click(target);
+    expect(target.className).toContain("ring-[var(--brand-indigo)]");
   });
 
   it("uses native img for teacher avatar", () => {
@@ -320,11 +352,11 @@ describe("StudentCourseDetailPreview", () => {
     render(
       <StudentCourseDetailPreview model={baseModel} locale="ar" viewer="guest" interactionMode="local-only" />
     );
-    expect(screen.getAllByText(/اشترك الآن/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/اشترك في الكورس/).length).toBeGreaterThan(0);
     render(
       <StudentCourseDetailPreview model={baseModel} locale="ar" viewer="subscribed" interactionMode="local-only" />
     );
-    expect(screen.getAllByText(/اشترك الآن/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/اشترك في الكورس/).length).toBeGreaterThan(0);
   });
 
   it("does not call onCurriculumCommitted (preview is read-only)", () => {
@@ -347,7 +379,7 @@ describe("StudentCourseDetailPreview", () => {
       <StudentCourseDetailPreview model={baseModel} locale="ar" viewer="guest" interactionMode="local-only" />
     );
     const heroGrid = Array.from(container.querySelectorAll("div")).find((element) =>
-      element.className.includes("@lg/preview:grid-cols-[1fr_auto]")
+      element.className.includes("@5xl/preview:grid-cols-[minmax(0,1fr)_minmax(0,36%)]")
     );
     expect(heroGrid).toBeDefined();
   });
@@ -365,9 +397,9 @@ describe("StudentCourseDetailPreview", () => {
       <StudentCourseDetailPreview model={baseModel} locale="en" interactionMode="local-only" />
     );
     expect(container.firstElementChild?.getAttribute("dir")).toBe("ltr");
-    expect(screen.getByText("Back to discovery")).toBeDefined();
+    expect(screen.getByText("Back to explore")).toBeDefined();
     expect(screen.getByText("Course plan")).toBeDefined();
-    expect(screen.getByText(/Subscribe now/)).toBeDefined();
+    expect(screen.getByText(/Enroll in this course/)).toBeDefined();
     expect(screen.getAllByText(/lesson/).length).toBeGreaterThan(0);
   });
 });

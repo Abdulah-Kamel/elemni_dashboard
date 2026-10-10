@@ -47,6 +47,8 @@ export type StudentTeacherPreviewModel = {
 };
 
 export type StudentCoursePreviewModel = {
+  /** Absent on an unsaved course; never synthesize a publication date. */
+  createdAt?: string | null;
   id: string | number;
   title: string;
   description: string;

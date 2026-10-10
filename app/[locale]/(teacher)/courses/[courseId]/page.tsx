@@ -179,6 +179,7 @@ async function CourseEditor({
         <CourseWorkspaceLoader
           model={buildCoursePreviewModel({
             courseId: course.id,
+            createdAt: course.created_at,
             values: {
               title: course.title,
               description: course.description,

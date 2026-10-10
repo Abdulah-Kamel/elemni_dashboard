@@ -1,15 +1,37 @@
 /*
- * Student Preview — Scoped Light Theme Tokens
+ * Student Preview — Scoped Theme Tokens
  *
  * These overrides ensure the student preview renders with the student
- * frontend's light-theme palette regardless of the dashboard's dark mode
- * or brand token state. Scoped under .student-preview to prevent leakage.
+ * frontend's palette in both dashboard themes, independently of its brand
+ * tokens. Scoped under .student-preview to prevent leakage.
  *
  * Source: elemni_front_end portal-shell.tsx, course-detail.tsx,
  * teacher-profile-view.tsx, and student globals.css.
  */
 
 .student-preview {
+  font-family: var(--font-app, "Readex Pro"), system-ui, sans-serif;
+  --color-ink: #0F172A;
+  --color-muted: #64748B;
+  --color-page: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-surface-muted: #F1F5F9;
+  --color-line: #0F172A;
+  --color-sticker-shadow: #0F172A;
+  --color-brand-50: #F0F9FF;
+  --color-brand-100: #E0F2FE;
+  --color-brand-300: #7DD3FC;
+  --color-brand-500: #0EA5E9;
+  --color-brand-600: #0284C7;
+  --color-brand-700: #0369A1;
+  --color-brand-900: #0C4A6E;
+  --preview-hero: #0B1726;
+  --preview-hero-cover: #142B40;
+  --preview-hero-muted: #C5D4E2;
+  --preview-banner: #0284C7;
+  --preview-marker-yellow: rgb(252 211 77 / 85%);
+  --preview-marker-sky: rgb(125 211 252 / 85%);
+  --preview-marker-pink: rgb(249 168 212 / 85%);
   /* Page / background */
   --page: #FCFCFE;
   --surface: #FFFFFF;
@@ -54,6 +76,20 @@
 
 /* Match the dashboard theme when previews are rendered inside .dark. */
 .dark .student-preview {
+  --color-ink: #E8ECF1;
+  --color-muted: #9AA4B2;
+  --color-page: #0C0F14;
+  --color-surface: #151A21;
+  --color-surface-muted: #1C222B;
+  --color-line: #353D49;
+  --color-sticker-shadow: #05070A;
+  --preview-hero: #151A21;
+  --preview-hero-cover: #1C222B;
+  --preview-hero-muted: #C3CAD4;
+  --preview-banner: #0C4A6E;
+  --preview-marker-yellow: rgb(251 191 36 / 30%);
+  --preview-marker-sky: rgb(56 189 248 / 30%);
+  --preview-marker-pink: rgb(244 114 182 / 30%);
   --page: #0C0F14;
   --surface: #151A21;
   --surface-raised: #1C222B;
@@ -87,4 +123,96 @@
   --border: #262D37;
   --border-strong: #353D49;
   --border-subtle: #1F252E;
+}
+
+/* The portal's sticker material stays inside the preview, including dark mode. */
+.student-preview .sticker-tile {
+  border: 2px solid var(--color-ink);
+  border-radius: 1.25rem;
+  background-color: var(--color-surface);
+  box-shadow: 5px 5px 0 0 var(--color-sticker-shadow);
+}
+.student-preview .sticker-shadow {
+  box-shadow: 5px 5px 0 0 var(--color-sticker-shadow);
+}
+.student-preview .sticker-btn {
+  border: 2px solid var(--color-ink);
+  border-radius: 999px;
+  background-color: var(--color-brand-600);
+  color: #fff;
+  box-shadow: 3px 3px 0 0 var(--color-sticker-shadow);
+  transition: transform 0.15s ease-out, box-shadow 0.15s ease-out, background-color 0.15s ease-out;
+}
+.student-preview .sticker-btn:hover {
+  background-color: var(--color-brand-700);
+}
+.student-preview .sticker-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 0 var(--color-sticker-shadow);
+}
+.student-preview .sticker-btn-outline {
+  border: 2px solid var(--color-ink);
+  border-radius: 999px;
+  background-color: var(--color-surface);
+  color: var(--color-ink);
+  box-shadow: 3px 3px 0 0 var(--color-sticker-shadow);
+  transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+}
+.student-preview .sticker-btn-outline:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 0 var(--color-sticker-shadow);
+}
+.student-preview .sticker-badge {
+  border: 2px solid var(--color-ink);
+  border-radius: 999px;
+  box-shadow: 2px 2px 0 0 var(--color-sticker-shadow);
+}
+.dark .student-preview .sticker-tile,
+.dark .student-preview .sticker-btn-outline,
+.dark .student-preview .sticker-badge {
+  border-color: var(--color-line);
+}
+.dark .student-preview .sticker-btn {
+  border-color: var(--color-brand-500);
+}
+.student-preview .sticker-numeral {
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.student-preview .preview-hero {
+  border: 2px solid var(--color-ink);
+  border-radius: 1.75rem;
+  background-color: var(--preview-hero);
+  color: #fff;
+  box-shadow: 5px 5px 0 0 var(--color-sticker-shadow);
+}
+.dark .student-preview .preview-hero {
+  border-color: var(--color-line);
+}
+.student-preview .preview-profile-banner {
+  background-color: var(--preview-banner);
+}
+.student-preview .preview-marker-yellow { background-color: var(--preview-marker-yellow); }
+.student-preview .preview-marker-sky { background-color: var(--preview-marker-sky); }
+.student-preview .preview-marker-pink { background-color: var(--preview-marker-pink); }
+.student-preview ::selection {
+  background-color: var(--color-brand-600);
+  color: #fff;
+}
+.student-preview :focus-visible {
+  outline: 3px solid var(--color-brand-600);
+  outline-offset: 2px;
+}
+.student-preview {
+  scrollbar-color: var(--color-brand-600) transparent;
+  caret-color: var(--color-brand-600);
+}
+@media (prefers-reduced-motion: reduce) {
+  .student-preview *,
+  .student-preview *::before,
+  .student-preview *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
