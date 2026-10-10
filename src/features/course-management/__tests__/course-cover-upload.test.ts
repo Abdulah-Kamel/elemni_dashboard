@@ -62,7 +62,7 @@ describe("course cover upload", () => {
     )
   })
 
-  it("rejects a failed storage upload", async () => {
+  it.each([404, 500])("rejects a storage upload with HTTP %i", async (status) => {
     requestUpload.mockResolvedValue({
       success: true,
       data: {
@@ -71,7 +71,7 @@ describe("course cover upload", () => {
       },
     })
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(null, { status: 500 })
+      new Response(null, { status })
     )
 
     await expect(
@@ -81,4 +81,11 @@ describe("course cover upload", () => {
       )
     ).rejects.toThrow("Course cover upload failed")
   })
+})
+
+
+it("rejects a storage network failure", async () => {
+  requestUpload.mockResolvedValue({ success: true, data: { upload_url: "https://storage.example.test/signed", path: "courses/7" } })
+  vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(new TypeError("Failed to fetch"))
+  await expect(uploadCourseCover(7, new File(["cover"], "cover.png", { type: "image/png" }))).rejects.toThrow("Failed to fetch")
 })

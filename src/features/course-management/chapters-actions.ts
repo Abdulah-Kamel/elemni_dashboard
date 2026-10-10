@@ -2,6 +2,7 @@
 import { titleValidationError } from "@/features/course-management/title-validation"
 import { revalidateTag } from "next/cache"
 import { apiFetch } from "@/lib/api/client"
+import { serializeActionError } from "@/lib/api/errors"
 import { endpoints } from "@/lib/api/endpoints"
 import { headers } from "next/headers"
 import { chapterOutSchema } from "@/features/course-management/chapters-schema"
@@ -55,12 +56,12 @@ export async function listChapters(
         await redirectToSignIn(`/courses/${courseId}`)
       }
       logger.actionError("listChapters", apiErr, elapsed)
-      return { success: false, error: apiErr }
+      return { success: false, error: serializeActionError(apiErr) }
     }
     logger.actionError("listChapters", err, elapsed)
     return {
       success: false,
-      error: { type: "Upstream", message: "Network error" },
+      error: serializeActionError(err),
     }
   }
 }
@@ -99,12 +100,12 @@ export async function createChapter(
         await redirectToSignIn(`/courses/${courseId}`)
       }
       logger.actionError("createChapter", apiErr, elapsed)
-      return { success: false, error: apiErr }
+      return { success: false, error: serializeActionError(apiErr) }
     }
     logger.actionError("createChapter", err, elapsed)
     return {
       success: false,
-      error: { type: "Upstream", message: "Network error" },
+      error: serializeActionError(err),
     }
   }
 }
@@ -144,12 +145,12 @@ export async function updateChapter(
         await redirectToSignIn(`/courses/${courseId}`)
       }
       logger.actionError("updateChapter", apiErr, elapsed)
-      return { success: false, error: apiErr }
+      return { success: false, error: serializeActionError(apiErr) }
     }
     logger.actionError("updateChapter", err, elapsed)
     return {
       success: false,
-      error: { type: "Upstream", message: "Network error" },
+      error: serializeActionError(err),
     }
   }
 }
@@ -186,12 +187,12 @@ export async function reorderChapters(
         await redirectToSignIn(`/courses/${courseId}`)
       }
       logger.actionError("reorderChapters", apiErr, elapsed)
-      return { success: false, error: apiErr }
+      return { success: false, error: serializeActionError(apiErr) }
     }
     logger.actionError("reorderChapters", err, elapsed)
     return {
       success: false,
-      error: { type: "Upstream", message: "Network error" },
+      error: serializeActionError(err),
     }
   }
 }
@@ -222,12 +223,12 @@ export async function deleteChapter(
         await redirectToSignIn(`/courses/${courseId}`)
       }
       logger.actionError("deleteChapter", apiErr, elapsed)
-      return { success: false, error: apiErr }
+      return { success: false, error: serializeActionError(apiErr) }
     }
     logger.actionError("deleteChapter", err, elapsed)
     return {
       success: false,
-      error: { type: "Upstream", message: "Network error" },
+      error: serializeActionError(err),
     }
   }
 }

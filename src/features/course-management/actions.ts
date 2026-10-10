@@ -1,6 +1,7 @@
 "use server"
 import { revalidateTag } from "next/cache"
 import { apiFetch } from "@/lib/api/client"
+import { serializeActionError } from "@/lib/api/errors"
 import { endpoints } from "@/lib/api/endpoints"
 import { headers } from "next/headers"
 import { courseOutSchema } from "@/features/shell/schema"
@@ -78,17 +79,13 @@ export async function createCourse(
       logger.actionError("createCourse", apiErr, elapsed)
       return {
         success: false,
-        error: {
-          type: apiErr.type,
-          message: apiErr.message,
-          fields: apiErr.fields,
-        },
+        error: serializeActionError(apiErr),
       }
     }
     logger.actionError("createCourse", err, elapsed)
     return {
       success: false,
-      error: { type: "Upstream", message: "Network error" },
+      error: serializeActionError(err),
     }
   }
 }
@@ -143,11 +140,11 @@ export async function requestCourseImageUpload(
   } catch (err: unknown) {
     if (err && typeof err === "object" && "type" in err && "message" in err) {
       const apiErr = err as { type: string; message: string }
-      return { success: false, error: apiErr }
+      return { success: false, error: serializeActionError(apiErr) }
     }
     return {
       success: false,
-      error: { type: "Upstream", message: "Image upload request failed" },
+      error: serializeActionError(err, "Image upload request failed"),
     }
   }
 }
@@ -289,17 +286,13 @@ export async function updateCourse(
       logger.actionError("updateCourse", apiErr, elapsed)
       return {
         success: false,
-        error: {
-          type: apiErr.type,
-          message: apiErr.message,
-          fields: apiErr.fields,
-        },
+        error: serializeActionError(apiErr),
       }
     }
     logger.actionError("updateCourse", err, elapsed)
     return {
       success: false,
-      error: { type: "Upstream", message: "Network error" },
+      error: serializeActionError(err),
     }
   }
 }

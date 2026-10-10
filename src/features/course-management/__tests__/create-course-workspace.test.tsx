@@ -2,6 +2,7 @@ import { beforeEach, describe, it, expect, vi } from "vitest"
 import { render, screen, fireEvent, waitFor } from "@testing-library/react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { NextIntlClientProvider } from "next-intl"
+import { toast } from "sonner"
 import { CreateCourseWorkspace } from "../components/create-course-workspace"
 
 const createMutation = vi.hoisted(() => ({ mutateAsync: vi.fn() }))
@@ -118,6 +119,7 @@ describe("CreateCourseWorkspace", () => {
       createObjectURL: vi.fn(() => "blob:cover"),
       revokeObjectURL: vi.fn(),
     })
+    vi.clearAllMocks()
     createMutation.mutateAsync.mockReset()
     updateMutation.mutateAsync.mockReset()
     mockedUploadCourseCover.mockReset()
@@ -169,12 +171,12 @@ describe("CreateCourseWorkspace", () => {
       )
     )
     await waitFor(() =>
-      expect(mockedPush).toHaveBeenCalledWith("/en/courses/9")
+      expect(mockedPush).toHaveBeenCalledWith("/courses/9")
     )
   })
 
-  it("still navigates when the cover upload fails", async () => {
-    mockedUploadCourseCover.mockRejectedValueOnce(new Error("boom"))
+  it.each([new Error("Course cover upload failed"), new TypeError("Failed to fetch")])("shows an error and still navigates when the cover upload fails: %s", async (error) => {
+    mockedUploadCourseCover.mockRejectedValueOnce(error)
     renderWorkspace()
     fireEvent.change(screen.getByLabelText("Course Title"), {
       target: { value: "Physics" },
@@ -185,7 +187,10 @@ describe("CreateCourseWorkspace", () => {
     fireEvent.change(input, { target: { files: [file] } })
     fireEvent.click(screen.getByRole("button", { name: "Save and continue" }))
     await waitFor(() =>
-      expect(mockedPush).toHaveBeenCalledWith("/en/courses/9")
+      expect(mockedPush).toHaveBeenCalledWith("/courses/9")
     )
+    expect(toast.error).toHaveBeenCalledWith("Cover failed")
+    expect(toast.success).not.toHaveBeenCalled()
+    expect(updateMutation.mutateAsync).not.toHaveBeenCalled()
   })
 })

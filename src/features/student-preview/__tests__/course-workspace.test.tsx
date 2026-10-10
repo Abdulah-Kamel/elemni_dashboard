@@ -3,6 +3,7 @@ import { render as rtlRender, screen, fireEvent, waitFor, act } from "@testing-l
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { NextIntlClientProvider } from "next-intl"
 import type { ComponentProps } from "react"
+import { toast } from "sonner"
 import { CourseWorkspace } from "../course-workspace"
 import type { StudentCoursePreviewModel, StudentPreviewSection } from "../types"
 
@@ -33,6 +34,8 @@ vi.mock("@/i18n/routing", () => ({
   useRouter: () => ({ refresh: mockedRouterRefresh }),
 }))
 
+vi.mock("sonner", () => ({ toast: { error: vi.fn() } }))
+
 function render(ui: React.ReactNode, locale: string = "ar") {
   return rtlRender(
     <NextIntlClientProvider
@@ -43,6 +46,7 @@ function render(ui: React.ReactNode, locale: string = "ar") {
           grade_label: "الصف",
           stream_label: "الشعبة",
           loading_curriculum: "جارٍ التحميل...",
+          cover_upload_failed: "Couldn't upload the cover image. Please try again.",
           cover_label: "غلاف الكورس",
           cover_upload: "رفع الغلاف",
           cover_replace: "استبدال الغلاف",
@@ -134,6 +138,7 @@ const editableWorkspaceProps = {
 
 describe("CourseWorkspace", () => {
   beforeEach(() => {
+    vi.clearAllMocks()
     updateMutation.mutateAsync.mockReset()
     updateMutation.mutateAsync.mockResolvedValue({ img: null })
     publishMutation.mutateAsync.mockReset()
@@ -341,11 +346,9 @@ describe("CourseWorkspace", () => {
     )
   })
 
-  it("shows backend error message when cover upload fails", async () => {
+  it.each([new Error("Upload server rejected the file"), new TypeError("Failed to fetch")])("shows an error toast when cover upload fails: %s", async (error) => {
     updateMutation.mutateAsync.mockResolvedValue({ img: null })
-    mockedUploadCourseCover.mockRejectedValueOnce(
-      new Error("Upload server rejected the file")
-    )
+    mockedUploadCourseCover.mockRejectedValueOnce(error)
     render(
       <CourseWorkspace
         {...editableWorkspaceProps}
@@ -370,8 +373,11 @@ describe("CourseWorkspace", () => {
       expect(screen.getByRole("alert")).toBeDefined()
     })
     expect(screen.getByRole("alert").textContent).toBe(
-      "Upload server rejected the file"
+      error.message
     )
+    expect(toast.error).toHaveBeenCalledWith("Couldn't upload the cover image. Please try again.")
+    expect(updateMutation.mutateAsync).not.toHaveBeenCalled()
+    expect(screen.queryByText("Saved")).toBeNull()
   })
 
   it("saves unchanged chapter mode without confirmation", async () => {

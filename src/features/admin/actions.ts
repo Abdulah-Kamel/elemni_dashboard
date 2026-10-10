@@ -2,6 +2,7 @@
 import { headers } from "next/headers"
 import { revalidateTag } from "next/cache"
 import { apiFetch } from "@/lib/api/client"
+import { serializeActionError } from "@/lib/api/errors"
 import { z } from "zod"
 import {
   adminCreateTeacherRequestSchema,
@@ -64,12 +65,12 @@ async function handleActionResultErr(
     if (apiErr.type === "Unauthorized") {
       await redirectToSignIn("/admin")
     }
-    return { success: false, error: apiErr }
+    return { success: false, error: serializeActionError(apiErr) }
   }
   logger.actionError(action, err, elapsed)
   return {
     success: false,
-    error: { type: "Upstream", message: "Network error" },
+    error: serializeActionError(err),
   }
 }
 

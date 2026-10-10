@@ -3,6 +3,7 @@
 import { headers } from "next/headers"
 import { redirectToAuth } from "@/lib/auth/redirect"
 import { apiFetch } from "@/lib/api/client"
+import { serializeActionError } from "@/lib/api/errors"
 import { endpoints } from "@/lib/api/endpoints"
 import {
   adminRecordTeacherPaymentRequestSchema,
@@ -91,17 +92,17 @@ export async function recordTeacherPaymentAction(
       if (apiErr.type === "Unauthorized") {
         await redirectToSignIn("/admin/teachers")
       }
-      return { success: false, error: apiErr }
+      return { success: false, error: serializeActionError(apiErr) }
     }
     if (err instanceof Error) {
       return {
         success: false,
-        error: { type: "Validation", message: err.message },
+        error: serializeActionError({ type: "Validation", message: err.message }),
       }
     }
     return {
       success: false,
-      error: { type: "Upstream", message: "Network error" },
+      error: serializeActionError(err),
     }
   }
 }

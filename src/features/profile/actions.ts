@@ -3,6 +3,7 @@
 import { revalidateTag } from "next/cache"
 import { headers } from "next/headers"
 import { apiFetch } from "@/lib/api/client"
+import { serializeActionError } from "@/lib/api/errors"
 import { endpoints } from "@/lib/api/endpoints"
 import {
   profileImageUploadSchema,
@@ -39,11 +40,11 @@ function actionError(error: unknown): {
     "message" in error
   ) {
     const apiError = error as { type: string; message: string }
-    return { success: false, error: apiError }
+    return { success: false, error: serializeActionError(apiError) }
   }
   return {
     success: false,
-    error: { type: "Upstream", message: "Profile request failed" },
+    error: serializeActionError(error, "Profile request failed"),
   }
 }
 

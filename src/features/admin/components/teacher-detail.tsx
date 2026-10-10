@@ -29,14 +29,14 @@ export function TeacherDetail({ teacher: initialTeacher, subjects, grades, initi
   const [busy, setBusy] = useState(false)
   const [detailAction, setDetailAction] = useState<DetailAction | null>(null)
   const { update } = useTeacherMutations()
-  async function save() { const result = await update.mutateAsync({ id: teacher.id, data: { ...form, phone_number: form.phone_number || null, location: form.location || null, description: form.description || null } }); if (!result.success) { toast.error(result.error.message); return false } toast.success(t("updated")); return true }
+  async function save() { const result = await update.mutateAsync({ id: teacher.id, data: { ...form, phone_number: form.phone_number || null, location: form.location || null, description: form.description || null } }); if (!result.success) { toast.error(result.error.message); return false } setTeacher((previous) => ({ ...previous, ...(result.data as AdminTeacherListItem) })); toast.success(t("updated")); return true }
   async function invite() { setBusy(true); const result = await sendSetPasswordEmail(teacher.id); setBusy(false); if (!result.success) { toast.error(result.error.message); return false } toast.success(result.data.detail); return true }
   async function createLibrary() { setBusy(true); const result = await createTeacherLibrary(teacher.id); setBusy(false); if (!result.success) { toast.error(result.error.message); return false } setTeacher((previous) => ({ ...previous, has_library: true })); setLibrarySettings({ controls: ["play-large", "play", "rewind", "fast-forward", "progress", "current-time", "mute", "volume", "captions", "settings", "fullscreen"], block_none_referrer: true, enable_content_tagging: false, enable_drm: true }); toast.success(result.data.detail); return true }
   async function saveLibrary() { if (!librarySettings) return false; setBusy(true); const result = await updateTeacherLibrarySettings(teacher.id, librarySettings); setBusy(false); if (!result.success) { toast.error(result.error.message); return false } toast.success(result.data.detail); return true }
   async function confirmDetailAction() {
     if (!detailAction) return
     const succeeded = detailAction === "save" ? await save() : detailAction === "invite" ? await invite() : detailAction === "create-library" ? await createLibrary() : await saveLibrary()
-    if (succeeded) setDetailAction(null)
+    if (succeeded || detailAction === "create-library") setDetailAction(null)
   }
   const actionCopy = detailAction === "save"
     ? { title: t("action_save_teacher_title"), description: t("action_save_teacher", { name: teacher.name }), label: t("btn_save") }

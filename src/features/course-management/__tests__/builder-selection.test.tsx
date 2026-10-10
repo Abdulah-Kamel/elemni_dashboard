@@ -86,6 +86,7 @@ describe("course builder selection", () => {
             <SelectPreviewItem />
             <ChapterCard
               chapter={chapter}
+              index={0}
               courseId={42}
               initialLessons={[lesson]}
               lessonsError={null}

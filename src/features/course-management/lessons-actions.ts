@@ -2,6 +2,7 @@
 import { titleValidationError } from "@/features/course-management/title-validation"
 import { revalidateTag } from "next/cache"
 import { apiFetch } from "@/lib/api/client"
+import { serializeActionError } from "@/lib/api/errors"
 import { endpoints } from "@/lib/api/endpoints"
 import { headers } from "next/headers"
 import {
@@ -59,12 +60,12 @@ export async function listLessons(
         await redirectToSignIn(`/courses/${courseId}`)
       }
       logger.actionError("listLessons", apiErr, elapsed)
-      return { success: false, error: apiErr }
+      return { success: false, error: serializeActionError(apiErr) }
     }
     logger.actionError("listLessons", err, elapsed)
     return {
       success: false,
-      error: { type: "Upstream", message: "Network error" },
+      error: serializeActionError(err),
     }
   }
 }
@@ -107,12 +108,12 @@ export async function createLesson(
         await redirectToSignIn(`/courses/${courseId}`)
       }
       logger.actionError("createLesson", apiErr, elapsed)
-      return { success: false, error: apiErr }
+      return { success: false, error: serializeActionError(apiErr) }
     }
     logger.actionError("createLesson", err, elapsed)
     return {
       success: false,
-      error: { type: "Upstream", message: "Network error" },
+      error: serializeActionError(err),
     }
   }
 }
@@ -152,12 +153,12 @@ export async function updateLesson(
         await redirectToSignIn(`/courses/${courseId}`)
       }
       logger.actionError("updateLesson", apiErr, elapsed)
-      return { success: false, error: apiErr }
+      return { success: false, error: serializeActionError(apiErr) }
     }
     logger.actionError("updateLesson", err, elapsed)
     return {
       success: false,
-      error: { type: "Upstream", message: "Network error" },
+      error: serializeActionError(err),
     }
   }
 }
@@ -202,12 +203,12 @@ export async function reorderLessons(
         await redirectToSignIn(`/courses/${courseId}`)
       }
       logger.actionError("reorderLessons", apiErr, elapsed)
-      return { success: false, error: apiErr }
+      return { success: false, error: serializeActionError(apiErr) }
     }
     logger.actionError("reorderLessons", err, elapsed)
     return {
       success: false,
-      error: { type: "Upstream", message: "Network error" },
+      error: serializeActionError(err),
     }
   }
 }
@@ -238,12 +239,12 @@ export async function deleteLesson(
         await redirectToSignIn(`/courses/${courseId}`)
       }
       logger.actionError("deleteLesson", apiErr, elapsed)
-      return { success: false, error: apiErr }
+      return { success: false, error: serializeActionError(apiErr) }
     }
     logger.actionError("deleteLesson", err, elapsed)
     return {
       success: false,
-      error: { type: "Upstream", message: "Network error" },
+      error: serializeActionError(err),
     }
   }
 }

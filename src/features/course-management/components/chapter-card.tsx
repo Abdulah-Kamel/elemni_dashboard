@@ -34,17 +34,18 @@ import { LessonList } from "./lesson-list"
 import type { ChapterOut } from "@/features/course-management/chapters-schema"
 import type { LessonOut } from "@/features/course-management/lessons-schema"
 import { useCourseBuilderBridge } from "@/features/course-management/course-builder-bridge"
-import { displayPosition } from "@/features/course-management/display-position"
 import { useChapterMutations } from "@/features/course-management/hooks/use-course-management-queries"
 
 export function ChapterCard({
   chapter,
+  index,
   courseId,
   initialLessons,
   lessonsError,
   defaultExpanded = false,
   dragHandleProps,
 }: {
+  index: number
   chapter: ChapterOut
   courseId: number
   initialLessons: LessonOut[]
@@ -171,7 +172,7 @@ export function ChapterCard({
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-xs font-medium text-muted-foreground">
-                {t("chapter_number", { n: displayPosition(chapter.order) })}
+                {t("chapter_number", { n: index + 1 })}
               </span>
               <span className="block min-w-0 flex-1 truncate text-sm font-semibold sm:text-base" dir="auto">
                 {chapter.title}

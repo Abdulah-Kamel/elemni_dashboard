@@ -72,6 +72,55 @@ export class ApiErrorImpl extends Error {
   }
 }
 
+export type SerializableActionError = {
+  type: string;
+  message: string;
+  status?: number;
+  requestId?: string;
+  retryAfter?: number;
+  fields?: string[];
+  causeTag?: string;
+  cause?: string;
+  code?: string;
+};
+
+// Error instances get redacted by React in production Server Action responses.
+// Copy only known primitive fields, never the Error itself or its nested cause.
+export function serializeActionError(
+  error: unknown,
+  fallbackMessage = "Network error"
+): SerializableActionError {
+  if (
+    !error ||
+    typeof error !== "object" ||
+    !("type" in error) ||
+    typeof error.type !== "string" ||
+    !("message" in error) ||
+    typeof error.message !== "string"
+  ) {
+    return { type: "Upstream", message: fallbackMessage };
+  }
+  const result: SerializableActionError = {
+    type: error.type,
+    message: error.message,
+  };
+  const metadata = error as Record<string, unknown>;
+  for (const key of ["status", "retryAfter"] as const) {
+    const value = metadata[key];
+    if (typeof value === "number" && Number.isFinite(value)) result[key] = value;
+  }
+  for (const key of ["requestId", "causeTag", "cause", "code"] as const) {
+    const value = metadata[key];
+    if (typeof value === "string") result[key] = value;
+  }
+  if ("fields" in error && Array.isArray(error.fields)) {
+    result.fields = Array.from(error.fields).filter(
+      (field): field is string => typeof field === "string"
+    );
+  }
+  return result;
+}
+
 export async function toApiError(res: Response): Promise<ApiErrorImpl> {
   const requestId = res.headers.get("X-Request-ID") ?? undefined;
   const retryAfterHeader = res.headers.get("Retry-After");

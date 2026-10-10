@@ -51,6 +51,7 @@ import { ArchiveCourseControl } from "@/features/course-management/components/ar
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
 import { useRouter } from "@/i18n/routing"
+import { toast } from "sonner"
 
 interface CourseWorkspaceProps {
   model: StudentCoursePreviewModel
@@ -226,7 +227,12 @@ function CourseWorkspaceContent({
       }
 
       if (coverFile) {
-        body.img = await uploadCourseCover(courseId, coverFile)
+        try {
+          body.img = await uploadCourseCover(courseId, coverFile)
+        } catch (error) {
+          toast.error(t("cover_upload_failed"))
+          throw error
+        }
       }
 
       const updatedCourse = await update.mutateAsync({ courseId, data: body })
@@ -254,6 +260,7 @@ function CourseWorkspaceContent({
     }
   }, [
     copy.saveError,
+    t,
     courseId,
     coverFile,
     description,

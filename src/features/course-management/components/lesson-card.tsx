@@ -33,17 +33,18 @@ import {
 import { ItemList } from "@/features/course-management/components/item-list"
 import type { LessonOut } from "@/features/course-management/lessons-schema"
 import { useCourseBuilderBridge } from "@/features/course-management/course-builder-bridge"
-import { displayPosition } from "@/features/course-management/display-position"
 import { useLessonMutations } from "@/features/course-management/hooks/use-course-management-queries"
 
 export function LessonCard({
   lesson,
+  index,
   courseId,
   itemCount,
   status,
   dragHandleProps,
   nested = false,
 }: {
+  index: number
   lesson: LessonOut
   courseId: number
   itemCount?: number
@@ -211,7 +212,7 @@ export function LessonCard({
               <ChevronRight className="size-4 shrink-0 text-muted-foreground rtl:rotate-180" />
             )}
             <span className="min-w-0 flex-1 truncate text-sm font-medium" dir="auto">
-              {displayPosition(lesson.order)}. {lesson.title}
+              {index + 1}. {lesson.title}
             </span>
           </Collapsible.Trigger>
           {itemCount != null && (

@@ -1,5 +1,47 @@
 import { describe, it, expect } from "vitest";
-import { ApiError, toApiError } from "@/lib/api/errors";
+import { ApiError, ApiErrorImpl, toApiError, serializeActionError } from "@/lib/api/errors";
+
+describe("serializeActionError", () => {
+  it("returns API messages and metadata as plain data", () => {
+    const error = new ApiErrorImpl({
+      type: "Validation", status: 422, message: "Title is required",
+      requestId: "req_1", fields: ["title"],
+    });
+    const result = serializeActionError(error);
+    expect(Object.getPrototypeOf(result)).toBe(Object.prototype);
+    expect(result).not.toBeInstanceOf(Error);
+    expect(result).toEqual({
+      type: "Validation", status: 422, message: "Title is required",
+      requestId: "req_1", fields: ["title"],
+    });
+    expect(result.fields).not.toBe(error.fields);
+  });
+
+  it("preserves retry and upstream metadata without returning an Error cause", () => {
+    expect(serializeActionError(new ApiErrorImpl({
+      type: "RateLimited", status: 429, message: "Try later", retryAfter: 30,
+    }))).toEqual({ type: "RateLimited", status: 429, message: "Try later", retryAfter: 30 });
+    const error = new ApiErrorImpl({
+      type: "Upstream", status: 500, message: "Failed to create video library", cause: "5xx",
+    });
+    error.cause = new Error("private cause");
+    expect(serializeActionError(error)).toEqual({
+      type: "Upstream", status: 500, message: "Failed to create video library", causeTag: "5xx",
+    });
+  });
+
+  it.each([undefined, null, "failure", 42, new Error("private error")])(
+    "uses the existing fallback for unknown thrown values (%s)", (error) => {
+      expect(serializeActionError(error)).toEqual({ type: "Upstream", message: "Network error" });
+    },
+  );
+
+  it("supports action-specific fallback messages", () => {
+    expect(serializeActionError(null, "Profile request failed")).toEqual({
+      type: "Upstream", message: "Profile request failed",
+    });
+  });
+});
 
 describe("error taxonomy (Article II / FR-007)", () => {
   describe("all 7 variants exist with type discriminant", () => {

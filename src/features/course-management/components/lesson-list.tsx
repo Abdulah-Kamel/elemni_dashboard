@@ -53,11 +53,13 @@ const EMPTY_LESSONS: LessonOut[] = [];
 
 function SortableLessonCard({
   lesson,
+  index,
   courseId,
   itemCount,
   status,
   nested,
 }: {
+  index: number;
   lesson: LessonOut;
   courseId: number;
   itemCount?: number;
@@ -83,6 +85,7 @@ function SortableLessonCard({
     <div ref={setNodeRef} style={style}>
       <LessonCard
         lesson={lesson}
+        index={index}
         courseId={courseId}
         itemCount={itemCount}
         status={status}
@@ -301,10 +304,11 @@ export function LessonList({
             items={lessonIds}
             strategy={verticalListSortingStrategy}
           >
-            {lessons.map((lesson) => (
+            {lessons.map((lesson, index) => (
               <SortableLessonCard
                 key={lesson.id}
                 lesson={lesson}
+                index={index}
                 courseId={courseId}
                 itemCount={itemsMap[lesson.id]?.count}
                 status={itemsMap[lesson.id]?.status ?? null}

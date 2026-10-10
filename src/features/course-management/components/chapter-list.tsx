@@ -49,11 +49,13 @@ const EMPTY_CHAPTERS: ChapterOut[] = [];
 
 function SortableChapterCard({
   chapter,
+  index,
   courseId,
   initialLessons,
   lessonsError,
   defaultExpanded,
 }: {
+  index: number;
   chapter: ChapterOut;
   courseId: number;
   initialLessons: LessonOut[];
@@ -81,6 +83,7 @@ function SortableChapterCard({
     <div ref={setNodeRef} style={style}>
       <ChapterCard
         chapter={chapter}
+        index={index}
         courseId={courseId}
         initialLessons={initialLessons}
         lessonsError={lessonsError}
@@ -234,10 +237,11 @@ export function ChapterList({
           {t("empty")}
         </p>
       ) : chapters.length === 1 ? (
-        chapters.map((chapter) => (
+        chapters.map((chapter, index) => (
           <ChapterCard
             key={chapter.id}
             chapter={chapter}
+            index={index}
             courseId={courseId}
             initialLessons={initialLessonsByChapter[chapter.id] ?? []}
             lessonsError={lessonErrorsByChapter[chapter.id] ?? null}
@@ -263,10 +267,11 @@ export function ChapterList({
           onDragCancel={handleDragCancel}
         >
           <SortableContext items={chapterIds} strategy={verticalListSortingStrategy}>
-            {chapters.map((chapter) => (
+            {chapters.map((chapter, index) => (
               <SortableChapterCard
                 key={chapter.id}
                 chapter={chapter}
+                index={index}
                 courseId={courseId}
                 initialLessons={initialLessonsByChapter[chapter.id] ?? []}
                 lessonsError={lessonErrorsByChapter[chapter.id] ?? null}
@@ -283,7 +288,7 @@ export function ChapterList({
                 </span>
                 <div>
                   <p className="text-xs text-muted-foreground">
-                    {t("chapter_number", { n: activeChapter.order })}
+                    {t("chapter_number", { n: chapters.findIndex((chapter) => chapter.id === activeChapter.id) + 1 })}
                   </p>
                   <p className="font-semibold">{activeChapter.title}</p>
                 </div>

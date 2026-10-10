@@ -140,11 +140,11 @@ export function CreateCourseWorkspace({
           await update.mutateAsync({ courseId: course.id, data: { img: imagePath } })
         } catch {
           coverFailed = true
-          toast.warning(t("course_created_cover_failed"))
+          toast.error(t("course_created_cover_failed"))
         }
       }
       if (!coverFailed) toast.success(t("course_created"))
-      router.push(`/${locale}/courses/${course.id}`)
+      router.push(`/courses/${course.id}`)
     } catch (err) {
       const actionError = getActionError(err)
       if (actionError?.type === "Validation" && actionError.fields) {

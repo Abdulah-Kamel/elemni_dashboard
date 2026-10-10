@@ -5,7 +5,6 @@ import { ApiErrorImpl } from "@/lib/api/errors"
 import { isApiNotFound, parsePositiveRouteId, sanitizeNextPath } from "@/lib/routes"
 import { lessonCreateSchema } from "@/features/course-management/lessons-schema"
 import { titleValidationError } from "@/features/course-management/title-validation"
-import { displayPosition } from "@/features/course-management/display-position"
 
 describe("round-one regression helpers", () => {
   it("maps typed API NotFound and parses positive route ids", () => {
@@ -25,11 +24,6 @@ describe("round-one regression helpers", () => {
     expect(result.success).toBe(false)
     expect(result.error).toMatchObject({ type: "Validation", code: "title_too_long" })
     expect(result.error.message).toContain("200")
-  })
-
-  it("renders curriculum positions as one-based numbers", () => {
-    expect(displayPosition(0)).toBe(1)
-    expect(displayPosition(1)).toBe(2)
   })
 
   it("keeps auth upstream errors translated in both locales", () => {

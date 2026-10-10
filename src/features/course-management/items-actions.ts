@@ -3,6 +3,7 @@ import { titleValidationError } from "@/features/course-management/title-validat
 import { revalidateTag } from "next/cache"
 import { headers } from "next/headers"
 import { apiFetch } from "@/lib/api/client"
+import { serializeActionError } from "@/lib/api/errors"
 import { endpoints } from "@/lib/api/endpoints"
 import {
   itemOutSchema,
@@ -54,12 +55,12 @@ export async function listItems(
         await redirectToSignIn(`/courses/${courseId}`)
       }
       logger.actionError("listItems", apiErr, elapsed)
-      return { success: false, error: apiErr }
+      return { success: false, error: serializeActionError(apiErr) }
     }
     logger.actionError("listItems", err, elapsed)
     return {
       success: false,
-      error: { type: "Upstream", message: "Network error" },
+      error: serializeActionError(err),
     }
   }
 }
@@ -118,12 +119,12 @@ export async function createItem(
         await redirectToSignIn(`/courses/${courseId}`)
       }
       logger.actionError("createItem", apiErr, elapsed)
-      return { success: false, error: apiErr }
+      return { success: false, error: serializeActionError(apiErr) }
     }
     logger.actionError("createItem", err, elapsed)
     return {
       success: false,
-      error: { type: "Upstream", message: "Network error" },
+      error: serializeActionError(err),
     }
   }
 }
@@ -163,12 +164,12 @@ export async function updateItem(
         await redirectToSignIn(`/courses/${courseId}`)
       }
       logger.actionError("updateItem", apiErr, elapsed)
-      return { success: false, error: apiErr }
+      return { success: false, error: serializeActionError(apiErr) }
     }
     logger.actionError("updateItem", err, elapsed)
     return {
       success: false,
-      error: { type: "Upstream", message: "Network error" },
+      error: serializeActionError(err),
     }
   }
 }
@@ -200,12 +201,12 @@ export async function deleteItem(
         await redirectToSignIn(`/courses/${courseId}`)
       }
       logger.actionError("deleteItem", apiErr, elapsed)
-      return { success: false, error: apiErr }
+      return { success: false, error: serializeActionError(apiErr) }
     }
     logger.actionError("deleteItem", err, elapsed)
     return {
       success: false,
-      error: { type: "Upstream", message: "Network error" },
+      error: serializeActionError(err),
     }
   }
 }
@@ -243,12 +244,12 @@ export async function reorderItems(
         await redirectToSignIn(`/courses/${courseId}`)
       }
       logger.actionError("reorderItems", apiErr, elapsed)
-      return { success: false, error: apiErr }
+      return { success: false, error: serializeActionError(apiErr) }
     }
     logger.actionError("reorderItems", err, elapsed)
     return {
       success: false,
-      error: { type: "Upstream", message: "Network error" },
+      error: serializeActionError(err),
     }
   }
 }
@@ -284,12 +285,12 @@ export async function requestVideoUpload(
       }
       return {
         success: false,
-        error: err as { type: string; message: string; fields?: string[] },
+        error: serializeActionError(err),
       }
     }
     return {
       success: false,
-      error: { type: "Upstream", message: "Network error" },
+      error: serializeActionError(err),
     }
   }
 }
@@ -322,12 +323,12 @@ export async function confirmVideoUpload(
       }
       return {
         success: false,
-        error: err as { type: string; message: string; fields?: string[] },
+        error: serializeActionError(err),
       }
     }
     return {
       success: false,
-      error: { type: "Upstream", message: "Network error" },
+      error: serializeActionError(err),
     }
   }
 }
@@ -360,13 +361,13 @@ export async function requestUploadUrl(
       logger.actionError("requestUploadUrl", err, elapsed)
       return {
         success: false,
-        error: err as { type: string; message: string; fields?: string[] },
+        error: serializeActionError(err),
       }
     }
     logger.actionError("requestUploadUrl", err, elapsed)
     return {
       success: false,
-      error: { type: "Upstream", message: "Network error" },
+      error: serializeActionError(err),
     }
   }
 }
@@ -399,13 +400,13 @@ export async function confirmUpload(
       logger.actionError("confirmUpload", err, elapsed)
       return {
         success: false,
-        error: err as { type: string; message: string; fields?: string[] },
+        error: serializeActionError(err),
       }
     }
     logger.actionError("confirmUpload", err, elapsed)
     return {
       success: false,
-      error: { type: "Upstream", message: "Network error" },
+      error: serializeActionError(err),
     }
   }
 }
@@ -443,12 +444,12 @@ async function deleteItemMedia(
         await redirectToSignIn(`/courses/${courseId}`)
       }
       logger.actionError(actionName, apiErr, elapsed)
-      return { success: false, error: apiErr }
+      return { success: false, error: serializeActionError(apiErr) }
     }
     logger.actionError(actionName, err, elapsed)
     return {
       success: false,
-      error: { type: "Upstream", message: "Network error" },
+      error: serializeActionError(err),
     }
   }
 }
