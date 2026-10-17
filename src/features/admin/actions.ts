@@ -38,6 +38,10 @@ import {
 import { logger } from "@/lib/logger"
 import { redirectToAuth as redirectToAuthRoute } from "@/lib/auth/redirect"
 
+// Teacher provisioning blocks on Bunny library creation and the SMTP
+// invitation; together they routinely exceed the default 10s API budget.
+const PROVISIONING_TIMEOUT_MS = 60_000
+
 type ActionResult<T> =
   | { success: true; data: T }
   | { success: false; error: { type: string; message: string } }
@@ -95,6 +99,7 @@ export async function createTeacher(data: unknown): Promise<
       {
         method: "POST",
         body: JSON.stringify(parsed),
+        timeoutMs: PROVISIONING_TIMEOUT_MS,
       }
     )
     const elapsed = Math.round(performance.now() - start)
@@ -133,6 +138,7 @@ export async function sendSetPasswordEmail(
       setPasswordResponseSchema,
       {
         method: "POST",
+        timeoutMs: PROVISIONING_TIMEOUT_MS,
       }
     )
     const elapsed = Math.round(performance.now() - start)
@@ -304,7 +310,7 @@ export async function createTeacherLibrary(
     const result = await apiFetch(
       `/api/v1/admin/teachers/${id}/library`,
       setPasswordResponseSchema,
-      { method: "POST" }
+      { method: "POST", timeoutMs: PROVISIONING_TIMEOUT_MS }
     )
     return { success: true, data: result }
   } catch (err) {
