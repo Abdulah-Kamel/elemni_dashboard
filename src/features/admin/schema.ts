@@ -171,6 +171,27 @@ export const adminOverviewSchema = z.object({
   currency: z.string(),
 })
 
+export const adminUsageSyncFailureSchema = z.object({
+  id: z.number().int(),
+  teacher_profile_id: z.number().int(),
+  teacher_user_id: z.number().int(),
+  teacher_name: z.string().nullable(),
+  teacher_email: z.string().nullable(),
+  teacher_slug: z.string().nullable(),
+  date: z.string().min(1),
+  error: z.string(),
+  attempts: z.number().int().positive(),
+  first_failed_at: z.string().min(1),
+  last_failed_at: z.string().min(1),
+})
+
+export const adminUsageSyncFailurePageSchema = z.object({
+  total: z.number().int().nonnegative(),
+  skip: z.number().int().nonnegative(),
+  limit: z.number().int().positive(),
+  items: adminUsageSyncFailureSchema.array(),
+})
+
 export const adminLibrarySettingsSchema = z.object({
   controls: z.array(z.enum(["play-large", "play", "rewind", "fast-forward", "progress", "current-time", "mute", "volume", "captions", "settings", "fullscreen"])),
   block_none_referrer: z.boolean(),
@@ -217,6 +238,8 @@ export type AdminStudentCreateResponse = z.infer<typeof adminStudentCreateRespon
 export type AdminStudentPage = z.infer<typeof adminStudentPageSchema>
 export type AdminSubscriptionPage = z.infer<typeof adminSubscriptionPageSchema>
 export type AdminOverview = z.infer<typeof adminOverviewSchema>
+export type AdminUsageSyncFailure = z.infer<typeof adminUsageSyncFailureSchema>
+export type AdminUsageSyncFailurePage = z.infer<typeof adminUsageSyncFailurePageSchema>
 export type AdminLibrarySettings = z.infer<typeof adminLibrarySettingsSchema>
 export type TaxonomyCreate = z.infer<typeof taxonomyCreateSchema>
 export type TaxonomyUpdate = z.infer<typeof taxonomyUpdateSchema>

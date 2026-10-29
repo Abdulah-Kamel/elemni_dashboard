@@ -17,6 +17,8 @@ export type AdminAttentionCounts = {
   duplicatePayments: number | null
   /** `total` of GET /admin/subscriptions?payment_status=failed */
   failedPayments: number | null
+  /** `total` of GET /admin/teachers/usage/sync-failures: teacher usage days not billed yet */
+  usageSyncFailures: number | null
   /** `has_library === false` across the full teacher list (null if the list was truncated). */
   teachersWithoutLibrary: number | null
   /** `total` of GET /admin/teachers?is_active=false */
@@ -48,6 +50,7 @@ function teachersHref(patch: Partial<ReturnType<typeof parseTeacherFilters>>) {
 const RULES: { id: AttentionKind; tone: AttentionDescriptor["tone"]; href: string }[] = [
   { id: "duplicatePayments", tone: "destructive", href: subscriptionsHref("duplicate_paid") },
   { id: "failedPayments", tone: "destructive", href: subscriptionsHref("failed") },
+  { id: "usageSyncFailures", tone: "destructive", href: "/admin#usage-sync-failures" },
   { id: "teachersWithoutLibrary", tone: "warning", href: teachersHref({ library: "missing" }) },
   { id: "inactiveTeachers", tone: "warning", href: teachersHref({ status: "inactive" }) },
   { id: "pendingPayments", tone: "primary", href: subscriptionsHref("pending") },

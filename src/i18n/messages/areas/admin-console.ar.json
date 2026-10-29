@@ -12,6 +12,7 @@
       "empty": "لا شيء يحتاج متابعتك الآن.",
       "duplicatePayments": "{count, plural, one {دفعة مكررة تحتاج استردادًا أو تسوية} other {مدفوعات مكررة تحتاج استردادًا أو تسوية}}",
       "failedPayments": "{count, plural, one {دفعة فاشلة} other {مدفوعات فاشلة}}",
+      "usageSyncFailures": "{count, plural, one {يوم استخدام لمعلم لم يُحتسب (فشلت المزامنة)} other {أيام استخدام لمعلمين لم تُحتسب (فشلت المزامنة)}}",
       "teachersWithoutLibrary": "{count, plural, one {معلم بلا مكتبة فيديو} other {معلمون بلا مكتبة فيديو}}",
       "inactiveTeachers": "{count, plural, one {معلم معطل} other {معلمون معطلون}}",
       "pendingPayments": "{count, plural, one {دفعة قيد الانتظار} other {مدفوعات قيد الانتظار}}"
@@ -66,6 +67,13 @@
     "errors": {
       "list": "تعذر تحميل هذه القائمة.",
       "retry": "إعادة المحاولة"
+    },
+    "usageSync": {
+      "title": "أعطال مزامنة الاستخدام",
+      "hint": "تعذّر جلب استخدام Bunny لهذه الأيام، لذلك لم تُحتسب بعد. المزامنة الليلية تعيد محاولة آخر ٣ أيام، والأيام الأقدم تحتاج إلى تعبئة يدوية.",
+      "attempts": "{count, plural, one {محاولة فاشلة واحدة} two {محاولتان فاشلتان} few {# محاولات فاشلة} many {# محاولة فاشلة} other {# محاولة فاشلة}}",
+      "last_failed": "آخر محاولة {time}",
+      "more": "{count, plural, other {+# أخرى}}"
     }
   }
 }

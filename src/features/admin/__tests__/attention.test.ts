@@ -5,6 +5,7 @@ import type { AdminTeacherPage } from "../schema"
 const none = {
   duplicatePayments: 0,
   failedPayments: 0,
+  usageSyncFailures: 0,
   teachersWithoutLibrary: 0,
   inactiveTeachers: 0,
   pendingPayments: 0,
@@ -14,7 +15,7 @@ describe("deriveAdminAttention", () => {
   it("returns nothing when every count is zero or unknown", () => {
     expect(deriveAdminAttention(none)).toEqual([])
     expect(
-      deriveAdminAttention({ duplicatePayments: null, failedPayments: null, teachersWithoutLibrary: null, inactiveTeachers: null, pendingPayments: null }),
+      deriveAdminAttention({ duplicatePayments: null, failedPayments: null, usageSyncFailures: null, teachersWithoutLibrary: null, inactiveTeachers: null, pendingPayments: null }),
     ).toEqual([])
   })
 
@@ -22,6 +23,7 @@ describe("deriveAdminAttention", () => {
     const items = deriveAdminAttention({
       duplicatePayments: 1,
       failedPayments: 2,
+      usageSyncFailures: 6,
       teachersWithoutLibrary: 3,
       inactiveTeachers: 4,
       pendingPayments: 5,
@@ -29,6 +31,7 @@ describe("deriveAdminAttention", () => {
     expect(items.map(({ id, count, href, tone }) => [id, count, href, tone])).toEqual([
       ["duplicatePayments", 1, "/admin/subscriptions?status=duplicate_paid", "destructive"],
       ["failedPayments", 2, "/admin/subscriptions?status=failed", "destructive"],
+      ["usageSyncFailures", 6, "/admin#usage-sync-failures", "destructive"],
       ["teachersWithoutLibrary", 3, "/admin/teachers?library=missing", "warning"],
       ["inactiveTeachers", 4, "/admin/teachers?status=inactive", "warning"],
       ["pendingPayments", 5, "/admin/subscriptions?status=pending", "primary"],
