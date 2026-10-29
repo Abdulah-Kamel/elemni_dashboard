@@ -4,11 +4,13 @@ import {
   getAdminOverview,
   listAdminSubscriptions,
   listAdminTeachers,
+  listUsageSyncFailures,
 } from "@/features/admin/queries"
 import type {
   AdminOverview,
   AdminSubscriptionPage,
   AdminTeacherPage,
+  AdminUsageSyncFailurePage,
 } from "@/features/admin/schema"
 import { logger } from "@/lib/logger"
 import type { ApiError } from "@/lib/api/errors"
@@ -20,6 +22,7 @@ import {
 /** The API caps page size at 100; with fewer teachers than that, one call sees them all. */
 const TEACHER_SCAN_LIMIT = 100
 const LATEST_LIMIT = 6
+const USAGE_SYNC_FAILURE_LIMIT = 5
 
 type AdminPageData =
   | {
@@ -28,6 +31,8 @@ type AdminPageData =
       teachers: AdminTeacherPage
       subscriptions: AdminSubscriptionPage
       attention: AdminAttentionCounts
+      /** Latest open usage sync failures; null if they could not be loaded. */
+      usageSyncFailures: AdminUsageSyncFailurePage | null
     }
   | {
       kind: "error"
@@ -91,10 +96,24 @@ async function loadAttentionTotals() {
   return totals
 }
 
+/** Secondary like the attention counts: a failure hides the panel, not the page. */
+async function loadUsageSyncFailures(): Promise<AdminUsageSyncFailurePage | null> {
+  try {
+    return await listUsageSyncFailures(USAGE_SYNC_FAILURE_LIMIT)
+  } catch (reason) {
+    logger.error(
+      "Admin attention count failed",
+      serializeAdminPageError(`/api/v1/admin/teachers/usage/sync-failures?skip=0&limit=${USAGE_SYNC_FAILURE_LIMIT}`, reason)
+    )
+    return null
+  }
+}
+
 export async function loadAdminPageData(): Promise<AdminPageData> {
-  const [results, totals] = await Promise.all([
+  const [results, totals, usageSyncFailures] = await Promise.all([
     Promise.allSettled(adminPageRequests.map(({ execute }) => execute())),
     loadAttentionTotals(),
+    loadUsageSyncFailures(),
   ])
 
   const failures = results.flatMap((result, index) =>
@@ -134,10 +153,12 @@ export async function loadAdminPageData(): Promise<AdminPageData> {
     attention: {
       duplicatePayments: totals.duplicatePayments ?? null,
       failedPayments: totals.failedPayments ?? null,
+      usageSyncFailures: usageSyncFailures?.total ?? null,
       teachersWithoutLibrary: countTeachersWithoutLibrary(teachers),
       inactiveTeachers: totals.inactiveTeachers ?? null,
       pendingPayments: totals.pendingPayments ?? null,
     },
+    usageSyncFailures,
   }
 }
 

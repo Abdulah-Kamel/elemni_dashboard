@@ -5,6 +5,7 @@ vi.mock("@/features/admin/queries", () => ({
   getAdminOverview: vi.fn(),
   listAdminTeachers: vi.fn(),
   listAdminSubscriptions: vi.fn(),
+  listUsageSyncFailures: vi.fn(),
 }))
 
 vi.mock("@/lib/logger", () => ({
@@ -98,6 +99,28 @@ describe("loadAdminPageData", () => {
       return { items: [], total: totals[params.paymentStatus ?? "completed"] ?? 0, skip: 0, limit: 1 } as never
     })
 
+    const failurePage = {
+      total: 7,
+      skip: 0,
+      limit: 5,
+      items: [
+        {
+          id: 1,
+          teacher_profile_id: 3,
+          teacher_user_id: 9,
+          teacher_name: "Mona",
+          teacher_email: "mona@example.com",
+          teacher_slug: "mona",
+          date: "2026-10-28",
+          error: "library 404",
+          attempts: 2,
+          first_failed_at: "2026-10-29T01:00:00Z",
+          last_failed_at: "2026-10-30T01:00:00Z",
+        },
+      ],
+    }
+    vi.mocked(queries.listUsageSyncFailures).mockResolvedValue(failurePage)
+
     const result = await loadAdminPageData()
 
     expect(result.kind).toBe("ready")
@@ -105,9 +128,44 @@ describe("loadAdminPageData", () => {
     expect(result.attention).toEqual({
       duplicatePayments: 1,
       failedPayments: null,
+      usageSyncFailures: 7,
       teachersWithoutLibrary: 1,
       inactiveTeachers: 1,
       pendingPayments: 4,
     })
+    expect(result.usageSyncFailures).toEqual(failurePage)
+    expect(queries.listUsageSyncFailures).toHaveBeenCalledWith(5)
+  })
+
+  it("still renders the overview when the usage sync failures request fails", async () => {
+    const queries = await import("@/features/admin/queries")
+    const { logger } = await import("@/lib/logger")
+    const { loadAdminPageData } = await import("./page-data")
+
+    vi.mocked(queries.getAdminOverview).mockResolvedValue({
+      teacher_total: 0,
+      active_teacher_total: 0,
+      student_total: 0,
+      active_student_total: 0,
+      completed_subscription_total: 0,
+      collected_revenue: "0.00",
+      currency: "EGP",
+    })
+    vi.mocked(queries.listAdminTeachers).mockResolvedValue({ items: [], total: 0, skip: 0, limit: 100 } as never)
+    vi.mocked(queries.listAdminSubscriptions).mockResolvedValue({ items: [], total: 0, skip: 0, limit: 1 } as never)
+    vi.mocked(queries.listUsageSyncFailures).mockRejectedValue(
+      new ApiErrorImpl({ type: "NotFound", status: 404, message: "Not Found" })
+    )
+
+    const result = await loadAdminPageData()
+
+    expect(result.kind).toBe("ready")
+    if (result.kind !== "ready") return
+    expect(result.usageSyncFailures).toBeNull()
+    expect(result.attention.usageSyncFailures).toBeNull()
+    expect(logger.error).toHaveBeenCalledWith(
+      "Admin attention count failed",
+      expect.objectContaining({ request: "/api/v1/admin/teachers/usage/sync-failures?skip=0&limit=5", status: 404 })
+    )
   })
 })

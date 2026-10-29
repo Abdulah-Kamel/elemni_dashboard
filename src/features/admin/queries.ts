@@ -6,11 +6,13 @@ import {
   adminStudentPageSchema,
   adminSubscriptionPageSchema,
   adminTeacherListItemSchema,
+  adminUsageSyncFailurePageSchema,
   adminTeacherPageSchema,
   publicTeacherOutSchema,
   type AdminStudentPage,
   type AdminSubscriptionPage,
   type AdminTeacherPage,
+  type AdminUsageSyncFailurePage,
   type PublicTeacherOut,
 } from "@/features/admin/schema"
 
@@ -69,6 +71,10 @@ export async function listAdminStudents(params: PageParams = {}): Promise<AdminS
 
 export async function listAdminSubscriptions(params: PageParams = {}): Promise<AdminSubscriptionPage> {
   return apiFetch(`/api/v1/admin/subscriptions?${queryString(params)}`, adminSubscriptionPageSchema)
+}
+
+export async function listUsageSyncFailures(limit = 5): Promise<AdminUsageSyncFailurePage> {
+  return apiFetch(`/api/v1/admin/teachers/usage/sync-failures?skip=0&limit=${limit}`, adminUsageSyncFailurePageSchema)
 }
 
 export type { PageParams }

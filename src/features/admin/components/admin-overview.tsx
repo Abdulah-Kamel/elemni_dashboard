@@ -2,6 +2,7 @@ import {
   Banknote,
   CircleAlert,
   Clock3,
+  CloudOff,
   CopyX,
   GraduationCap,
   ReceiptText,
@@ -15,11 +16,13 @@ import { AttentionList, type AttentionItem } from "@/components/ui/attention-lis
 import { StatTile } from "@/components/ui/stat-tile"
 import { deriveAdminAttention, type AdminAttentionCounts, type AttentionKind } from "../attention"
 import { formatDate, formatMoney, formatRelative, initials } from "../format"
-import type { AdminOverview, AdminSubscriptionPage, AdminTeacherPage } from "../schema"
+import type { AdminOverview, AdminSubscriptionPage, AdminTeacherPage, AdminUsageSyncFailurePage } from "../schema"
+import { UsageSyncFailures } from "./usage-sync-failures"
 
 const attentionIcons: Record<AttentionKind, AttentionItem["icon"]> = {
   duplicatePayments: CopyX,
   failedPayments: CircleAlert,
+  usageSyncFailures: CloudOff,
   teachersWithoutLibrary: VideoOff,
   inactiveTeachers: UserRoundX,
   pendingPayments: Clock3,
@@ -32,11 +35,13 @@ export async function AdminOverviewView({
   teachers,
   subscriptions,
   attention,
+  usageSyncFailures,
 }: {
   overview: AdminOverview
   teachers: AdminTeacherPage
   subscriptions: AdminSubscriptionPage
   attention: AdminAttentionCounts
+  usageSyncFailures: AdminUsageSyncFailurePage | null
 }) {
   const t = await getTranslations("admin")
   const c = await getTranslations("adminConsole")
@@ -96,6 +101,8 @@ export async function AdminOverviewView({
             emptyLabel={c("attention.empty")}
             dir={locale === "ar" ? "rtl" : "ltr"}
           />
+
+          {usageSyncFailures && usageSyncFailures.total > 0 && <UsageSyncFailures page={usageSyncFailures} />}
 
           <section aria-labelledby="latest-teachers" className="rounded-xl border border-border bg-surface">
             <div className="flex items-center justify-between border-b border-border px-4 py-3">

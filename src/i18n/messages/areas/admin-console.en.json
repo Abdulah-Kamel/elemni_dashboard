@@ -12,6 +12,7 @@
       "empty": "Nothing needs your attention right now.",
       "duplicatePayments": "{count, plural, one {Duplicate payment to refund or reconcile} other {Duplicate payments to refund or reconcile}}",
       "failedPayments": "{count, plural, one {Failed payment} other {Failed payments}}",
+      "usageSyncFailures": "{count, plural, one {Teacher usage day not billed (sync failed)} other {Teacher usage days not billed (sync failed)}}",
       "teachersWithoutLibrary": "{count, plural, one {Teacher without a video library} other {Teachers without a video library}}",
       "inactiveTeachers": "{count, plural, one {Deactivated teacher} other {Deactivated teachers}}",
       "pendingPayments": "{count, plural, one {Payment still pending} other {Payments still pending}}"
@@ -66,6 +67,13 @@
     "errors": {
       "list": "This list could not be loaded.",
       "retry": "Try again"
+    },
+    "usageSync": {
+      "title": "Usage sync failures",
+      "hint": "Bunny usage for these days could not be fetched, so they are not billed yet. The nightly sync retries the last 3 days; older days need a backfill.",
+      "attempts": "{count, plural, one {# failed attempt} other {# failed attempts}}",
+      "last_failed": "Last tried {time}",
+      "more": "{count, plural, one {+# more} other {+# more}}"
     }
   }
 }
